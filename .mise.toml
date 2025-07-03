@@ -23,8 +23,13 @@ run = [
 ]
 
 [tasks.dev]
-description = "開発サーバーを起動"
-run = "bun run dev"
+description = "WASMビルド→ファイルコピー→Vite開発サーバー起動"
+run = [
+  "wasm-pack build --target web --out-dir pkg",
+  "mkdir -p web/public/pkg",
+  "cp -r pkg/* web/public/pkg/",
+  "cd web && bun run dev"
+]
 
 [tasks.build-wasm]
 description = "WASMをビルド"
