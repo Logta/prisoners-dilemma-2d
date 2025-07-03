@@ -50,6 +50,11 @@ impl SimulationEngine {
         // 全エージェントで対戦実行
         let agent_count = self.grid.agents.len();
         for i in 0..agent_count {
+            // エージェント数が変わっていないか確認（安全性のため）
+            if i >= self.grid.agents.len() {
+                console_log!("Agent index {} out of bounds, stopping battles", i);
+                break;
+            }
             self.grid.execute_battles_for_agent(i, &self.payoff_matrix, battle_radius);
         }
         
@@ -57,7 +62,7 @@ impl SimulationEngine {
         self.grid.move_agents();
         
         self.generation += 1;
-        console_log!("Completed generation {}", self.generation);
+        // console_log!("Completed generation {}", self.generation);
         self.generation
     }
 
@@ -71,6 +76,12 @@ impl SimulationEngine {
         mutation_rate: f64,
         mutation_strength: f64,
     ) {
+        // エージェントが存在しない場合は何もしない
+        if self.grid.agents.is_empty() {
+            console_log!("No agents to evolve");
+            return;
+        }
+
         let selection = match selection_method {
             "top_percent" => SelectionMethod::TopPercent(selection_param),
             "tournament" => SelectionMethod::Tournament(selection_param as usize),
@@ -92,6 +103,12 @@ impl SimulationEngine {
             mutation_strength,
         );
 
+        // 新世代が空でないことを確認
+        if new_generation.is_empty() {
+            console_log!("Evolution failed - no new generation created");
+            return;
+        }
+
         // グリッドをクリアして新世代を配置
         self.grid.agents.clear();
         for mut agent in new_generation {
@@ -103,7 +120,7 @@ impl SimulationEngine {
             self.grid.add_agent(agent);
         }
 
-        console_log!("Evolution completed for generation {}", self.generation);
+        console_log!("Evolution completed for generation {} with {} agents", self.generation, self.grid.agents.len());
     }
 
     #[wasm_bindgen]
