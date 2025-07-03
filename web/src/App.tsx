@@ -1,8 +1,9 @@
 import { createSignal, createEffect, onCleanup } from 'solid-js';
 import { SimulationEngine } from '../../pkg/prisoners_dilemma_2d';
-import GridVisualization from './components/GridVisualization';
 import ControlPanel from './components/ControlPanel';
+import GridVisualization from './components/GridVisualization';
 import StatisticsPanel from './components/StatisticsPanel';
+import type { AgentData, Statistics, GridSize } from './types';
 import './App.css';
 
 export default function App() {
@@ -12,11 +13,11 @@ export default function App() {
   const [animationId, setAnimationId] = createSignal<number | null>(null);
   
   // シミュレーションパラメータ
-  const [gridSize, setGridSize] = createSignal({ width: 100, height: 100 });
+  const [gridSize, setGridSize] = createSignal<GridSize>({ height: 100, width: 100 });
   const [agentDensity, setAgentDensity] = createSignal(0.3);
   const [battleRadius, setBattleRadius] = createSignal(2);
   const [speed, setSpeed] = createSignal(100); // ms per generation
-  
+
   // 遺伝的アルゴリズムパラメータ
   const [selectionMethod, setSelectionMethod] = createSignal('top_percent');
   const [selectionParam, setSelectionParam] = createSignal(0.5);
@@ -24,10 +25,16 @@ export default function App() {
   const [crossoverParam, setCrossoverParam] = createSignal(0.5);
   const [mutationRate, setMutationRate] = createSignal(0.1);
   const [mutationStrength, setMutationStrength] = createSignal(0.05);
-  
+
   // 統計データ
-  const [agentData, setAgentData] = createSignal<any[]>([]);
-  const [statistics, setStatistics] = createSignal<any>({});
+  const [agentData, setAgentData] = createSignal<AgentData[]>([]);
+  const [statistics, setStatistics] = createSignal<Statistics>({
+    generation: 0,
+    population: 0,
+    avg_cooperation: 0,
+    avg_movement: 0,
+    avg_score: 0,
+  });
 
   // シミュレーションエンジンを初期化
   createEffect(() => {

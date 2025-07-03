@@ -10,7 +10,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "biome:check": "biome check ./web",
-    "biome:fix": "biome check --apply ./web",
+    "biome:fix": "biome check --write ./web",
     "biome:init": "biome init"
   },
   "dependencies": {

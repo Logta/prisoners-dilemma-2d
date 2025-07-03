@@ -1,7 +1,7 @@
-import { render } from 'solid-js/web';
 import { createSignal, onMount } from 'solid-js';
-import App from './App';
+import { render } from 'solid-js/web';
 import init from '../../pkg/prisoners_dilemma_2d';
+import App from './App';
 
 function AppWithLoader() {
   const [wasmLoaded, setWasmLoaded] = createSignal(false);
@@ -36,4 +36,7 @@ function AppWithLoader() {
   );
 }
 
-render(() => <AppWithLoader />, document.getElementById('app')!);
+const appElement = document.getElementById('app');
+if (appElement) {
+  render(() => <AppWithLoader />, appElement);
+}

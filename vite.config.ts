@@ -10,8 +10,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    fs: {
+      allow: ['..']
+    }
   },
   optimizeDeps: {
     exclude: ['prisoners_dilemma_2d'],
   },
+  assetsInclude: ['**/*.wasm'],
 })

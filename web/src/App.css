@@ -94,7 +94,152 @@
   background-color: #b52d3a;
 }
 
-/* 統計表示 */
+/* グリッド可視化 */
+.grid-visualization {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.grid-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #3a3a3a;
+  border-radius: 4px;
+}
+
+.zoom-info {
+  font-size: 0.9rem;
+  color: #cccccc;
+}
+
+.canvas-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #2d2d2d;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.grid-canvas {
+  cursor: grab;
+  border-radius: 4px;
+}
+
+.grid-canvas:active {
+  cursor: grabbing;
+}
+
+.legend {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background-color: rgba(45, 45, 45, 0.9);
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+/* コントロールパネル */
+.control-panel {
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.control-panel h2 {
+  margin: 0 0 1rem 0;
+  color: #ffffff;
+  font-size: 1.3rem;
+}
+
+.control-panel h3 {
+  margin: 1.5rem 0 1rem 0;
+  color: #cccccc;
+  font-size: 1.1rem;
+  border-bottom: 1px solid #555;
+  padding-bottom: 0.5rem;
+}
+
+.control-section {
+  margin-bottom: 1.5rem;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.control-buttons .button {
+  flex: 1;
+}
+
+.grid-size-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grid-size-controls input {
+  flex: 1;
+}
+
+.grid-size-controls span {
+  color: #cccccc;
+  font-weight: bold;
+}
+
+/* 統計パネル */
+.statistics-panel {
+  padding: 1rem;
+  overflow-y: auto;
+  border-top: 1px solid #444;
+}
+
+.statistics-panel h2 {
+  margin: 0 0 1rem 0;
+  color: #ffffff;
+  font-size: 1.3rem;
+}
+
+.statistics-panel h3 {
+  margin: 1.5rem 0 1rem 0;
+  color: #cccccc;
+  font-size: 1rem;
+  border-bottom: 1px solid #555;
+  padding-bottom: 0.5rem;
+}
+
+.stats-section {
+  margin-bottom: 1.5rem;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -120,4 +265,66 @@
   font-size: 0.8rem;
   color: #cccccc;
   margin-top: 0.25rem;
+}
+
+.score-range {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.range-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  background-color: #3a3a3a;
+  border-radius: 4px;
+}
+
+.range-label {
+  color: #cccccc;
+}
+
+.range-value {
+  color: #007acc;
+  font-weight: bold;
+}
+
+.distribution {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.distribution-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.bar-label {
+  width: 50px;
+  color: #cccccc;
+  font-size: 0.7rem;
+}
+
+.bar-container {
+  flex: 1;
+  height: 16px;
+  background-color: #444;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.bar-value {
+  width: 30px;
+  text-align: right;
+  color: #cccccc;
+  font-size: 0.7rem;
 }
