@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Agent {
     pub x: usize,
     pub y: usize,

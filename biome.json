@@ -8,23 +8,31 @@
       "web/**/*.jsx"
     ]
   },
-  "organizeImports": {
-    "enabled": true
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
   },
   "linter": {
     "enabled": true,
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noAdjacentSpacesInRegex": "error",
-        "noArguments": "error",
-        "noBannedTypes": "error",
-        "noCommaOperator": "error",
-        "noEmptyTypeParameters": "error"
+        "noExplicitAny": "error"
       },
-      "complexity": {
-        "noStaticOnlyClass": "error",
-        "noThisInStatic": "error"
+      "style": {
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
+        "noNonNullAssertion": "error",
+        "noParameterAssign": "error",
+        "useNodejsImportProtocol": "error",
+        "useExportType": "error",
+        "useImportType": "error"
       },
       "correctness": {
         "noUnusedFunctionParameters": "error",
@@ -33,29 +41,23 @@
         "noUnusedPrivateClassMembers": "error",
         "noUnusedVariables": "error"
       },
-      "style": {
-        "useArrowFunction": "error",
-        "useDateNow": "error",
-        "useNumericLiterals": "error",
-        "useOptionalChain": "error",
-        "useRegexLiterals": "error",
-        "useSimpleNumberKeys": "error",
-        "useConst": "error",
-        "useExportType": "error",
-        "useImportType": "error",
-        "useLiteralEnumMembers": "error"
+      "complexity": {
+        "noStaticOnlyClass": "error"
+      },
+      "performance": {
+        "noAccumulatingSpread": "error",
+        "noDelete": "error"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "error",
+        "noGlobalEval": "error"
       }
     }
   },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineEnding": "lf"
-  },
   "javascript": {
     "formatter": {
-      "quoteStyle": "double"
+      "quoteStyle": "single",
+      "trailingCommas": "es5"
     }
   }
 }
