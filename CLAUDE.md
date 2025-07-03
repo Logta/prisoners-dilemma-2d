@@ -8,8 +8,8 @@
 
 - **Rust**: ゲームロジックの実装
 - **WebAssembly**: Rust コードを Web ブラウザで実行
-- **Remix**: フルスタック React フレームワーク
 - **React**: UI ライブラリ
+- **Vite**: ビルドツール
 - **Vitest**: Vite ベースのテストフレームワーク
 - **Biome v2**: 高速なリンター/フォーマッター
 
@@ -36,13 +36,13 @@
 - 遺伝的アルゴリズムの実装
 - パフォーマンスクリティカルな計算処理
 
-### Remix/React フロントエンド
+### React フロントエンド
 
 - UI コンポーネント（React hooks ベース）
 - グリッドの可視化
 - ユーザーインタラクション
 - 統計情報の表示
-- サーバーサイドレンダリング対応
+- レスポンシブデザイン対応
 
 ### データフロー
 
@@ -77,30 +77,30 @@
 
 ### Phase 1: 基本構造 (Rust)
 
-- [ ] Agent の基本構造実装
-- [ ] Grid の初期化とエージェント配置
-- [ ] 囚人のジレンマの利得計算
+- [x] Agent の基本構造実装
+- [x] Grid の初期化とエージェント配置
+- [x] 囚人のジレンマの利得計算
 
 ### Phase 2: ゲームロジック (Rust)
 
-- [ ] 対戦相手の検索ロジック
-- [ ] 対戦実行とスコア更新
-- [ ] エージェント移動
+- [x] 対戦相手の検索ロジック
+- [x] 対戦実行とスコア更新
+- [x] エージェント移動
 
 ### Phase 3: 遺伝的アルゴリズム (Rust)
 
-- [ ] 選択アルゴリズム（3 種類）
-- [ ] 交叉アルゴリズム（3 種類）
-- [ ] 突然変異
-- [ ] 世代交代
+- [x] 選択アルゴリズム（3 種類）
+- [x] 交叉アルゴリズム（3 種類）
+- [x] 突然変異
+- [x] 世代交代
 
 ### Phase 4: WASM 統合
 
-- [ ] wasm-bindgen 設定
-- [ ] TypeScript 型定義
-- [ ] Solid.js との統合
+- [x] wasm-bindgen 設定
+- [x] TypeScript 型定義
+- [x] React との統合
 
-### Phase 5: UI 実装 (Remix/React)
+### Phase 5: UI 実装 (React)
 
 - [x] グリッド表示コンポーネント
 - [x] コントロールパネル
@@ -109,8 +109,8 @@
 
 ### Phase 6: 追加機能
 
-- [ ] プリセット機能
-- [ ] CSV エクスポート
+- [x] プリセット機能
+- [x] CSV エクスポート
 - [ ] パフォーマンス最適化
 
 ## テスト戦略
@@ -183,7 +183,7 @@ run = [
 ]
 
 [tasks.dev]
-description = "Remix開発サーバーを起動"
+description = "Vite開発サーバーを起動"
 run = "bun run dev"
 
 [tasks.build-wasm]
@@ -209,7 +209,7 @@ mise run watch
 # WASMビルド
 mise run build-wasm
 
-# Remix開発サーバー
+# Vite開発サーバー
 mise run dev
 
 # 全テスト実行
@@ -249,7 +249,7 @@ bun test           # Vitestテストのみ
 ├── .mise.toml              # mise設定ファイル
 ├── Cargo.toml              # Rustプロジェクト設定
 ├── package.json            # Node.jsプロジェクト設定
-├── biome.json              # Biome設定
+├── biome.jsonc             # Biome設定
 ├── vite.config.ts          # Vite設定
 ├── vitest.config.ts        # Vitest設定
 ├── src/
@@ -257,15 +257,23 @@ bun test           # Vitestテストのみ
 │   ├── agent.rs            # エージェント実装
 │   ├── grid.rs             # グリッド実装
 │   ├── game.rs             # ゲームロジック
-│   └── genetic.rs          # 遺伝的アルゴリズム
-├── tests/                  # Rustテスト
+│   ├── genetic.rs          # 遺伝的アルゴリズム
+│   └── wasm_bindings.rs    # WASMバインディング
 ├── pkg/                    # WASMビルド出力 (自動生成)
-├── web/                    # Solid.jsフロントエンド
+├── web/                    # Reactフロントエンド
 │   ├── index.html
 │   ├── src/
 │   │   ├── App.tsx
 │   │   ├── components/
-│   │   └── lib/
+│   │   │   ├── ControlPanel.tsx
+│   │   │   ├── GridVisualization.tsx
+│   │   │   ├── StatisticsPanel.tsx
+│   │   │   ├── GraphPopup.tsx
+│   │   │   ├── PresetManager.tsx
+│   │   │   └── CSVExporter.tsx
+│   │   ├── types.ts
+│   │   └── routes/
 │   └── tests/
+├── specification_doc.md    # 仕様書
 └── CLAUDE.md               # このファイル
 ```
