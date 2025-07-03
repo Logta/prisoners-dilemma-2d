@@ -1,119 +1,76 @@
-import { createSignal, onMount, Switch, Match, createEffect } from 'solid-js';
+import { createSignal, onMount, Show, createEffect } from 'solid-js';
 import { render } from 'solid-js/web';
 import init from '../../pkg/prisoners_dilemma_2d';
 import App from './App';
 
 function AppWithLoader() {
-  const [appState, setAppState] = createSignal<'loading' | 'ready' | 'error'>('loading');
-  const [errorMessage, setErrorMessage] = createSignal<string | null>(null);
-  const [forceRender, setForceRender] = createSignal(0);
+  const [wasmLoaded, setWasmLoaded] = createSignal(false);
+  const [error, setError] = createSignal<string | null>(null);
+  const [loading, setLoading] = createSignal(true);
 
   onMount(async () => {
-    console.log('Initial state:', appState());
+    console.log('Starting WASM initialization...');
 
     // タイムアウト設定
     const timeout = setTimeout(() => {
       console.error('WASM loading timeout after 10 seconds');
-      setAppState('error');
-      setErrorMessage('WASMの読み込みがタイムアウトしました');
+      setLoading(false);
+      setError('WASMの読み込みがタイムアウトしました');
     }, 10000);
 
     try {
-      console.log('Starting WASM initialization...');
-      
       await init();
       clearTimeout(timeout);
       
-      console.log('WASM init completed, setting state to ready');
-      setAppState('ready');
-      setForceRender(prev => prev + 1);
+      console.log('WASM init completed');
+      setLoading(false);
+      setWasmLoaded(true);
       
-      console.log('WASM module loaded successfully, new state:', appState());
-      
-      // 強制的にDOM更新を確認
-      setTimeout(() => {
-        console.log('After timeout - state:', appState(), 'forceRender:', forceRender());
-      }, 100);
+      console.log('WASM module loaded successfully');
     } catch (err) {
       clearTimeout(timeout);
       console.error('Failed to load WASM module:', err);
-      setAppState('error');
-      setErrorMessage(err instanceof Error ? err.message : 'Unknown error');
-      console.log('Error state set, current state:', appState());
+      setLoading(false);
+      setError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
 
   // 状態変更を監視
   createEffect(() => {
-    console.log('Effect - appState changed to:', appState());
+    console.log('Effect - loading:', loading(), 'wasmLoaded:', wasmLoaded(), 'error:', error());
   });
 
-  console.log('Current appState:', appState(), 'forceRender:', forceRender());
+  console.log('Render - loading:', loading(), 'wasmLoaded:', wasmLoaded(), 'error:', error());
 
-  // シンプルな条件分岐（forceRender も参照してリアクティブ性を保証）
-  const currentState = appState();
-  const renderCount = forceRender();
-  console.log('Rendering with state:', currentState, 'render count:', renderCount);
-
-  if (currentState === 'error') {
-    console.log('Rendering error state');
-    return (
-      <div class="loading" style="color: #ff6b6b;">
-        <span>エラー: {errorMessage()}</span>
-      </div>
-    );
-  }
-
-  if (currentState === 'ready') {
-    console.log('Rendering ready state');
-    return (
-      <div style="padding: 2rem; color: green;">
-        <h1>WASM Loaded Successfully!</h1>
-        <p>State: {currentState}</p>
-        <App />
-      </div>
-    );
-  }
-
-  console.log('Rendering loading state');
   return (
-    <div class="loading">
-      <div class="spinner"></div>
-      <span>シミュレーションエンジンを読み込み中...</span>
-    </div>
-  );
-}
+    <>
+      <Show when={error()}>
+        <div class="loading" style="color: #ff6b6b;">
+          <span>エラー: {error()}</span>
+        </div>
+      </Show>
 
-// 完全にシンプルなテスト用コンポーネント
-function TestComponent() {
-  const [count, setCount] = createSignal(0);
-  
-  onMount(() => {
-    console.log('TestComponent mounted');
-    setTimeout(() => {
-      console.log('Setting count to 1');
-      setCount(1);
-    }, 2000);
-  });
-  
-  console.log('TestComponent render, count:', count());
-  
-  if (count() === 0) {
-    return <div style="color: red;">Count is 0</div>;
-  }
-  
-  return <div style="color: green;">Count is {count()}</div>;
+      <Show when={loading() && !error()}>
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>シミュレーションエンジンを読み込み中...</span>
+        </div>
+      </Show>
+
+      <Show when={wasmLoaded() && !loading() && !error()}>
+        <div style="padding: 2rem; color: green;">
+          <h1>WASM Loaded Successfully!</h1>
+          <p>wasmLoaded: {String(wasmLoaded())}</p>
+          <p>loading: {String(loading())}</p>
+          <p>error: {String(!!error())}</p>
+          <App />
+        </div>
+      </Show>
+    </>
+  );
 }
 
 const appElement = document.getElementById('app');
 if (appElement) {
-  // テスト用コンポーネントで基本的なリアクティブ性を確認
-  console.log('Rendering TestComponent for debugging');
-  render(() => <TestComponent />, appElement);
-  
-  // 5秒後に本来のアプリに切り替え
-  setTimeout(() => {
-    console.log('Switching to AppWithLoader');
-    render(() => <AppWithLoader />, appElement);
-  }, 5000);
+  render(() => <AppWithLoader />, appElement);
 }
