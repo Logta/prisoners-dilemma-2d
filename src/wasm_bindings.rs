@@ -393,7 +393,7 @@ impl SimulationEngine {
     fn execute_all_battles(&mut self, battle_radius: usize) -> Result<(), JsValue> {
         // スナップショット時点でのエージェント数を取得
         let agent_count = self.grid.agents.len();
-        
+
         if agent_count == 0 {
             return Ok(());
         }
@@ -403,10 +403,18 @@ impl SimulationEngine {
             // 毎回サイズをチェック（agents vectorが変更される可能性に対応）
             let current_size = self.grid.agents.len();
             if i >= current_size {
-                console_error!("Agent index {} out of bounds (size: {}, original: {})", i, current_size, agent_count);
-                return Err(JsValue::from_str(&format!("Agent index {} out of bounds", i)));
+                console_error!(
+                    "Agent index {} out of bounds (size: {}, original: {})",
+                    i,
+                    current_size,
+                    agent_count
+                );
+                return Err(JsValue::from_str(&format!(
+                    "Agent index {} out of bounds",
+                    i
+                )));
             }
-            
+
             self.grid
                 .execute_battles_for_agent(i, &self.payoff_matrix, battle_radius);
         }

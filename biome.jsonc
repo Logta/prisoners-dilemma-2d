@@ -6,7 +6,15 @@
       "web/**/*.ts",
       "web/**/*.tsx",
       "web/**/*.js",
-      "web/**/*.jsx"
+      "web/**/*.jsx",
+      "!web/public/prisoners_dilemma_2d.js",
+      "!web/public/prisoners_dilemma_2d.d.ts",
+      "!web/public/prisoners_dilemma_2d_bg.wasm.d.ts",
+      "!web/public/pkg/**",
+      "!web/src/prisoners_dilemma_2d.js",
+      "!web/src/prisoners_dilemma_2d.d.ts",
+      "!web/src/prisoners_dilemma_2d_bg.wasm.d.ts",
+      "!**/pkg/**"
     ]
   },
   "formatter": {

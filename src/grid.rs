@@ -123,7 +123,7 @@ impl Grid {
             if neighbor_index >= self.agents.len() {
                 continue;
             }
-            
+
             let neighbor_cooperates = self.agents[neighbor_index].decides_to_cooperate();
             let (agent_score, neighbor_score) =
                 crate::game::calculate_payoff(matrix, agent_cooperates, neighbor_cooperates);
