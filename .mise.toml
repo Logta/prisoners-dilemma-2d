@@ -1,40 +1,161 @@
+# =============================================================================
+# 2D Prisoner's Dilemma - mise configuration
+# =============================================================================
+
 [tools]
 node = "24"
 rust = "latest"
-bun = "latest"  # 高速なパッケージマネージャーとして使用
+bun = "latest"
 
 [env]
 RUST_LOG = "debug"
 
-[tasks.setup]
-description = "開発環境の初期セットアップ"
+# =============================================================================
+# 🚀 DAILY COMMANDS - よく使うコマンド
+# =============================================================================
+
+[tasks.dev]
+description = "🚀 開発開始"
 run = [
-  "cargo install wasm-pack",
-  "cargo install cargo-watch",
-  "bun install",
-  "bun run biome:init"
+  "wasm-pack build --target web --out-dir pkg",
+  "mkdir -p web/public/pkg && cp -r pkg/* web/public/pkg/",
+  "cd web && bun run dev"
 ]
 
 [tasks.test]
-description = "全てのテストを実行"
+description = "🧪 テスト実行"
 run = [
   "cargo test",
   "bun test"
 ]
 
-[tasks.dev]
-description = "WASMビルド→ファイルコピー→Vite開発サーバー起動"
+[tasks.check]
+description = "✅ 品質チェック"
 run = [
-  "wasm-pack build --target web --out-dir pkg",
-  "mkdir -p web/public/pkg",
-  "cp -r pkg/* web/public/pkg/",
-  "cd web && bun run dev"
+  "cargo clippy",
+  "bun run biome:check"
 ]
 
-[tasks.build-wasm]
-description = "WASMをビルド"
+[tasks.fmt]
+description = "🎨 コード整形"
+run = [
+  "cargo fmt",
+  "bun run biome:fix"
+]
+
+# =============================================================================
+# 🔨 BUILD COMMANDS - ビルド関連
+# =============================================================================
+
+[tasks.wasm]
+description = "🦀 WASMビルド"
 run = "wasm-pack build --target web --out-dir pkg"
 
+[tasks.copy]
+description = "📂 ファイルコピー"
+run = [
+  "mkdir -p web/public/pkg",
+  "cp -r pkg/* web/public/pkg/"
+]
+depends = ["wasm"]
+
+[tasks.build]
+description = "🏗️ 本番ビルド"
+run = [
+  "mise run wasm",
+  "mise run copy",
+  "cd web && bun run build"
+]
+
+[tasks.preview]
+description = "👀 本番プレビュー"
+run = [
+  "mise run build",
+  "cd web && bun run preview"
+]
+
+# =============================================================================
+# 📊 WATCH COMMANDS - 監視系
+# =============================================================================
+
 [tasks.watch]
-description = "ファイル変更を監視してテストを実行"
+description = "👀 テスト監視"
 run = "cargo watch -x test"
+
+[tasks.watch-wasm]
+description = "🔄 WASM監視"
+run = "cargo watch -s 'mise run wasm && mise run copy'"
+
+# =============================================================================
+# 🛠️ SETUP COMMANDS - セットアップ
+# =============================================================================
+
+[tasks.setup]
+description = "🛠️ 初期セットアップ"
+run = [
+  "cargo install wasm-pack",
+  "cargo install cargo-watch",
+  "bun install"
+]
+
+[tasks.install]
+description = "📦 依存関係インストール"
+run = "bun install"
+
+[tasks.clean]
+description = "🧹 クリーンアップ"
+run = [
+  "rm -rf pkg/ web/public/pkg/ web/build/ target/",
+  "echo 'クリーンアップ完了'"
+]
+
+# =============================================================================
+# 📚 UTILITY COMMANDS - その他
+# =============================================================================
+
+[tasks.docs]
+description = "📚 ドキュメント生成"
+run = "cargo doc --no-deps --open"
+
+[tasks.size]
+description = "📊 サイズ確認"
+run = [
+  "mise run build",
+  "ls -lh pkg/*.wasm",
+  "ls -lh web/build/assets/*.js"
+]
+
+[tasks.lint]
+description = "🔍 詳細リント"
+run = [
+  "cargo clippy -- -D warnings",
+  "bun run biome:check"
+]
+
+# =============================================================================
+# 🎯 SHORTCUT COMMANDS - ショートカット
+# =============================================================================
+
+[tasks.d]
+description = "🚀 開発開始 (短縮)"
+run = "mise run dev"
+
+[tasks.t]
+description = "🧪 テスト実行 (短縮)"
+run = "mise run test"
+
+[tasks.c]
+description = "✅ 品質チェック (短縮)"
+run = "mise run check"
+
+[tasks.f]
+description = "🎨 コード整形 (短縮)"
+run = "mise run fmt"
+
+[tasks.w]
+description = "👀 テスト監視 (短縮)"
+run = "mise run watch"
+
+[tasks.b]
+description = "🏗️ 本番ビルド (短縮)"
+run = "mise run build"
