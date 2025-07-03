@@ -1,11 +1,16 @@
-import type { GridSize } from '../types';
+import { createSignal } from 'solid-js';
+import type { GridSize, AgentData, Statistics } from '../types';
+import PresetManager from './PresetManager';
+import CSVExporter from './CSVExporter';
 
 interface ControlPanelProps {
   agentDensity: number;
+  agents: AgentData[];
   battleRadius: number;
   crossoverMethod: string;
   crossoverParam: number;
   gridSize: GridSize;
+  historyData: Statistics[];
   isRunning: boolean;
   mutationRate: number;
   mutationStrength: number;
@@ -24,14 +29,67 @@ interface ControlPanelProps {
   setSelectionParam: (value: number) => void;
   setSpeed: (value: number) => void;
   speed: number;
+  statistics: Statistics;
 }
 
 export default function ControlPanel(props: ControlPanelProps) {
+  const [activeTab, setActiveTab] = createSignal<'controls' | 'presets' | 'export'>('controls');
+
+  const loadPreset = (preset: any) => {
+    props.setGridSize(preset.gridSize);
+    props.setAgentDensity(preset.agentDensity);
+    props.setBattleRadius(preset.battleRadius);
+    props.setSpeed(preset.speed);
+    props.setSelectionMethod(preset.selectionMethod);
+    props.setSelectionParam(preset.selectionParam);
+    props.setCrossoverMethod(preset.crossoverMethod);
+    props.setCrossoverParam(preset.crossoverParam);
+    props.setMutationRate(preset.mutationRate);
+    props.setMutationStrength(preset.mutationStrength);
+  };
+
+  const getCurrentPreset = () => ({
+    name: '',
+    gridSize: props.gridSize,
+    agentDensity: props.agentDensity,
+    battleRadius: props.battleRadius,
+    speed: props.speed,
+    selectionMethod: props.selectionMethod,
+    selectionParam: props.selectionParam,
+    crossoverMethod: props.crossoverMethod,
+    crossoverParam: props.crossoverParam,
+    mutationRate: props.mutationRate,
+    mutationStrength: props.mutationStrength,
+  });
+
   return (
     <div class="control-panel">
       <h2>シミュレーション制御</h2>
       
-      <div class="control-section">
+      <div class="control-tabs">
+        <button
+          class={`tab-button ${activeTab() === 'controls' ? 'active' : ''}`}
+          onClick={() => setActiveTab('controls')}
+        >
+          制御
+        </button>
+        <button
+          class={`tab-button ${activeTab() === 'presets' ? 'active' : ''}`}
+          onClick={() => setActiveTab('presets')}
+        >
+          プリセット
+        </button>
+        <button
+          class={`tab-button ${activeTab() === 'export' ? 'active' : ''}`}
+          onClick={() => setActiveTab('export')}
+        >
+          エクスポート
+        </button>
+      </div>
+
+      {activeTab() === 'controls' && (
+        <>
+          <div class="control-section">
         <div class="control-buttons">
           <button
             class={`button ${props.isRunning ? 'danger' : ''}`}
@@ -200,8 +258,24 @@ export default function ControlPanel(props: ControlPanelProps) {
             value={props.mutationStrength}
             onChange={(e) => props.setMutationStrength(Number(e.target.value))}
           />
-        </div>
-      </div>
+          </div>
+        </>
+      )}
+
+      {activeTab() === 'presets' && (
+        <PresetManager
+          currentPreset={getCurrentPreset()}
+          onLoadPreset={loadPreset}
+        />
+      )}
+
+      {activeTab() === 'export' && (
+        <CSVExporter
+          agents={props.agents}
+          historyData={props.historyData}
+          statistics={props.statistics}
+        />
+      )}
     </div>
   );
 }

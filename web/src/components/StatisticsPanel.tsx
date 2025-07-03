@@ -3,6 +3,7 @@ import type { AgentData, Statistics } from '../types';
 
 interface StatisticsPanelProps {
   agents: AgentData[];
+  onShowGraph: () => void;
   statistics: Statistics;
 }
 
@@ -81,7 +82,12 @@ export default function StatisticsPanel(props: StatisticsPanelProps) {
 
   return (
     <div class="statistics-panel">
-      <h2>統計情報</h2>
+      <div class="stats-header">
+        <h2>統計情報</h2>
+        <button class="button graph-button" onClick={props.onShowGraph}>
+          グラフ表示
+        </button>
+      </div>
       
       <div class="stats-section">
         <h3>基本統計</h3>

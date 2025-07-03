@@ -3,6 +3,7 @@ import { SimulationEngine } from '../../pkg/prisoners_dilemma_2d';
 import ControlPanel from './components/ControlPanel';
 import GridVisualization from './components/GridVisualization';
 import StatisticsPanel from './components/StatisticsPanel';
+import GraphPopup from './components/GraphPopup';
 import type { AgentData, Statistics, GridSize } from './types';
 import './App.css';
 
@@ -35,6 +36,8 @@ export default function App() {
     avg_movement: 0,
     avg_score: 0,
   });
+  const [historyData, setHistoryData] = createSignal<Statistics[]>([]);
+  const [showGraph, setShowGraph] = createSignal(false);
 
   // シミュレーションエンジンを初期化
   createEffect(() => {
@@ -48,7 +51,14 @@ export default function App() {
   // データ更新関数
   const updateData = (engine: SimulationEngine) => {
     setAgentData(Array.from(engine.get_agent_data()));
-    setStatistics(engine.get_statistics());
+    const newStats = engine.get_statistics() as Statistics;
+    setStatistics(newStats);
+    
+    // 履歴データに追加（10世代ごと、または最初の統計）
+    const currentHistory = historyData();
+    if (currentHistory.length === 0 || newStats.generation % 10 === 0) {
+      setHistoryData(prev => [...prev, newStats]);
+    }
   };
 
   // シミュレーションループ
@@ -111,6 +121,9 @@ export default function App() {
       currentEngine.populate_agents(agentDensity());
       updateData(currentEngine);
     }
+    
+    // 履歴データもリセット
+    setHistoryData([]);
   };
 
   // クリーンアップ
@@ -130,36 +143,45 @@ export default function App() {
         />
         <div class="side-panel">
           <ControlPanel
-            isRunning={isRunning()}
-            onToggle={toggleSimulation}
-            onReset={resetSimulation}
-            gridSize={gridSize()}
-            setGridSize={setGridSize}
             agentDensity={agentDensity()}
-            setAgentDensity={setAgentDensity}
+            agents={agentData()}
             battleRadius={battleRadius()}
-            setBattleRadius={setBattleRadius}
-            speed={speed()}
-            setSpeed={setSpeed}
-            selectionMethod={selectionMethod()}
-            setSelectionMethod={setSelectionMethod}
-            selectionParam={selectionParam()}
-            setSelectionParam={setSelectionParam}
             crossoverMethod={crossoverMethod()}
-            setCrossoverMethod={setCrossoverMethod}
             crossoverParam={crossoverParam()}
-            setCrossoverParam={setCrossoverParam}
+            gridSize={gridSize()}
+            historyData={historyData()}
+            isRunning={isRunning()}
             mutationRate={mutationRate()}
-            setMutationRate={setMutationRate}
             mutationStrength={mutationStrength()}
+            onReset={resetSimulation}
+            onToggle={toggleSimulation}
+            selectionMethod={selectionMethod()}
+            selectionParam={selectionParam()}
+            setAgentDensity={setAgentDensity}
+            setBattleRadius={setBattleRadius}
+            setCrossoverMethod={setCrossoverMethod}
+            setCrossoverParam={setCrossoverParam}
+            setGridSize={setGridSize}
+            setMutationRate={setMutationRate}
             setMutationStrength={setMutationStrength}
+            setSelectionMethod={setSelectionMethod}
+            setSelectionParam={setSelectionParam}
+            setSpeed={setSpeed}
+            speed={speed()}
+            statistics={statistics()}
           />
           <StatisticsPanel
-            statistics={statistics()}
             agents={agentData()}
+            onShowGraph={() => setShowGraph(true)}
+            statistics={statistics()}
           />
         </div>
       </div>
+      <GraphPopup
+        historyData={historyData()}
+        isOpen={showGraph()}
+        onClose={() => setShowGraph(false)}
+      />
     </div>
   );
 }
