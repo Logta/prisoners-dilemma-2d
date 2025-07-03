@@ -1,0 +1,35 @@
+[tools]
+node = "24"
+rust = "latest"
+bun = "latest"  # 高速なパッケージマネージャーとして使用
+
+[env]
+RUST_LOG = "debug"
+
+[tasks.setup]
+description = "開発環境の初期セットアップ"
+run = [
+  "cargo install wasm-pack",
+  "cargo install cargo-watch",
+  "bun install",
+  "bun run biome:init"
+]
+
+[tasks.test]
+description = "全てのテストを実行"
+run = [
+  "cargo test",
+  "bun test"
+]
+
+[tasks.dev]
+description = "開発サーバーを起動"
+run = "bun run dev"
+
+[tasks.build-wasm]
+description = "WASMをビルド"
+run = "wasm-pack build --target web --out-dir pkg"
+
+[tasks.watch]
+description = "ファイル変更を監視してテストを実行"
+run = "cargo watch -x test"
