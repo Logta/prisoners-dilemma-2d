@@ -1,4 +1,5 @@
 use wasm_bindgen::prelude::*;
+use rand::Rng;
 use crate::{Grid, PayoffMatrix, SelectionMethod, CrossoverMethod, replace_generation};
 
 #[wasm_bindgen]
@@ -40,8 +41,15 @@ impl SimulationEngine {
 
     #[wasm_bindgen]
     pub fn run_generation(&mut self, battle_radius: usize) -> u32 {
+        // エージェントが存在しない場合は何もしない
+        if self.grid.agents.is_empty() {
+            console_log!("No agents to run generation for");
+            return self.generation;
+        }
+        
         // 全エージェントで対戦実行
-        for i in 0..self.grid.agents.len() {
+        let agent_count = self.grid.agents.len();
+        for i in 0..agent_count {
             self.grid.execute_battles_for_agent(i, &self.payoff_matrix, battle_radius);
         }
         
@@ -86,7 +94,12 @@ impl SimulationEngine {
 
         // グリッドをクリアして新世代を配置
         self.grid.agents.clear();
-        for agent in new_generation {
+        for mut agent in new_generation {
+            // ランダムな位置に配置
+            let mut rng = rand::thread_rng();
+            agent.x = rng.gen_range(0..self.grid.width);
+            agent.y = rng.gen_range(0..self.grid.height);
+            agent.score = 0.0; // スコアをリセット
             self.grid.add_agent(agent);
         }
 

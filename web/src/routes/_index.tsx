@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { SimulationEngine } from '../../pkg/prisoners_dilemma_2d';
-import ControlPanel from './components/ControlPanel';
-import GraphPopup from './components/GraphPopup';
-import GridVisualization from './components/GridVisualization';
-import StatisticsPanel from './components/StatisticsPanel';
-import type { AgentData, GridSize, Statistics } from './types';
-import './App.css';
+import { SimulationEngine } from '../../../pkg/prisoners_dilemma_2d';
+import ControlPanel from '../components/ControlPanel';
+import GraphPopup from '../components/GraphPopup';
+import GridVisualization from '../components/GridVisualization';
+import StatisticsPanel from '../components/StatisticsPanel';
+import type { AgentData, GridSize, Statistics } from '../types';
+import '../App.css';
 
-export default function App() {
+export default function Index() {
   // シミュレーション状態
   const [engine, setEngine] = useState<SimulationEngine | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -41,29 +41,23 @@ export default function App() {
 
   // データ更新関数
   const updateData = useCallback((engine: SimulationEngine) => {
-    try {
-      const agents = engine.get_agent_data();
-      setAgentData(Array.from(agents));
-      const newStats = engine.get_statistics() as Statistics;
-      setStatistics(newStats);
+    setAgentData(Array.from(engine.get_agent_data()));
+    const newStats = engine.get_statistics() as Statistics;
+    setStatistics(newStats);
 
-      // 履歴データに追加（10世代ごと、または最初の統計）
-      if (newStats.generation === 0 || newStats.generation % 10 === 0) {
-        setHistoryData((prev) => {
-          // 同じ世代のデータが既にある場合は更新、ない場合は追加
-          const existingIndex = prev.findIndex((stat) => stat.generation === newStats.generation);
-          if (existingIndex >= 0) {
-            const updated = [...prev];
-            updated[existingIndex] = newStats;
-            return updated;
-          } else {
-            return [...prev, newStats];
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error updating data:', error);
-      return;
+    // 履歴データに追加（10世代ごと、または最初の統計）
+    if (newStats.generation === 0 || newStats.generation % 10 === 0) {
+      setHistoryData((prev) => {
+        // 同じ世代のデータが既にある場合は更新、ない場合は追加
+        const existingIndex = prev.findIndex((stat) => stat.generation === newStats.generation);
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = newStats;
+          return updated;
+        } else {
+          return [...prev, newStats];
+        }
+      });
     }
   }, []);
 
@@ -71,52 +65,39 @@ export default function App() {
   useEffect(() => {
     if (isRunning) return; // 実行中は再初期化しない
 
-    try {
-      const newEngine = new SimulationEngine(gridSize.width, gridSize.height);
-      newEngine.populate_agents(agentDensity);
-      setEngine(newEngine);
-      updateData(newEngine);
-    } catch (error) {
-      console.error('Error initializing simulation engine:', error);
-    }
+    const newEngine = new SimulationEngine(gridSize.width, gridSize.height);
+    newEngine.populate_agents(agentDensity);
+    setEngine(newEngine);
+    updateData(newEngine);
   }, [gridSize, agentDensity, isRunning, updateData]);
 
   // シミュレーションループ
   const runSimulation = useCallback(() => {
     if (!engine || !isRunning) return;
 
-    try {
-      // 1世代実行
-      engine.run_generation(battleRadius);
+    // 1世代実行
+    engine.run_generation(battleRadius);
 
-      // 進化処理（10世代ごと）
-      const generation = engine.get_generation();
-      if (generation % 10 === 0) {
-        engine.evolve_population(
-          selectionMethod,
-          selectionParam,
-          crossoverMethod,
-          crossoverParam,
-          mutationRate,
-          mutationStrength
-        );
-      }
-
-      updateData(engine);
-
-      // 次のフレームをスケジュール
-      const id = window.setTimeout(() => {
-        window.requestAnimationFrame(runSimulation);
-      }, speed);
-      animationIdRef.current = id as unknown as number;
-    } catch (error) {
-      console.error('Error in simulation loop:', error);
-      setIsRunning(false);
-      if (animationIdRef.current !== null) {
-        window.clearTimeout(animationIdRef.current);
-        animationIdRef.current = null;
-      }
+    // 進化処理（10世代ごと）
+    const generation = engine.get_generation();
+    if (generation % 10 === 0) {
+      engine.evolve_population(
+        selectionMethod,
+        selectionParam,
+        crossoverMethod,
+        crossoverParam,
+        mutationRate,
+        mutationStrength
+      );
     }
+
+    updateData(engine);
+
+    // 次のフレームをスケジュール
+    const id = window.setTimeout(() => {
+      window.requestAnimationFrame(runSimulation);
+    }, speed);
+    animationIdRef.current = id as unknown as number;
   }, [
     engine,
     isRunning,

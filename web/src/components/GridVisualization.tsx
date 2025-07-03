@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onMount } from 'solid-js';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { AgentData, GridSize } from '../types';
 
 interface GridVisualizationProps {
@@ -7,39 +7,39 @@ interface GridVisualizationProps {
 }
 
 export default function GridVisualization(props: GridVisualizationProps) {
-  let canvasRef: HTMLCanvasElement | undefined;
-  const [zoomLevel, setZoomLevel] = createSignal(1);
-  const [offset, setOffset] = createSignal({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = createSignal(false);
-  const [lastMousePos, setLastMousePos] = createSignal({ x: 0, y: 0 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
 
   // キャンバスサイズの計算
-  const canvasSize = createMemo(() => {
+  const canvasSize = useMemo(() => {
     const containerWidth = 800;
     const containerHeight = 600;
     const aspectRatio = props.gridSize.width / props.gridSize.height;
-    
+
     let width = containerWidth;
     let height = containerHeight;
-    
+
     if (aspectRatio > containerWidth / containerHeight) {
       height = containerWidth / aspectRatio;
     } else {
       width = containerHeight * aspectRatio;
     }
-    
-    return { width, height };
-  });
+
+    return { height, width };
+  }, [props.gridSize]);
 
   // セル描画
   const drawGrid = () => {
-    const canvas = canvasRef;
+    const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const { width, height } = canvasSize();
+    const { width, height } = canvasSize;
     canvas.width = width;
     canvas.height = height;
 
@@ -47,8 +47,8 @@ export default function GridVisualization(props: GridVisualizationProps) {
     ctx.fillStyle = '#2d2d2d';
     ctx.fillRect(0, 0, width, height);
 
-    const zoom = zoomLevel();
-    const offsetPos = offset();
+    const zoom = zoomLevel;
+    const offsetPos = offset;
     const cellWidth = (width / props.gridSize.width) * zoom;
     const cellHeight = (height / props.gridSize.height) * zoom;
 
@@ -57,31 +57,31 @@ export default function GridVisualization(props: GridVisualizationProps) {
       ctx.strokeStyle = '#444';
       ctx.lineWidth = 0.5;
       ctx.beginPath();
-      
+
       for (let x = 0; x <= props.gridSize.width; x++) {
-        const xPos = (x * cellWidth) + offsetPos.x;
+        const xPos = x * cellWidth + offsetPos.x;
         if (xPos >= -cellWidth && xPos <= width + cellWidth) {
           ctx.moveTo(xPos, offsetPos.y);
-          ctx.lineTo(xPos, offsetPos.y + (props.gridSize.height * cellHeight));
+          ctx.lineTo(xPos, offsetPos.y + props.gridSize.height * cellHeight);
         }
       }
-      
+
       for (let y = 0; y <= props.gridSize.height; y++) {
-        const yPos = (y * cellHeight) + offsetPos.y;
+        const yPos = y * cellHeight + offsetPos.y;
         if (yPos >= -cellHeight && yPos <= height + cellHeight) {
           ctx.moveTo(offsetPos.x, yPos);
-          ctx.lineTo(offsetPos.x + (props.gridSize.width * cellWidth), yPos);
+          ctx.lineTo(offsetPos.x + props.gridSize.width * cellWidth, yPos);
         }
       }
-      
+
       ctx.stroke();
     }
 
     // エージェントを描画
     for (const agent of props.agents) {
-      const x = (agent.x * cellWidth) + offsetPos.x;
-      const y = (agent.y * cellHeight) + offsetPos.y;
-      
+      const x = agent.x * cellWidth + offsetPos.x;
+      const y = agent.y * cellHeight + offsetPos.y;
+
       // 画面外のエージェントはスキップ
       if (x < -cellWidth || x > width + cellWidth || y < -cellHeight || y > height + cellHeight) {
         continue;
@@ -92,28 +92,24 @@ export default function GridVisualization(props: GridVisualizationProps) {
       const red = Math.floor((1 - coopRate) * 255);
       const blue = Math.floor(coopRate * 255);
       const green = Math.floor(Math.min(red, blue) * 0.5);
-      
+
       ctx.fillStyle = `rgb(${red}, ${green}, ${blue})`;
-      
+
       // スコアに基づくサイズ（正規化）
-      const maxScore = Math.max(...props.agents.map(a => a.score), 1);
-      const minScore = Math.min(...props.agents.map(a => a.score), 0);
-      const normalizedScore = maxScore > minScore 
-        ? (agent.score - minScore) / (maxScore - minScore)
-        : 0.5;
-      const size = Math.max(2, Math.min(cellWidth * 0.8, cellHeight * 0.8) * (0.3 + normalizedScore * 0.7));
-      
+      const maxScore = Math.max(...props.agents.map((a) => a.score), 1);
+      const minScore = Math.min(...props.agents.map((a) => a.score), 0);
+      const normalizedScore =
+        maxScore > minScore ? (agent.score - minScore) / (maxScore - minScore) : 0.5;
+      const size = Math.max(
+        2,
+        Math.min(cellWidth * 0.8, cellHeight * 0.8) * (0.3 + normalizedScore * 0.7)
+      );
+
       // 円を描画
       ctx.beginPath();
-      ctx.arc(
-        x + cellWidth / 2,
-        y + cellHeight / 2,
-        size / 2,
-        0,
-        2 * Math.PI
-      );
+      ctx.arc(x + cellWidth / 2, y + cellHeight / 2, size / 2, 0, 2 * Math.PI);
       ctx.fill();
-      
+
       // スコアが高い場合は縁取り
       if (normalizedScore > 0.8) {
         ctx.strokeStyle = '#fff';
@@ -130,17 +126,17 @@ export default function GridVisualization(props: GridVisualizationProps) {
   };
 
   const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging()) return;
-    
-    const last = lastMousePos();
+    if (!isDragging) return;
+
+    const last = lastMousePos;
     const deltaX = e.clientX - last.x;
     const deltaY = e.clientY - last.y;
-    
-    setOffset(prev => ({
+
+    setOffset((prev) => ({
       x: prev.x + deltaX,
-      y: prev.y + deltaY
+      y: prev.y + deltaY,
     }));
-    
+
     setLastMousePos({ x: e.clientX, y: e.clientY });
     drawGrid();
   };
@@ -152,7 +148,7 @@ export default function GridVisualization(props: GridVisualizationProps) {
   const handleWheel = (e: WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = Math.max(0.1, Math.min(10, zoomLevel() * delta));
+    const newZoom = Math.max(0.1, Math.min(10, zoomLevel * delta));
     setZoomLevel(newZoom);
     drawGrid();
   };
@@ -165,50 +161,56 @@ export default function GridVisualization(props: GridVisualizationProps) {
   };
 
   // 描画効果
-  onMount(() => {
-    if (canvasRef) {
-      canvasRef.addEventListener('mousedown', handleMouseDown);
-      canvasRef.addEventListener('mousemove', handleMouseMove);
-      canvasRef.addEventListener('mouseup', handleMouseUp);
-      canvasRef.addEventListener('wheel', handleWheel);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener('mousedown', handleMouseDown);
+      canvas.addEventListener('mousemove', handleMouseMove);
+      canvas.addEventListener('mouseup', handleMouseUp);
+      canvas.addEventListener('wheel', handleWheel);
       drawGrid();
+
+      return () => {
+        canvas.removeEventListener('mousedown', handleMouseDown);
+        canvas.removeEventListener('mousemove', handleMouseMove);
+        canvas.removeEventListener('mouseup', handleMouseUp);
+        canvas.removeEventListener('wheel', handleWheel);
+      };
     }
-  });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: このままにしておく
+  }, [drawGrid, handleMouseDown, handleMouseMove, handleMouseUp, handleWheel]);
 
   // プロパティ変更時の再描画
-  createMemo(() => {
-    props.agents;
-    props.gridSize;
+  useEffect(() => {
     // 少し遅延させて描画
     setTimeout(drawGrid, 0);
-  });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: このままにしておく
+  }, [drawGrid]);
 
   return (
-    <div class="grid-visualization">
-      <div class="grid-controls">
-        <button class="button" onClick={resetView}>
+    <div className="grid-visualization">
+      <div className="grid-controls">
+        <button className="button" onClick={resetView}>
           ビューをリセット
         </button>
-        <span class="zoom-info">
-          ズーム: {Math.round(zoomLevel() * 100)}%
-        </span>
+        <span className="zoom-info">ズーム: {Math.round(zoomLevel * 100)}%</span>
       </div>
-      <div class="canvas-container">
+      <div className="canvas-container">
         <canvas
+          className="grid-canvas"
           ref={canvasRef}
-          class="grid-canvas"
-          style={`width: ${canvasSize().width}px; height: ${canvasSize().height}px;`}
+          style={{ height: `${canvasSize.height}px`, width: `${canvasSize.width}px` }}
         />
-        <div class="legend">
-          <div class="legend-item">
-            <div class="legend-color" style="background: rgb(0, 0, 255);" />
+        <div className="legend">
+          <div className="legend-item">
+            <div className="legend-color" style={{ background: 'rgb(0, 0, 255)' }} />
             <span>協力的</span>
           </div>
-          <div class="legend-item">
-            <div class="legend-color" style="background: rgb(255, 0, 0);" />
+          <div className="legend-item">
+            <div className="legend-color" style={{ background: 'rgb(255, 0, 0)' }} />
             <span>非協力的</span>
           </div>
-          <div class="legend-item">
+          <div className="legend-item">
             <span>サイズ: スコア</span>
           </div>
         </div>

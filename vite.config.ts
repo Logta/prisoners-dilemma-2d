@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
-import solid from 'vite-plugin-solid'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [solid()],
+  plugins: [react()],
   root: './web',
   build: {
     outDir: '../dist',
@@ -18,4 +18,9 @@ export default defineConfig({
     exclude: ['prisoners_dilemma_2d'],
   },
   assetsInclude: ['**/*.wasm'],
-})
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
+  }
+});

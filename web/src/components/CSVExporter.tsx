@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { useState } from 'react';
 import type { AgentData, Statistics } from '../types';
 
 interface CSVExporterProps {
@@ -8,7 +8,7 @@ interface CSVExporterProps {
 }
 
 export default function CSVExporter(props: CSVExporterProps) {
-  const [exportType, setExportType] = createSignal<'agents' | 'history' | 'summary'>('agents');
+  const [exportType, setExportType] = useState<'agents' | 'history' | 'summary'>('agents');
 
   // エージェントデータをCSV形式に変換
   const exportAgentsCSV = () => {
@@ -28,7 +28,7 @@ export default function CSVExporter(props: CSVExporterProps) {
     ]);
 
     const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .map((row) => row.map((cell) => `"${cell}"`).join(','))
       .join('\n');
 
     downloadCSV(csvContent, `agents_generation_${props.statistics.generation}.csv`);
@@ -42,7 +42,7 @@ export default function CSVExporter(props: CSVExporterProps) {
     }
 
     const headers = ['世代', '個体数', '平均協力率', '平均移動率', '平均スコア'];
-    const rows = props.historyData.map(stat => [
+    const rows = props.historyData.map((stat) => [
       stat.generation,
       stat.population,
       stat.avg_cooperation.toFixed(4),
@@ -51,7 +51,7 @@ export default function CSVExporter(props: CSVExporterProps) {
     ]);
 
     const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .map((row) => row.map((cell) => `"${cell}"`).join(','))
       .join('\n');
 
     downloadCSV(csvContent, 'simulation_history.csv');
@@ -75,18 +75,21 @@ export default function CSVExporter(props: CSVExporterProps) {
     ];
 
     // 詳細統計の計算
-    const coopRates = props.agents.map(a => a.cooperation_rate);
-    const moveRates = props.agents.map(a => a.movement_rate);
-    const scores = props.agents.map(a => a.score);
+    const coopRates = props.agents.map((a) => a.cooperation_rate);
+    const moveRates = props.agents.map((a) => a.movement_rate);
+    const scores = props.agents.map((a) => a.score);
 
     const cooperationStdDev = Math.sqrt(
-      coopRates.reduce((sum, rate) => sum + Math.pow(rate - props.statistics.avg_cooperation, 2), 0) / props.agents.length
+      coopRates.reduce((sum, rate) => sum + (rate - props.statistics.avg_cooperation) ** 2, 0) /
+        props.agents.length
     );
     const movementStdDev = Math.sqrt(
-      moveRates.reduce((sum, rate) => sum + Math.pow(rate - props.statistics.avg_movement, 2), 0) / props.agents.length
+      moveRates.reduce((sum, rate) => sum + (rate - props.statistics.avg_movement) ** 2, 0) /
+        props.agents.length
     );
     const scoreStdDev = Math.sqrt(
-      scores.reduce((sum, score) => sum + Math.pow(score - props.statistics.avg_score, 2), 0) / props.agents.length
+      scores.reduce((sum, score) => sum + (score - props.statistics.avg_score) ** 2, 0) /
+        props.agents.length
     );
 
     const detailedStats = [
@@ -117,22 +120,22 @@ export default function CSVExporter(props: CSVExporterProps) {
       ['協力率分布', ''],
       ['範囲', '個体数', '割合(%)'],
       ...coopBuckets.map((count, i) => [
-        `${(i / buckets * 100).toFixed(0)}-${((i + 1) / buckets * 100).toFixed(0)}%`,
+        `${((i / buckets) * 100).toFixed(0)}-${(((i + 1) / buckets) * 100).toFixed(0)}%`,
         count,
-        (count / props.agents.length * 100).toFixed(1),
+        ((count / props.agents.length) * 100).toFixed(1),
       ]),
       ['', ''],
       ['移動率分布', ''],
       ['範囲', '個体数', '割合(%)'],
       ...moveBuckets.map((count, i) => [
-        `${(i / buckets * 100).toFixed(0)}-${((i + 1) / buckets * 100).toFixed(0)}%`,
+        `${((i / buckets) * 100).toFixed(0)}-${(((i + 1) / buckets) * 100).toFixed(0)}%`,
         count,
-        (count / props.agents.length * 100).toFixed(1),
+        ((count / props.agents.length) * 100).toFixed(1),
       ]),
     ];
 
     const csvContent = [...basicStats, ...detailedStats, ...distributionStats]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .map((row) => row.map((cell) => `"${cell}"`).join(','))
       .join('\n');
 
     downloadCSV(csvContent, `summary_generation_${props.statistics.generation}.csv`);
@@ -143,7 +146,7 @@ export default function CSVExporter(props: CSVExporterProps) {
     const BOM = '\uFEFF'; // UTF-8 BOM for Excel compatibility
     const blob = new Blob([BOM + content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    
+
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
@@ -155,7 +158,7 @@ export default function CSVExporter(props: CSVExporterProps) {
 
   // エクスポート実行
   const executeExport = () => {
-    switch (exportType()) {
+    switch (exportType) {
       case 'agents':
         exportAgentsCSV();
         break;
@@ -176,66 +179,68 @@ export default function CSVExporter(props: CSVExporterProps) {
   };
 
   return (
-    <div class="csv-exporter">
+    <div className="csv-exporter">
       <h3>データエクスポート</h3>
-      
-      <div class="export-options">
-        <div class="export-type-selector">
+
+      <div className="export-options">
+        <div className="export-type-selector">
           <label>
             <input
-              type="radio"
+              checked={exportType === 'agents'}
               name="exportType"
-              value="agents"
-              checked={exportType() === 'agents'}
               onChange={() => setExportType('agents')}
+              type="radio"
+              value="agents"
             />
             現在のエージェントデータ
           </label>
           <label>
             <input
-              type="radio"
+              checked={exportType === 'history'}
               name="exportType"
-              value="history"
-              checked={exportType() === 'history'}
               onChange={() => setExportType('history')}
+              type="radio"
+              value="history"
             />
             世代推移データ
           </label>
           <label>
             <input
-              type="radio"
+              checked={exportType === 'summary'}
               name="exportType"
-              value="summary"
-              checked={exportType() === 'summary'}
               onChange={() => setExportType('summary')}
+              type="radio"
+              value="summary"
             />
             統計サマリー
           </label>
         </div>
 
-        <div class="export-description">
-          {exportType() === 'agents' && (
-            <p>現在の世代のすべてのエージェントの詳細データ（位置、特性、スコア）をエクスポートします。</p>
+        <div className="export-description">
+          {exportType === 'agents' && (
+            <p>
+              現在の世代のすべてのエージェントの詳細データ（位置、特性、スコア）をエクスポートします。
+            </p>
           )}
-          {exportType() === 'history' && (
+          {exportType === 'history' && (
             <p>シミュレーション開始からの世代ごとの統計データをエクスポートします。</p>
           )}
-          {exportType() === 'summary' && (
+          {exportType === 'summary' && (
             <p>現在の状態の統計サマリーと分布データをエクスポートします。</p>
           )}
         </div>
       </div>
 
-      <div class="export-buttons">
-        <button class="button" onClick={executeExport}>
+      <div className="export-buttons">
+        <button className="button" onClick={executeExport}>
           選択したデータをエクスポート
         </button>
-        <button class="button" onClick={exportAll}>
+        <button className="button" onClick={exportAll}>
           すべてのデータをエクスポート
         </button>
       </div>
 
-      <div class="export-info">
+      <div className="export-info">
         <h4>エクスポート情報</h4>
         <ul>
           <li>ファイル形式: CSV (UTF-8 BOM付き)</li>

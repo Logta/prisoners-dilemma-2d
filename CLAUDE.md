@@ -8,8 +8,8 @@
 
 - **Rust**: ゲームロジックの実装
 - **WebAssembly**: Rust コードを Web ブラウザで実行
-- **Solid.js**: リアクティブな UI フレームワーク
-- **Vite**: 高速なビルドツール
+- **Remix**: フルスタック React フレームワーク
+- **React**: UI ライブラリ
 - **Vitest**: Vite ベースのテストフレームワーク
 - **Biome v2**: 高速なリンター/フォーマッター
 
@@ -36,19 +36,20 @@
 - 遺伝的アルゴリズムの実装
 - パフォーマンスクリティカルな計算処理
 
-### Solid.js フロントエンド
+### Remix/React フロントエンド
 
-- UI コンポーネント
+- UI コンポーネント（React hooks ベース）
 - グリッドの可視化
 - ユーザーインタラクション
 - 統計情報の表示
+- サーバーサイドレンダリング対応
 
 ### データフロー
 
 1. ユーザーが UI でパラメータを設定
-2. Solid.js が WASM モジュールの関数を呼び出し
+2. React コンポーネントが WASM モジュールの関数を呼び出し
 3. Rust でシミュレーションを実行
-4. 結果を Solid.js に返して表示
+4. 結果を React に返して表示
 
 ## 主要機能
 
@@ -99,12 +100,12 @@
 - [ ] TypeScript 型定義
 - [ ] Solid.js との統合
 
-### Phase 5: UI 実装 (Solid.js)
+### Phase 5: UI 実装 (Remix/React)
 
-- [ ] グリッド表示コンポーネント
-- [ ] コントロールパネル
-- [ ] 統計情報表示
-- [ ] グラフ表示機能
+- [x] グリッド表示コンポーネント
+- [x] コントロールパネル
+- [x] 統計情報表示
+- [x] グラフ表示機能
 
 ### Phase 6: 追加機能
 
@@ -131,11 +132,11 @@ mod tests {
 }
 ```
 
-### Solid.js テスト
+### React テスト
 
 ```typescript
 // Vitestを使用したコンポーネントテスト
-import { render } from "@solidjs/testing-library";
+import { render } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 ```
 
@@ -182,7 +183,7 @@ run = [
 ]
 
 [tasks.dev]
-description = "開発サーバーを起動"
+description = "Remix開発サーバーを起動"
 run = "bun run dev"
 
 [tasks.build-wasm]
@@ -208,7 +209,7 @@ mise run watch
 # WASMビルド
 mise run build-wasm
 
-# Solid.js開発サーバー
+# Remix開発サーバー
 mise run dev
 
 # 全テスト実行

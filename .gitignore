@@ -85,3 +85,6 @@ vite.config.js.timestamp-*
 # Temporary files
 *.tmp
 *.temp
+
+/web/build/
+/web/public/

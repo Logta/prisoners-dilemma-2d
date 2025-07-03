@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onMount, onCleanup } from 'solid-js';
+import { useEffect, useRef, useState } from 'react';
 import type { Statistics } from '../types';
 
 interface GraphPopupProps {
@@ -8,20 +8,20 @@ interface GraphPopupProps {
 }
 
 export default function GraphPopup(props: GraphPopupProps) {
-  let canvasRef: HTMLCanvasElement | undefined;
-  const [selectedMetric, setSelectedMetric] = createSignal<keyof Statistics>('avg_cooperation');
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [selectedMetric, setSelectedMetric] = useState<keyof Statistics>('avg_cooperation');
 
   const drawGraph = () => {
-    const canvas = canvasRef;
+    const canvas = canvasRef.current;
     if (!canvas || !props.isOpen || props.historyData.length === 0) return;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const width = 600;
     const height = 400;
     const padding = 60;
-    
+
     canvas.width = width;
     canvas.height = height;
 
@@ -30,15 +30,15 @@ export default function GraphPopup(props: GraphPopupProps) {
     ctx.fillRect(0, 0, width, height);
 
     const data = props.historyData;
-    const metric = selectedMetric();
-    
+    const metric = selectedMetric;
+
     // データ範囲を計算
-    const values = data.map(d => d[metric] as number);
+    const values = data.map((d) => d[metric] as number);
     const minValue = Math.min(...values);
     const maxValue = Math.max(...values);
     const valueRange = maxValue - minValue || 1;
-    
-    const generations = data.map(d => d.generation);
+
+    const generations = data.map((d) => d.generation);
     const minGen = Math.min(...generations);
     const maxGen = Math.max(...generations);
     const genRange = maxGen - minGen || 1;
@@ -59,14 +59,14 @@ export default function GraphPopup(props: GraphPopupProps) {
     ctx.strokeStyle = '#444';
     ctx.lineWidth = 0.5;
     ctx.beginPath();
-    
+
     // 縦のグリッド線
     for (let i = 1; i <= 10; i++) {
       const x = padding + ((width - padding * 2) * i) / 10;
       ctx.moveTo(x, padding);
       ctx.lineTo(x, height - padding);
     }
-    
+
     // 横のグリッド線
     for (let i = 1; i <= 8; i++) {
       const y = padding + ((height - padding * 2) * i) / 8;
@@ -79,14 +79,14 @@ export default function GraphPopup(props: GraphPopupProps) {
     ctx.fillStyle = '#cccccc';
     ctx.font = '12px Arial';
     ctx.textAlign = 'center';
-    
+
     // X軸ラベル
     for (let i = 0; i <= 10; i++) {
       const x = padding + ((width - padding * 2) * i) / 10;
       const gen = minGen + (genRange * i) / 10;
       ctx.fillText(Math.round(gen).toString(), x, height - padding + 20);
     }
-    
+
     // Y軸ラベル
     ctx.textAlign = 'right';
     for (let i = 0; i <= 8; i++) {
@@ -101,17 +101,17 @@ export default function GraphPopup(props: GraphPopupProps) {
       ctx.fillStyle = getMetricColor(metric);
       ctx.lineWidth = 2;
       ctx.beginPath();
-      
+
       for (let i = 0; i < data.length; i++) {
         const x = padding + ((data[i].generation - minGen) / genRange) * (width - padding * 2);
         const y = height - padding - ((values[i] - minValue) / valueRange) * (height - padding * 2);
-        
+
         if (i === 0) {
           ctx.moveTo(x, y);
         } else {
           ctx.lineTo(x, y);
         }
-        
+
         // データポイントを描画
         ctx.save();
         ctx.beginPath();
@@ -127,11 +127,11 @@ export default function GraphPopup(props: GraphPopupProps) {
     ctx.font = 'bold 16px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(getMetricLabel(metric), width / 2, 30);
-    
+
     ctx.fillStyle = '#cccccc';
     ctx.font = '12px Arial';
     ctx.fillText('世代', width / 2, height - 10);
-    
+
     ctx.save();
     ctx.translate(20, height / 2);
     ctx.rotate(-Math.PI / 2);
@@ -142,22 +142,33 @@ export default function GraphPopup(props: GraphPopupProps) {
 
   const getMetricColor = (metric: keyof Statistics): string => {
     switch (metric) {
-      case 'avg_cooperation': return '#4CAF50';
-      case 'avg_movement': return '#2196F3';
-      case 'avg_score': return '#FF9800';
-      case 'population': return '#9C27B0';
-      default: return '#607D8B';
+      case 'avg_cooperation':
+        return '#4CAF50';
+      case 'avg_movement':
+        return '#2196F3';
+      case 'avg_score':
+        return '#FF9800';
+      case 'population':
+        return '#9C27B0';
+      default:
+        return '#607D8B';
     }
   };
 
   const getMetricLabel = (metric: keyof Statistics): string => {
     switch (metric) {
-      case 'avg_cooperation': return '平均協力率';
-      case 'avg_movement': return '平均移動率';
-      case 'avg_score': return '平均スコア';
-      case 'population': return '個体数';
-      case 'generation': return '世代';
-      default: return metric;
+      case 'avg_cooperation':
+        return '平均協力率';
+      case 'avg_movement':
+        return '平均移動率';
+      case 'avg_score':
+        return '平均スコア';
+      case 'population':
+        return '個体数';
+      case 'generation':
+        return '世代';
+      default:
+        return metric;
     }
   };
 
@@ -168,41 +179,40 @@ export default function GraphPopup(props: GraphPopupProps) {
     }
   };
 
-  createEffect(() => {
+  useEffect(() => {
     if (props.isOpen) {
       document.addEventListener('keydown', handleKeyDown);
       drawGraph();
     } else {
       document.removeEventListener('keydown', handleKeyDown);
     }
-  });
 
-  onCleanup(() => {
-    document.removeEventListener('keydown', handleKeyDown);
-  });
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [props.isOpen, drawGraph, handleKeyDown]);
 
-  createEffect(() => {
-    selectedMetric();
+  useEffect(() => {
     drawGraph();
-  });
+  }, [drawGraph]);
 
   if (!props.isOpen) return null;
 
   return (
-    <div class="graph-popup-overlay" onClick={props.onClose}>
-      <div class="graph-popup" onClick={(e) => e.stopPropagation()}>
-        <div class="graph-header">
+    <div className="graph-popup-overlay" onClick={props.onClose}>
+      <div className="graph-popup" onClick={(e) => e.stopPropagation()}>
+        <div className="graph-header">
           <h2>統計グラフ</h2>
-          <button class="close-button" onClick={props.onClose}>
+          <button className="close-button" onClick={props.onClose}>
             ×
           </button>
         </div>
-        
-        <div class="graph-controls">
+
+        <div className="graph-controls">
           <label>表示メトリック:</label>
           <select
-            value={selectedMetric()}
             onChange={(e) => setSelectedMetric(e.target.value as keyof Statistics)}
+            value={selectedMetric}
           >
             <option value="avg_cooperation">平均協力率</option>
             <option value="avg_movement">平均移動率</option>
@@ -210,12 +220,12 @@ export default function GraphPopup(props: GraphPopupProps) {
             <option value="population">個体数</option>
           </select>
         </div>
-        
-        <div class="graph-container">
-          <canvas ref={canvasRef} class="graph-canvas" />
+
+        <div className="graph-container">
+          <canvas className="graph-canvas" ref={canvasRef} />
         </div>
-        
-        <div class="graph-info">
+
+        <div className="graph-info">
           <p>データポイント数: {props.historyData.length}</p>
           <p>ESCキーまたは外側をクリックで閉じる</p>
         </div>
