@@ -43,11 +43,18 @@ function AppWithLoader() {
   // 状態変更を監視
   createEffect(() => {
     console.log('Effect - wasmLoaded changed to:', wasmLoaded());
+    if (wasmLoaded()) {
+      console.log('WASM loaded - forcing re-render check');
+    }
   });
 
   createEffect(() => {
     console.log('Effect - error changed to:', error());
   });
+
+  // レンダリング関数内での状態変更を強制的に追跡
+  const renderKey = () => `${wasmLoaded()}-${!!error()}`;
+  console.log('Render key:', renderKey());
   
   console.log('Current render conditions:', {
     'error()': error(),
@@ -56,28 +63,34 @@ function AppWithLoader() {
     'Match wasmLoaded when': !!wasmLoaded()
   });
 
-  return (
-    <Switch fallback={
-      <div class="loading">
-        <div class="spinner"></div>
-        <span>シミュレーションエンジンを読み込み中...</span>
+  // デバッグ用の直接的な条件分岐
+  if (error()) {
+    console.log('Rendering error state');
+    return (
+      <div class="loading" style="color: #ff6b6b;">
+        <span>エラー: {error()}</span>
       </div>
-    }>
-      <Match when={error()}>
-        <div class="loading" style="color: #ff6b6b;">
-          <span>エラー: {error()}</span>
-        </div>
-      </Match>
-      
-      <Match when={wasmLoaded()}>
-        <div style="padding: 2rem; color: green;">
-          <h1>WASM Loaded Successfully!</h1>
-          <p>wasmLoaded: {String(wasmLoaded())}</p>
-          <p>error: {String(error())}</p>
-          <App />
-        </div>
-      </Match>
-    </Switch>
+    );
+  }
+
+  if (wasmLoaded()) {
+    console.log('Rendering WASM loaded state');
+    return (
+      <div style="padding: 2rem; color: green;">
+        <h1>WASM Loaded Successfully!</h1>
+        <p>wasmLoaded: {String(wasmLoaded())}</p>
+        <p>error: {String(error())}</p>
+        <App />
+      </div>
+    );
+  }
+
+  console.log('Rendering loading state');
+  return (
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>シミュレーションエンジンを読み込み中...</span>
+    </div>
   );
 }
 
