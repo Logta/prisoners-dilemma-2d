@@ -8,14 +8,26 @@ function AppWithLoader() {
   const [error, setError] = createSignal<string | null>(null);
 
   onMount(async () => {
+    // タイムアウト設定
+    const timeout = setTimeout(() => {
+      console.error('WASM loading timeout after 10 seconds');
+      setError('WASMの読み込みがタイムアウトしました');
+    }, 10000);
+
     try {
       console.log('Starting WASM initialization...');
+      console.log('Import meta URL:', import.meta.url);
+      console.log('Window location:', window.location.href);
+      
       await init();
+      clearTimeout(timeout);
+      
       console.log('WASM init completed, setting wasmLoaded to true');
       setWasmLoaded(true);
       console.log('wasmLoaded state set, current value:', wasmLoaded());
       console.log('WASM module loaded successfully');
     } catch (err) {
+      clearTimeout(timeout);
       console.error('Failed to load WASM module:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
       console.log('Error state set, current value:', error());
@@ -26,12 +38,11 @@ function AppWithLoader() {
   const appState = () => {
     const loaded = wasmLoaded();
     const err = error();
+    const state = err ? 'error' : loaded ? 'ready' : 'loading';
     
-    console.log('Render state:', { loaded, err });
+    console.log('App state calculation:', { loaded, err, state });
     
-    if (err) return 'error';
-    if (loaded) return 'ready';
-    return 'loading';
+    return state;
   };
   
   return (
