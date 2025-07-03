@@ -16,6 +16,16 @@ impl Agent {
             score: 0.0,
         }
     }
+    
+    pub fn decides_to_cooperate(&self) -> bool {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        rng.gen::<f64>() < self.cooperation_rate
+    }
+    
+    pub fn update_score(&mut self, points: f64) {
+        self.score += points;
+    }
 }
 
 #[cfg(test)]
@@ -31,5 +41,26 @@ mod tests {
         assert_eq!(agent.cooperation_rate, 0.7);
         assert_eq!(agent.movement_rate, 0.3);
         assert_eq!(agent.score, 0.0);
+    }
+
+    #[test]
+    fn test_agent_decides_cooperation() {
+        let agent = Agent::new(0, 0, 1.0, 0.0); // 常に協力
+        assert!(agent.decides_to_cooperate());
+        
+        let agent = Agent::new(0, 0, 0.0, 0.0); // 常に裏切り
+        assert!(!agent.decides_to_cooperate());
+    }
+
+    #[test]
+    fn test_agent_update_score() {
+        let mut agent = Agent::new(0, 0, 0.5, 0.5);
+        assert_eq!(agent.score, 0.0);
+        
+        agent.update_score(5.0);
+        assert_eq!(agent.score, 5.0);
+        
+        agent.update_score(3.0);
+        assert_eq!(agent.score, 8.0);
     }
 }
