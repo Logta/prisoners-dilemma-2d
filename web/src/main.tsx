@@ -46,21 +46,19 @@ function AppWithLoader() {
   };
   
   return (
-    <Switch>
-      <Match when={appState() === 'error'}>
+    <Switch fallback={
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>シミュレーションエンジンを読み込み中...</span>
+      </div>
+    }>
+      <Match when={error()}>
         <div class="loading" style="color: #ff6b6b;">
           <span>エラー: {error()}</span>
         </div>
       </Match>
       
-      <Match when={appState() === 'loading'}>
-        <div class="loading">
-          <div class="spinner"></div>
-          <span>シミュレーションエンジンを読み込み中...</span>
-        </div>
-      </Match>
-      
-      <Match when={appState() === 'ready'}>
+      <Match when={wasmLoaded()}>
         <App />
       </Match>
     </Switch>
