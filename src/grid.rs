@@ -110,6 +110,28 @@ impl Grid {
             self.agents[neighbor_index].update_score(neighbor_score);
         }
     }
+    
+    pub fn move_agents(&mut self) {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        
+        for agent in &mut self.agents {
+            if agent.decides_to_move() {
+                // 隣接8マスのうちランダムな位置に移動
+                let directions = [
+                    (-1i32, -1i32), (-1, 0), (-1, 1),
+                    ( 0, -1),         ( 0, 1),
+                    ( 1, -1), ( 1, 0), ( 1, 1),
+                ];
+                
+                let (dx, dy) = directions[rng.gen_range(0..directions.len())];
+                let new_x = (agent.x as i32 + dx).max(0).min(self.width as i32 - 1) as usize;
+                let new_y = (agent.y as i32 + dy).max(0).min(self.height as i32 - 1) as usize;
+                
+                agent.move_to(new_x, new_y);
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -222,5 +244,31 @@ mod tests {
         // 協力vs裏切り: (0, 5), 協力vs協力: (3, 3) なので合計3点
         // ただし、実際にはランダム要素があるので、スコアが0より大きいことを確認
         assert!(grid.agents[0].score > 0.0);
+    }
+
+    #[test]
+    fn test_move_agents() {
+        let mut grid = Grid::new(10, 10);
+        
+        // 確実に移動するエージェント
+        grid.add_agent(Agent::new(5, 5, 0.5, 1.0));
+        // 確実に移動しないエージェント
+        grid.add_agent(Agent::new(2, 2, 0.5, 0.0));
+        
+        let original_positions: Vec<(usize, usize)> = grid.agents.iter().map(|a| (a.x, a.y)).collect();
+        
+        grid.move_agents();
+        
+        let new_positions: Vec<(usize, usize)> = grid.agents.iter().map(|a| (a.x, a.y)).collect();
+        
+        // 移動確率1.0のエージェントは移動している可能性が高い（ランダムなので必ずではない）
+        // 移動確率0.0のエージェントは移動していない
+        assert_eq!(new_positions[1], original_positions[1]); // 移動しないエージェント
+        
+        // すべてのエージェントがグリッド内にいることを確認
+        for agent in &grid.agents {
+            assert!(agent.x < grid.width);
+            assert!(agent.y < grid.height);
+        }
     }
 }

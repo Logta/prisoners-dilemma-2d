@@ -1,12 +1,50 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
+  "files": {
+    "includes": [
+      "web/**/*.ts",
+      "web/**/*.tsx",
+      "web/**/*.js",
+      "web/**/*.jsx"
+    ]
+  },
   "organizeImports": {
     "enabled": true
   },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "suspicious": {
+        "noAdjacentSpacesInRegex": "error",
+        "noArguments": "error",
+        "noBannedTypes": "error",
+        "noCommaOperator": "error",
+        "noEmptyTypeParameters": "error"
+      },
+      "complexity": {
+        "noStaticOnlyClass": "error",
+        "noThisInStatic": "error"
+      },
+      "correctness": {
+        "noUnusedFunctionParameters": "error",
+        "noUnusedImports": "error",
+        "noUnusedLabels": "error",
+        "noUnusedPrivateClassMembers": "error",
+        "noUnusedVariables": "error"
+      },
+      "style": {
+        "useArrowFunction": "error",
+        "useDateNow": "error",
+        "useNumericLiterals": "error",
+        "useOptionalChain": "error",
+        "useRegexLiterals": "error",
+        "useSimpleNumberKeys": "error",
+        "useConst": "error",
+        "useExportType": "error",
+        "useImportType": "error",
+        "useLiteralEnumMembers": "error"
+      }
     }
   },
   "formatter": {
@@ -19,13 +57,5 @@
     "formatter": {
       "quoteStyle": "double"
     }
-  },
-  "files": {
-    "includes": [
-      "web/**/*.ts",
-      "web/**/*.tsx",
-      "web/**/*.js",
-      "web/**/*.jsx"
-    ]
   }
 }

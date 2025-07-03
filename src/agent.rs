@@ -26,6 +26,17 @@ impl Agent {
     pub fn update_score(&mut self, points: f64) {
         self.score += points;
     }
+    
+    pub fn decides_to_move(&self) -> bool {
+        use rand::Rng;
+        let mut rng = rand::thread_rng();
+        rng.gen::<f64>() < self.movement_rate
+    }
+    
+    pub fn move_to(&mut self, new_x: usize, new_y: usize) {
+        self.x = new_x;
+        self.y = new_y;
+    }
 }
 
 #[cfg(test)]
@@ -62,5 +73,25 @@ mod tests {
         
         agent.update_score(3.0);
         assert_eq!(agent.score, 8.0);
+    }
+
+    #[test]
+    fn test_agent_decides_to_move() {
+        let agent = Agent::new(0, 0, 0.5, 1.0); // 常に移動
+        assert!(agent.decides_to_move());
+        
+        let agent = Agent::new(0, 0, 0.5, 0.0); // 常に移動しない
+        assert!(!agent.decides_to_move());
+    }
+
+    #[test]
+    fn test_agent_move_to() {
+        let mut agent = Agent::new(5, 5, 0.5, 0.5);
+        assert_eq!(agent.x, 5);
+        assert_eq!(agent.y, 5);
+        
+        agent.move_to(10, 15);
+        assert_eq!(agent.x, 10);
+        assert_eq!(agent.y, 15);
     }
 }
