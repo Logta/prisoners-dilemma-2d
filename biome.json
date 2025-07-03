@@ -60,7 +60,7 @@
         "noUnusedImports": "error",
         "noUnusedLabels": "error",
         "noUnusedPrivateClassMembers": "error",
-        "noUnusedVariables": "error",
+        "noUnusedVariables": "error"
       },
       "complexity": {
         "noStaticOnlyClass": "error",

@@ -68,6 +68,43 @@ pub fn select_agents(agents: &[Agent], method: &SelectionMethod, count: usize) -
     }
 }
 
+pub fn replace_generation(
+    current_generation: &[Agent],
+    selection_method: &SelectionMethod,
+    crossover_method: &CrossoverMethod,
+    mutation_rate: f64,
+    mutation_strength: f64,
+) -> Vec<Agent> {
+    let population_size = current_generation.len();
+    let mut new_generation = Vec::with_capacity(population_size);
+    
+    // 選択する親の数（偶数にする）
+    let parent_count = if population_size % 2 == 0 { population_size } else { population_size + 1 };
+    let parents = select_agents(current_generation, selection_method, parent_count);
+    
+    // 交叉と突然変異を繰り返して新世代を生成
+    let mut i = 0;
+    while new_generation.len() < population_size {
+        let parent1 = &parents[i % parents.len()];
+        let parent2 = &parents[(i + 1) % parents.len()];
+        
+        let (mut child1, mut child2) = crossover(parent1, parent2, crossover_method);
+        
+        // 突然変異を適用
+        child1 = mutate(&child1, mutation_rate, mutation_strength);
+        child2 = mutate(&child2, mutation_rate, mutation_strength);
+        
+        new_generation.push(child1);
+        if new_generation.len() < population_size {
+            new_generation.push(child2);
+        }
+        
+        i += 2;
+    }
+    
+    new_generation
+}
+
 pub fn mutate(agent: &Agent, mutation_rate: f64, mutation_strength: f64) -> Agent {
     let mut rng = rand::thread_rng();
     let mut mutated = agent.clone();
@@ -302,5 +339,73 @@ mod tests {
         let mutated_min = mutate(&min_agent, 1.0, 0.1);
         assert!(mutated_min.cooperation_rate >= 0.0);
         assert!(mutated_min.movement_rate >= 0.0);
+    }
+
+    #[test]
+    fn test_replace_generation() {
+        // 現在の世代（スコア付き）
+        let mut current_generation = vec![
+            Agent::new(0, 0, 0.5, 0.5),
+            Agent::new(1, 1, 0.6, 0.4),
+            Agent::new(2, 2, 0.7, 0.3),
+            Agent::new(3, 3, 0.8, 0.2),
+        ];
+        current_generation[0].update_score(10.0);
+        current_generation[1].update_score(5.0);
+        current_generation[2].update_score(15.0);
+        current_generation[3].update_score(8.0);
+
+        let new_generation = replace_generation(
+            &current_generation,
+            &SelectionMethod::TopPercent(0.5),
+            &CrossoverMethod::OnePoint,
+            0.1, // 突然変異確率
+            0.05 // 突然変異強度
+        );
+
+        // 新世代のサイズは元の世代と同じ
+        assert_eq!(new_generation.len(), current_generation.len());
+        
+        // 新世代のエージェントは位置がリセットされている
+        for agent in &new_generation {
+            assert_eq!(agent.x, 0);
+            assert_eq!(agent.y, 0);
+            assert_eq!(agent.score, 0.0);
+        }
+        
+        // 特性は0.0〜1.0の範囲内
+        for agent in &new_generation {
+            assert!(agent.cooperation_rate >= 0.0 && agent.cooperation_rate <= 1.0);
+            assert!(agent.movement_rate >= 0.0 && agent.movement_rate <= 1.0);
+        }
+    }
+
+    #[test]
+    fn test_replace_generation_preserves_good_traits() {
+        // 極端な例：高協力・低移動のエージェントが高スコア
+        let mut current_generation = vec![
+            Agent::new(0, 0, 0.9, 0.1), // 高協力・低移動
+            Agent::new(1, 1, 0.1, 0.9), // 低協力・高移動
+        ];
+        current_generation[0].update_score(100.0); // 高スコア
+        current_generation[1].update_score(1.0);   // 低スコア
+
+        let new_generation = replace_generation(
+            &current_generation,
+            &SelectionMethod::TopPercent(1.0), // 全選択
+            &CrossoverMethod::OnePoint,
+            0.0, // 突然変異なし
+            0.0
+        );
+
+        // 新世代は元の世代数と同じ
+        assert_eq!(new_generation.len(), 2);
+        
+        // 高スコアエージェントの特性が継承されているかチェック
+        // 突然変異がないので、親の特性がそのまま受け継がれる
+        let has_high_coop = new_generation.iter().any(|a| a.cooperation_rate == 0.9);
+        let has_low_move = new_generation.iter().any(|a| a.movement_rate == 0.1);
+        assert!(has_high_coop);
+        assert!(has_low_move);
     }
 }
