@@ -258,7 +258,8 @@ export default function ControlPanel(props: ControlPanelProps) {
             value={props.mutationStrength}
             onChange={(e) => props.setMutationStrength(Number(e.target.value))}
           />
-          </div>
+        </div>
+      </div>
         </>
       )}
 
