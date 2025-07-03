@@ -39,6 +39,31 @@ impl Grid {
     pub fn get_agent_at(&self, x: usize, y: usize) -> Option<&Agent> {
         self.agents.iter().find(|agent| agent.x == x && agent.y == y)
     }
+    
+    pub fn find_neighbors_within_radius(&self, center_x: usize, center_y: usize, radius: usize) -> Vec<&Agent> {
+        self.agents.iter()
+            .filter(|agent| {
+                // 中心のエージェント自身は除外
+                if agent.x == center_x && agent.y == center_y {
+                    return false;
+                }
+                
+                // マンハッタン距離で半径内かチェック
+                let dx = if agent.x > center_x { 
+                    agent.x - center_x 
+                } else { 
+                    center_x - agent.x 
+                };
+                let dy = if agent.y > center_y { 
+                    agent.y - center_y 
+                } else { 
+                    center_y - agent.y 
+                };
+                
+                dx.max(dy) <= radius
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
@@ -91,5 +116,44 @@ mod tests {
         assert!(grid.get_agent_at(3, 4).is_some());
         assert!(grid.get_agent_at(2, 4).is_none());
         assert_eq!(grid.get_agent_at(3, 4).unwrap().cooperation_rate, 0.7);
+    }
+
+    #[test]
+    fn test_find_neighbors_within_radius() {
+        let mut grid = Grid::new(10, 10);
+        
+        // 中心のエージェント
+        grid.add_agent(Agent::new(5, 5, 0.5, 0.5));
+        
+        // 隣接エージェント
+        grid.add_agent(Agent::new(4, 5, 0.6, 0.4)); // 左
+        grid.add_agent(Agent::new(6, 5, 0.7, 0.3)); // 右
+        grid.add_agent(Agent::new(5, 4, 0.8, 0.2)); // 上
+        grid.add_agent(Agent::new(5, 6, 0.9, 0.1)); // 下
+        
+        // 半径2の範囲内
+        grid.add_agent(Agent::new(3, 5, 0.3, 0.7)); // 半径2
+        
+        // 範囲外
+        grid.add_agent(Agent::new(1, 1, 0.1, 0.9)); // 範囲外
+        
+        let neighbors = grid.find_neighbors_within_radius(5, 5, 1);
+        assert_eq!(neighbors.len(), 4); // 隣接する4つのエージェント
+        
+        let neighbors_radius_2 = grid.find_neighbors_within_radius(5, 5, 2);
+        assert_eq!(neighbors_radius_2.len(), 5); // 半径2以内の5つのエージェント
+    }
+
+    #[test]
+    fn test_find_neighbors_boundary_conditions() {
+        let mut grid = Grid::new(5, 5);
+        
+        // 角にエージェントを配置
+        grid.add_agent(Agent::new(0, 0, 0.5, 0.5));
+        grid.add_agent(Agent::new(1, 0, 0.6, 0.4));
+        grid.add_agent(Agent::new(0, 1, 0.7, 0.3));
+        
+        let neighbors = grid.find_neighbors_within_radius(0, 0, 1);
+        assert_eq!(neighbors.len(), 2); // 境界条件での隣接エージェント
     }
 }
