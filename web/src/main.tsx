@@ -1,4 +1,4 @@
-import { createSignal, onMount, Switch, Match } from 'solid-js';
+import { createSignal, onMount, Switch, Match, createEffect } from 'solid-js';
 import { render } from 'solid-js/web';
 import init from '../../pkg/prisoners_dilemma_2d';
 import App from './App';
@@ -24,7 +24,13 @@ function AppWithLoader() {
       
       console.log('WASM init completed, setting wasmLoaded to true');
       setWasmLoaded(true);
-      console.log('wasmLoaded state set, current value:', wasmLoaded());
+      
+      // 状態変更を確認
+      setTimeout(() => {
+        console.log('After setWasmLoaded - wasmLoaded():', wasmLoaded());
+        console.log('After setWasmLoaded - error():', error());
+      }, 0);
+      
       console.log('WASM module loaded successfully');
     } catch (err) {
       clearTimeout(timeout);
@@ -34,17 +40,22 @@ function AppWithLoader() {
     }
   });
 
-  // 状態を計算して適切な値を返す
-  const appState = () => {
-    const loaded = wasmLoaded();
-    const err = error();
-    const state = err ? 'error' : loaded ? 'ready' : 'loading';
-    
-    console.log('App state calculation:', { loaded, err, state });
-    
-    return state;
-  };
+  // 状態変更を監視
+  createEffect(() => {
+    console.log('Effect - wasmLoaded changed to:', wasmLoaded());
+  });
+
+  createEffect(() => {
+    console.log('Effect - error changed to:', error());
+  });
   
+  console.log('Current render conditions:', {
+    'error()': error(),
+    'wasmLoaded()': wasmLoaded(),
+    'Match error when': !!error(),
+    'Match wasmLoaded when': !!wasmLoaded()
+  });
+
   return (
     <Switch fallback={
       <div class="loading">
@@ -59,7 +70,12 @@ function AppWithLoader() {
       </Match>
       
       <Match when={wasmLoaded()}>
-        <App />
+        <div style="padding: 2rem; color: green;">
+          <h1>WASM Loaded Successfully!</h1>
+          <p>wasmLoaded: {String(wasmLoaded())}</p>
+          <p>error: {String(error())}</p>
+          <App />
+        </div>
       </Match>
     </Switch>
   );
