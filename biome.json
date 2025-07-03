@@ -88,5 +88,15 @@
       "quoteStyle": "single",
       "trailingCommas": "es5"
     }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on",
+        "useSortedKeys": "on",
+        "useSortedAttributes": "on"
+      }
+    }
   }
 }
