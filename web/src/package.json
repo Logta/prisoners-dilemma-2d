@@ -1,0 +1,15 @@
+{
+  "name": "prisoners_dilemma_2d",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "prisoners_dilemma_2d_bg.wasm",
+    "prisoners_dilemma_2d.js",
+    "prisoners_dilemma_2d.d.ts"
+  ],
+  "main": "prisoners_dilemma_2d.js",
+  "types": "prisoners_dilemma_2d.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import init from '../../pkg/prisoners_dilemma_2d';
 import App from './App';
 
@@ -63,7 +63,7 @@ function AppWithLoader() {
     return (
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<App />} />
+          <Route element={<App />} path="/" />
         </Routes>
       </BrowserRouter>
     );

@@ -1,10 +1,26 @@
+// ========================================
+// 2D Prisoner's Dilemma - Refactored Architecture
+// ========================================
+
+// Legacy modules (temporary compatibility)
 mod agent;
-mod grid;
 mod game;
 mod genetic;
-mod wasm_bindings;
+mod grid;
 
+// New modular architecture
+// pub mod core;
+// pub mod evolution;
+pub mod wasm_bindings;
+
+// Legacy exports for backward compatibility
 pub use agent::Agent;
+pub use game::{calculate_payoff, PayoffMatrix};
+pub use genetic::{
+    crossover, mutate, replace_generation, select_agents, CrossoverMethod, SelectionMethod,
+};
 pub use grid::Grid;
-pub use game::{PayoffMatrix, calculate_payoff};
-pub use genetic::{SelectionMethod, CrossoverMethod, select_agents, crossover, mutate, replace_generation};
+
+// New architecture exports
+// pub use core::*;
+// pub use evolution::*;

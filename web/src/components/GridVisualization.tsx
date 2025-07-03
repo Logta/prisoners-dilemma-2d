@@ -15,14 +15,14 @@ export default function GridVisualization(props: GridVisualizationProps) {
 
   // スコアの最大値・最小値を事前計算
   const scoreRange = useMemo(() => {
-    if (props.agents.length === 0) return { min: 0, max: 1 };
+    if (props.agents.length === 0) return { max: 1, min: 0 };
     let min = Infinity;
     let max = -Infinity;
     for (const agent of props.agents) {
       if (agent.score < min) min = agent.score;
       if (agent.score > max) max = agent.score;
     }
-    return { min: min === Infinity ? 0 : min, max: max === -Infinity ? 1 : max };
+    return { max: max === -Infinity ? 1 : max, min: min === Infinity ? 0 : min };
   }, [props.agents]);
 
   // キャンバスサイズの計算
@@ -109,8 +109,8 @@ export default function GridVisualization(props: GridVisualizationProps) {
 
       // スコアに基づくサイズ（正規化）
       const normalizedScore =
-        scoreRange.max > scoreRange.min 
-          ? (agent.score - scoreRange.min) / (scoreRange.max - scoreRange.min) 
+        scoreRange.max > scoreRange.min
+          ? (agent.score - scoreRange.min) / (scoreRange.max - scoreRange.min)
           : 0.5;
       const size = Math.max(
         2,
@@ -137,30 +137,36 @@ export default function GridVisualization(props: GridVisualizationProps) {
     setLastMousePos({ x: e.clientX, y: e.clientY });
   }, []);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging) return;
 
-    const deltaX = e.clientX - lastMousePos.x;
-    const deltaY = e.clientY - lastMousePos.y;
+      const deltaX = e.clientX - lastMousePos.x;
+      const deltaY = e.clientY - lastMousePos.y;
 
-    setOffset((prev) => ({
-      x: prev.x + deltaX,
-      y: prev.y + deltaY,
-    }));
+      setOffset((prev) => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY,
+      }));
 
-    setLastMousePos({ x: e.clientX, y: e.clientY });
-  }, [isDragging, lastMousePos]);
+      setLastMousePos({ x: e.clientX, y: e.clientY });
+    },
+    [isDragging, lastMousePos]
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
 
-  const handleWheel = useCallback((e: WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = Math.max(0.1, Math.min(10, zoomLevel * delta));
-    setZoomLevel(newZoom);
-  }, [zoomLevel]);
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      const newZoom = Math.max(0.1, Math.min(10, zoomLevel * delta));
+      setZoomLevel(newZoom);
+    },
+    [zoomLevel]
+  );
 
   // リセットビュー
   const resetView = useCallback(() => {
@@ -194,7 +200,7 @@ export default function GridVisualization(props: GridVisualizationProps) {
   return (
     <div className="grid-visualization">
       <div className="grid-controls">
-        <button type="button" className="button" onClick={resetView}>
+        <button className="button" onClick={resetView} type="button">
           ビューをリセット
         </button>
         <span className="zoom-info">ズーム: {Math.round(zoomLevel * 100)}%</span>

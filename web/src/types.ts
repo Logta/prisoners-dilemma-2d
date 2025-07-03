@@ -45,8 +45,8 @@ export interface SimulationConfig {
   mutation_strength: number;
 }
 
-export type SelectionMethod = "top_percent" | "tournament" | "roulette_wheel";
-export type CrossoverMethod = "one_point" | "two_point" | "uniform";
+export type SelectionMethod = 'top_percent' | 'tournament' | 'roulette_wheel';
+export type CrossoverMethod = 'one_point' | 'two_point' | 'uniform';
 
 // ========================================
 // 利得マトリックス
@@ -127,7 +127,7 @@ export interface PerformanceMetrics {
 // イベントタイプ
 // ========================================
 
-export type SimulationEvent = 
+export type SimulationEvent =
   | { type: 'SIMULATION_STARTED'; payload: { config: SimulationConfig } }
   | { type: 'GENERATION_COMPLETED'; payload: { generation: number; statistics: Statistics } }
   | { type: 'EVOLUTION_COMPLETED'; payload: { generation: number; populationSize: number } }
