@@ -1,0 +1,32 @@
+{
+  "name": "prisoners-dilemma-2d",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "biome:check": "biome check ./web",
+    "biome:fix": "biome check --apply ./web",
+    "biome:init": "biome init"
+  },
+  "dependencies": {
+    "solid-js": "^1.8.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.6",
+    "@solidjs/testing-library": "^0.8.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0",
+    "vite-plugin-solid": "^2.10.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
