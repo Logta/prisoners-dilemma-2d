@@ -1,3 +1,4 @@
+// biome-ignore-all assist/source/useSortedKeys: 設定だから不要
 {
   "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
   "files": {
