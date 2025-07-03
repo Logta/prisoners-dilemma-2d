@@ -2,6 +2,7 @@ mod agent;
 mod grid;
 mod game;
 mod genetic;
+mod wasm_bindings;
 
 pub use agent::Agent;
 pub use grid::Grid;
