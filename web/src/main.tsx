@@ -1,4 +1,4 @@
-import { createSignal, onMount, Show } from 'solid-js';
+import { createSignal, onMount, Switch, Match } from 'solid-js';
 import { render } from 'solid-js/web';
 import init from '../../pkg/prisoners_dilemma_2d';
 import App from './App';
@@ -22,27 +22,37 @@ function AppWithLoader() {
     }
   });
 
-  console.log('Render state:', { wasmLoaded: wasmLoaded(), error: error() });
+  // 状態を計算して適切な値を返す
+  const appState = () => {
+    const loaded = wasmLoaded();
+    const err = error();
+    
+    console.log('Render state:', { loaded, err });
+    
+    if (err) return 'error';
+    if (loaded) return 'ready';
+    return 'loading';
+  };
   
   return (
-    <>
-      <Show when={error()}>
+    <Switch>
+      <Match when={appState() === 'error'}>
         <div class="loading" style="color: #ff6b6b;">
           <span>エラー: {error()}</span>
         </div>
-      </Show>
+      </Match>
       
-      <Show when={!wasmLoaded() && !error()}>
+      <Match when={appState() === 'loading'}>
         <div class="loading">
           <div class="spinner"></div>
           <span>シミュレーションエンジンを読み込み中...</span>
         </div>
-      </Show>
+      </Match>
       
-      <Show when={wasmLoaded() && !error()}>
+      <Match when={appState() === 'ready'}>
         <App />
-      </Show>
-    </>
+      </Match>
+    </Switch>
   );
 }
 
