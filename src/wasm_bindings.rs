@@ -23,7 +23,7 @@ pub struct SimulationEngine {
 impl SimulationEngine {
     #[wasm_bindgen(constructor)]
     pub fn new(width: usize, height: usize) -> SimulationEngine {
-        console_log!("Creating simulation engine: {}x{}", width, height);
+        // console_log!("Creating simulation engine: {}x{}", width, height);
         
         SimulationEngine {
             grid: Grid::new(width, height),
@@ -35,7 +35,7 @@ impl SimulationEngine {
     #[wasm_bindgen]
     pub fn populate_agents(&mut self, density: f64) {
         self.grid.populate_agents(density);
-        console_log!("Populated agents with density {}", density);
+        // console_log!("Populated agents with density {}", density);
     }
 
     #[wasm_bindgen]

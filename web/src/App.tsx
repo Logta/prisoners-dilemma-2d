@@ -39,11 +39,15 @@ export default function App() {
   const [historyData, setHistoryData] = createSignal<Statistics[]>([]);
   const [showGraph, setShowGraph] = createSignal(false);
 
-  // シミュレーションエンジンを初期化
+  // シミュレーションエンジンを初期化（グリッドサイズまたは密度変更時のみ）
   createEffect(() => {
+    if (isRunning()) return; // 実行中は再初期化しない
+    
     const size = gridSize();
+    const density = agentDensity();
+    
     const newEngine = new SimulationEngine(size.width, size.height);
-    newEngine.populate_agents(agentDensity());
+    newEngine.populate_agents(density);
     setEngine(newEngine);
     updateData(newEngine);
   });
@@ -55,9 +59,18 @@ export default function App() {
     setStatistics(newStats);
     
     // 履歴データに追加（10世代ごと、または最初の統計）
-    const currentHistory = historyData();
-    if (currentHistory.length === 0 || newStats.generation % 10 === 0) {
-      setHistoryData(prev => [...prev, newStats]);
+    if (newStats.generation === 0 || newStats.generation % 10 === 0) {
+      setHistoryData(prev => {
+        // 同じ世代のデータが既にある場合は更新、ない場合は追加
+        const existingIndex = prev.findIndex(stat => stat.generation === newStats.generation);
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = newStats;
+          return updated;
+        } else {
+          return [...prev, newStats];
+        }
+      });
     }
   };
 
