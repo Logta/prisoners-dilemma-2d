@@ -19,7 +19,26 @@
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noExplicitAny": "error"
+        "noExplicitAny": "error",
+        "noApproximativeNumericConstant": "error",
+        "noCatchAssign": "error",
+        "noConfusingLabels": "error",
+        "noConfusingVoidType": "error",
+        "noConstEnum": "error",
+        "noDocumentCookie": "error",
+        "noExtraNonNullAssertion": "error",
+        "noGlobalIsFinite": "error",
+        "noGlobalIsNan": "error",
+        "noIrregularWhitespace": "error",
+        "noOctalEscape": "error",
+        "noPrototypeBuiltins": "error",
+        "noRedundantUseStrict": "error",
+        "noSuspiciousSemicolonInJsx": "error",
+        "noTemplateCurlyInString": "error",
+        "useAdjacentOverloadSignatures": "error",
+        "useDefaultSwitchClauseLast": "error",
+        "useGoogleFontDisplay": "error",
+        "useIsArray": "error"
       },
       "style": {
         "useConsistentArrayType": {
@@ -32,21 +51,31 @@
         "noParameterAssign": "error",
         "useNodejsImportProtocol": "error",
         "useExportType": "error",
-        "useImportType": "error"
+        "useImportType": "error",
+        "useConst": "error",
+        "useLiteralEnumMembers": "error"
       },
       "correctness": {
         "noUnusedFunctionParameters": "error",
         "noUnusedImports": "error",
         "noUnusedLabels": "error",
         "noUnusedPrivateClassMembers": "error",
-        "noUnusedVariables": "error"
+        "noUnusedVariables": "error",
       },
       "complexity": {
-        "noStaticOnlyClass": "error"
+        "noStaticOnlyClass": "error",
+        "noThisInStatic": "error",
+        "useArrowFunction": "error",
+        "useDateNow": "error",
+        "useNumericLiterals": "error",
+        "useOptionalChain": "error",
+        "useRegexLiterals": "error",
+        "useSimpleNumberKeys": "error"
       },
       "performance": {
         "noAccumulatingSpread": "error",
-        "noDelete": "error"
+        "noDelete": "error",
+        "noDynamicNamespaceImportAccess": "error"
       },
       "security": {
         "noDangerouslySetInnerHtml": "error",
