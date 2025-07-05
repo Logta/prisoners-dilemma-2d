@@ -4,6 +4,16 @@
 
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use crate::core::value_objects::{Position, WorldDimensions};
+use crate::core::strategies::Strategy;
+
+/// 戦略タイプ
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum StrategyType {
+    Random,     // 確率ベース戦略
+    TitForTat,  // しっぺ返し戦略
+    Pavlov,     // Pavlov戦略（Win-Stay, Lose-Switch）
+}
 
 /// エージェントエンティティ - シミュレーションの主要なアクター
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,8 +98,64 @@ impl Agent {
         Self::new(id, position, traits)
     }
 
-    /// 協力するかどうかを決定（確率的）
-    pub fn decides_to_cooperate<R: Rng>(&self, rng: &mut R) -> bool {
+    /// 協力するかどうかを決定（統合版）
+    /// opponent_id と history がある場合は戦略ベース、ない場合は確率ベース
+    pub fn decides_to_cooperate<R: Rng>(
+        &self,
+        opponent_id: Option<AgentId>,
+        history: Option<&crate::core::strategies::BattleHistory>,
+        rng: &mut R,
+    ) -> bool {
+        // 戦略情報が揃っている場合は戦略ベースで決定
+        if let (Some(opp_id), Some(hist)) = (opponent_id, history) {
+            return self.decide_with_strategy(opp_id, hist, rng);
+        }
+
+        // 戦略情報がない場合は従来の確率ベース戦略
+        self.decide_with_random_strategy(rng)
+    }
+
+    /// 戦略に基づく協力決定（内部メソッド）
+    fn decide_with_strategy<R: Rng>(
+        &self,
+        opponent_id: AgentId,
+        history: &crate::core::strategies::BattleHistory,
+        rng: &mut R,
+    ) -> bool {
+        // 遺伝子情報に基づいて戦略を選択
+        match self.select_strategy() {
+            StrategyType::Random => self.decide_with_random_strategy(rng),
+            StrategyType::TitForTat => {
+                let strategy = crate::core::strategies::TitForTatStrategy;
+                strategy.decide_cooperation(self, history, opponent_id, rng)
+            }
+            StrategyType::Pavlov => {
+                let strategy = crate::core::strategies::PavlovStrategy;
+                strategy.decide_cooperation(self, history, opponent_id, rng)
+            }
+        }
+    }
+
+    /// 遺伝子情報に基づく戦略選択
+    fn select_strategy(&self) -> StrategyType {
+        // aggression_level と learning_rate に基づいて戦略を選択
+        if self.traits.aggression_level < 0.3 {
+            // 攻撃性が低い：ランダム戦略
+            StrategyType::Random
+        } else if self.traits.aggression_level < 0.7 && self.traits.learning_rate > 0.5 {
+            // 中程度の攻撃性 + 高い学習率：TitForTat戦略
+            StrategyType::TitForTat
+        } else if self.traits.aggression_level >= 0.7 && self.traits.learning_rate > 0.4 {
+            // 高い攻撃性 + 学習率：Pavlov戦略
+            StrategyType::Pavlov
+        } else {
+            // その他：ランダム戦略
+            StrategyType::Random
+        }
+    }
+
+    /// 確率ベースの協力決定（内部メソッド）
+    fn decide_with_random_strategy<R: Rng>(&self, rng: &mut R) -> bool {
         let mut cooperation_rate = self.traits.cooperation_rate;
 
         // 環境要因による調整
@@ -144,16 +210,6 @@ impl Agent {
         (base_fitness + energy_bonus - age_penalty).max(0.0)
     }
 
-    /// 戦略に基づいて協力するかどうかを決定
-    pub fn decides_to_cooperate_with_strategy<R: Rng, S: crate::core::strategies::Strategy>(
-        &self,
-        strategy: &S,
-        history: &crate::core::strategies::BattleHistory,
-        opponent_id: AgentId,
-        rng: &mut R,
-    ) -> bool {
-        strategy.decide_cooperation(self, history, opponent_id, rng)
-    }
 }
 
 impl SimulationWorld {
@@ -315,6 +371,101 @@ mod tests {
         assert_eq!(agent.traits.cooperation_rate, 0.5);
         assert_eq!(agent.state.score, 0.0);
         assert_eq!(agent.state.energy, 100.0);
+    }
+
+
+    #[test]
+    fn test_agent_strategy_selection_random() {
+        // aggression_level が低い場合はランダム戦略を使用
+        let position = Position::new(0, 0);
+        let traits = AgentTraits {
+            cooperation_rate: 1.0, // 100%協力率
+            movement_rate: 0.3,
+            aggression_level: 0.1, // 低い攻撃性（ランダム戦略）
+            learning_rate: 0.5, // 中程度の学習率
+        };
+        
+        let agent = Agent::new(AgentId(1), position, traits);
+        let opponent_id = AgentId(2);
+        let history = crate::core::strategies::BattleHistory::new();
+        
+        // ランダム戦略で協力する（確率ベース）
+        let decision = agent.decides_to_cooperate(
+            Some(opponent_id),
+            Some(&history),
+            &mut rand::thread_rng()
+        );
+        assert!(decision); // 100%協力率なので常に協力
+    }
+
+    #[test]
+    fn test_agent_strategy_selection_tit_for_tat() {
+        // aggression_level が中程度でlearning_rate が高い場合はTitForTat戦略
+        let position = Position::new(0, 0);
+        let traits = AgentTraits {
+            cooperation_rate: 0.3, // 低い協力率（戦略で上書きされる）
+            movement_rate: 0.3,
+            aggression_level: 0.5, // 中程度の攻撃性（TitForTat戦略）
+            learning_rate: 0.8, // 高い学習率
+        };
+        
+        let agent = Agent::new(AgentId(1), position, traits);
+        let opponent_id = AgentId(2);
+        let history = crate::core::strategies::BattleHistory::new();
+        
+        // TitForTat戦略で最初は協力
+        let decision = agent.decides_to_cooperate(
+            Some(opponent_id),
+            Some(&history),
+            &mut rand::thread_rng()
+        );
+        assert!(decision); // TitForTat戦略の最初の手は協力
+    }
+
+    #[test]
+    fn test_agent_strategy_selection_pavlov() {
+        // aggression_level が高い場合はPavlov戦略
+        let position = Position::new(0, 0);
+        let traits = AgentTraits {
+            cooperation_rate: 0.2, // 低い協力率（戦略で上書きされる）
+            movement_rate: 0.3,
+            aggression_level: 0.8, // 高い攻撃性（Pavlov戦略）
+            learning_rate: 0.6, // 高い学習率
+        };
+        
+        let agent = Agent::new(AgentId(1), position, traits);
+        let opponent_id = AgentId(2);
+        let history = crate::core::strategies::BattleHistory::new();
+        
+        // Pavlov戦略で最初は協力
+        let decision = agent.decides_to_cooperate(
+            Some(opponent_id),
+            Some(&history),
+            &mut rand::thread_rng()
+        );
+        assert!(decision); // Pavlov戦略の最初の手は協力
+    }
+
+    #[test]
+    fn test_agent_strategy_selection_backwards_compatibility() {
+        // opponent_id や history が None の場合は従来のランダム戦略を使用
+        let position = Position::new(0, 0);
+        let traits = AgentTraits {
+            cooperation_rate: 1.0, // 100%協力率
+            movement_rate: 0.3,
+            aggression_level: 0.8, // 高い攻撃性だが履歴がないのでランダム戦略
+            learning_rate: 0.8,
+        };
+        
+        let agent = Agent::new(AgentId(1), position, traits);
+        
+        // 従来のランダム戦略（履歴なし）
+        let decision = agent.decides_to_cooperate(
+            None,
+            None,
+            &mut rand::thread_rng()
+        );
+        assert!(decision); // 100%協力率なので常に協力
     }
 
 }

@@ -2,7 +2,7 @@
 // Strategy Module - 戦略パターンの実装
 // ========================================
 
-use crate::core::entities::{Agent, AgentId, BattleHistory, BattleRecord};
+use crate::core::entities::{Agent, AgentId};
 use rand::Rng;
 use std::collections::HashMap;
 

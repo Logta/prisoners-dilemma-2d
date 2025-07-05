@@ -56,9 +56,9 @@ impl BattleService {
     ) -> Result<(), BattleError> {
         let mut rng = rand::thread_rng();
 
-        // 両エージェントの戦略決定
-        let agent1_cooperates = world.agents[agent1_index].decides_to_cooperate(&mut rng);
-        let agent2_cooperates = world.agents[agent2_index].decides_to_cooperate(&mut rng);
+        // 両エージェントの戦略決定（履歴なしでランダム戦略）
+        let agent1_cooperates = world.agents[agent1_index].decides_to_cooperate(None, None, &mut rng);
+        let agent2_cooperates = world.agents[agent2_index].decides_to_cooperate(None, None, &mut rng);
 
         // 利得計算
         let (agent1_payoff, agent2_payoff) =
