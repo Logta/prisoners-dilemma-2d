@@ -143,6 +143,17 @@ impl Agent {
 
         (base_fitness + energy_bonus - age_penalty).max(0.0)
     }
+
+    /// 戦略に基づいて協力するかどうかを決定
+    pub fn decides_to_cooperate_with_strategy<R: Rng, S: crate::core::strategies::Strategy>(
+        &self,
+        strategy: &S,
+        history: &crate::core::strategies::BattleHistory,
+        opponent_id: AgentId,
+        rng: &mut R,
+    ) -> bool {
+        strategy.decide_cooperation(self, history, opponent_id, rng)
+    }
 }
 
 impl SimulationWorld {
@@ -281,4 +292,29 @@ impl WorldStatistics {
             total_battles: 0,
         }
     }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_agent_creation() {
+        let position = Position::new(5, 5);
+        let traits = AgentTraits {
+            cooperation_rate: 0.5,
+            movement_rate: 0.3,
+            aggression_level: 0.2,
+            learning_rate: 0.1,
+        };
+        
+        let agent = Agent::new(AgentId(1), position, traits);
+        assert_eq!(agent.id, AgentId(1));
+        assert_eq!(agent.position, position);
+        assert_eq!(agent.traits.cooperation_rate, 0.5);
+        assert_eq!(agent.state.score, 0.0);
+        assert_eq!(agent.state.energy, 100.0);
+    }
+
 }
