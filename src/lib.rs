@@ -1,17 +1,8 @@
 // ========================================
-// 2D Prisoner's Dilemma - Refactored Architecture
+// 2D Prisoner's Dilemma - Clean Architecture
 // ========================================
 
-// Legacy modules (temporary compatibility)
-// mod agent;
-// mod game;
-// mod genetic;
-// mod grid;
+pub mod domain;
 
-// New modular architecture
-pub mod core;
-// pub mod evolution;
-// pub mod wasm_bindings; // 一時的に無効化
-
-// New architecture exports
-pub use core::*;
+// Public API exports
+pub use domain::*;
