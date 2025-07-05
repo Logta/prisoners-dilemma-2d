@@ -8,7 +8,7 @@
 
 - Rust (ゲームロジック)
 - WebAssembly
-- Solid.js (UI)
+- React (UI)
 - Vite (ビルドツール)
 - Vitest (テストフレームワーク)
 - Biome v2 (リンター/フォーマッター)
@@ -29,9 +29,14 @@
 
 #### 4.2.1 基本属性
 
-- **協力確率**: 0〜100%
-- **移動頻度**: 0〜100%
+- **協力傾向**: 0〜1.0 (cooperation_tendency)
+- **攻撃性**: 0〜1.0 (aggression_level) - 戦略選択に影響
+- **学習能力**: 0〜1.0 (learning_ability) - 戦略選択に影響
+- **移動傾向**: 0〜1.0 (movement_tendency)
 - **スコア**: 対戦結果の累積値
+- **エネルギー**: 0〜100 (行動力)
+- **年齢**: 生存ターン数
+- **適応度**: 自然選択の指標
 
 #### 4.2.2 移動
 
@@ -40,10 +45,12 @@
 
 #### 4.2.3 対戦
 
-- **対戦範囲**: デフォルト隣接 8 マス、最大半径 5 マスまで可変
-- **対戦方式**:
-  - 範囲内の全エージェントと 1 回ずつ
-  - 範囲内からランダムに 1 体と対戦
+- **対戦範囲**: デフォルト隣接 8 マス、最大半径 5 マスまで可変  
+- **戦略選択**: エージェントの遺伝的特性に基づく戦略選択
+  - **Random**: 攻撃性 < 0.3
+  - **TitForTat**: 攻撃性 0.3-0.7 かつ学習能力 > 0.5
+  - **Pavlov**: 攻撃性 ≥ 0.7 かつ学習能力 > 0.4
+- **対戦履歴**: 過去の対戦結果を記録し戦略決定に活用
 
 ### 4.3 囚人のジレンマ
 
@@ -60,8 +67,10 @@
 
 #### 4.4.1 進化する形質
 
-- 協力確率
-- 移動頻度
+- 協力傾向 (cooperation_tendency)
+- 攻撃性 (aggression_level)  
+- 学習能力 (learning_ability)
+- 移動傾向 (movement_tendency)
 
 #### 4.4.2 世代交代
 
@@ -134,40 +143,72 @@
 - 交叉方法
 - 突然変異率
 
-## 6. データ構造（概要）
+## 6. データ構造（Clean Architecture）
 
-### 6.1 Agent
+### 6.1 Domain Layer
 
+#### Agent Entity
 ```rust
-struct Agent {
-    x: usize,
-    y: usize,
-    cooperation_rate: f64,
-    movement_rate: f64,
-    score: f64,
+pub struct Agent {
+    id: AgentId,
+    position: Position,
+    traits: AgentTraits,
+    state: AgentState,
+}
+
+pub struct AgentTraits {
+    cooperation_tendency: f64,
+    aggression_level: f64,
+    learning_ability: f64,
+    movement_tendency: f64,
 }
 ```
 
-### 6.2 Grid
-
+#### World Entity
 ```rust
-struct Grid {
-    width: usize,
-    height: usize,
-    agents: Vec<Agent>,
+pub struct World {
+    id: SimulationId,
+    grid: Grid,
+    config: SimulationConfig,
+    generation: u32,
+}
+
+pub struct Grid {
+    size: WorldSize,
+    agents: HashMap<Position, AgentId>,
 }
 ```
 
-### 6.3 GameConfig
-
+#### Simulation Config
 ```rust
-struct GameConfig {
-    grid_size: (usize, usize),
-    agent_density: f64,
-    movement_enabled: bool,
-    interaction_radius: usize,
-    // ... その他のパラメータ
+pub struct SimulationConfig {
+    world_size: WorldSize,
+    initial_population: usize,
+    max_generations: u32,
+    battles_per_generation: u32,
+    neighbor_radius: u32,
+    evolution_config: EvolutionConfig,
 }
+```
+
+### 6.2 Application Layer
+
+#### Use Cases
+```rust
+pub struct SimulationUseCase;
+pub struct BattleUseCase;
+pub struct EvolutionUseCase;
+```
+
+### 6.3 Infrastructure Layer
+
+#### WASM Bindings
+```rust
+#[wasm_bindgen]
+pub struct WasmSimulationManager;
+
+#[wasm_bindgen]
+pub struct WasmBattleManager;
 ```
 
 ## 7. 開発ステップ（TDD）
@@ -195,7 +236,7 @@ struct GameConfig {
 
 1. Rust → WASM ビルド設定
 2. JavaScript/TypeScript バインディング
-3. Solid.js との統合テスト
+3. React との統合テスト
 
 ### Phase 5: UI 実装
 
@@ -203,6 +244,14 @@ struct GameConfig {
 2. コントロールパネル
 3. 統計情報表示
 4. グラフ表示機能
+
+### Phase 6: Clean Architecture 実装
+
+1. Domain Layer の設計と実装
+2. Application Layer のユースケース実装
+3. Infrastructure Layer の WASM/シリアライゼーション実装
+4. 戦略パターン（Random, TitForTat, Pavlov）の実装
+5. 包括的なテストスイート（158テストケース）
 
 ### Phase 6: 追加機能
 

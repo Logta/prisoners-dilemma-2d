@@ -30,11 +30,25 @@
 
 ## アーキテクチャ
 
-### Rust コア (WebAssembly)
+### Clean Architecture 構成
 
-- ゲームロジック全般
-- 遺伝的アルゴリズムの実装
-- パフォーマンスクリティカルな計算処理
+プロジェクトは Clean Architecture の原則に従って、以下の3層で構成されています：
+
+#### Domain Layer (ドメイン層)
+- **Entity**: Agent, World, Grid 等の主要エンティティ
+- **Value Object**: AgentId, Position, AgentTraits 等の値オブジェクト
+- **Service**: BattleService, EvolutionService 等のドメインサービス
+- **Repository Trait**: データ永続化の抽象化
+
+#### Application Layer (アプリケーション層)  
+- **Use Case**: SimulationUseCase, BattleUseCase, EvolutionUseCase
+- **Command/Query**: 操作要求とデータ取得の定義
+- **Result**: ユースケース実行結果の型定義
+
+#### Infrastructure Layer (インフラストラクチャ層)
+- **WASM Bindings**: JavaScript との連携機能
+- **Serialization**: JSON/CSV/バイナリ形式での入出力
+- **Persistence**: プリセット管理・データエクスポート
 
 ### React フロントエンド
 
@@ -46,19 +60,19 @@
 
 ### データフロー
 
-1. ユーザーが UI でパラメータを設定
-2. React コンポーネントが WASM モジュールの関数を呼び出し
-3. Rust でシミュレーションを実行
-4. 結果を React に返して表示
+1. React UI → WASM Bindings → Application Layer → Domain Layer
+2. Domain Layer での計算処理
+3. Infrastructure Layer でのシリアライゼーション
+4. WASM Bindings → React UI への結果返却
 
 ## 主要機能
 
 ### シミュレーション機能
 
 - 50x50〜1000x1000 の可変グリッドサイズ
-- エージェントの協力確率と移動頻度の進化
-- 囚人のジレンマによる対戦
-- 遺伝的アルゴリズムによる世代交代
+- エージェントの4つの形質（協力傾向、攻撃性、学習能力、移動性）の進化
+- 戦略パターン（Random、TitForTat、Pavlov）による囚人のジレンマ対戦
+- 遺伝的アルゴリズムによる世代交代（3種類の選択・交叉アルゴリズム）
 
 ### 可視化機能
 
@@ -107,10 +121,14 @@
 - [x] 統計情報表示
 - [x] グラフ表示機能
 
-### Phase 6: 追加機能
+### Phase 6: Clean Architecture 移行
 
-- [x] プリセット機能
-- [x] CSV エクスポート
+- [x] Domain Layer の実装（エンティティ、値オブジェクト、サービス）
+- [x] Application Layer の実装（ユースケース、コマンド、結果型）
+- [x] Infrastructure Layer の実装（WASM、シリアライゼーション、永続化）
+- [x] 戦略パターンの実装（Random、TitForTat、Pavlov）
+- [x] プリセット機能とCSVエクスポート機能
+- [x] 158のテストケースによる品質保証
 - [ ] パフォーマンス最適化
 
 ## テスト戦略
@@ -254,11 +272,41 @@ bun test           # Vitestテストのみ
 ├── vitest.config.ts        # Vitest設定
 ├── src/
 │   ├── lib.rs              # Rust WASMエントリーポイント
-│   ├── agent.rs            # エージェント実装
-│   ├── grid.rs             # グリッド実装
-│   ├── game.rs             # ゲームロジック
-│   ├── genetic.rs          # 遺伝的アルゴリズム
-│   └── wasm_bindings.rs    # WASMバインディング
+│   ├── domain/             # ドメイン層
+│   │   ├── shared/         # 共有値オブジェクト
+│   │   │   ├── id.rs       # AgentId, SimulationId
+│   │   │   └── mod.rs
+│   │   ├── world/          # ワールド関連
+│   │   │   ├── entity.rs   # World, Grid エンティティ
+│   │   │   ├── value.rs    # WorldSize, Position
+│   │   │   └── mod.rs
+│   │   ├── agent/          # エージェント関連
+│   │   │   ├── entity.rs   # Agent エンティティ
+│   │   │   ├── value.rs    # AgentTraits, AgentState
+│   │   │   └── mod.rs
+│   │   ├── battle/         # 戦闘関連
+│   │   │   ├── service.rs  # BattleService, 戦略パターン
+│   │   │   ├── value.rs    # PayoffMatrix, BattleConfig
+│   │   │   └── mod.rs
+│   │   ├── evolution/      # 進化関連
+│   │   │   ├── service.rs  # EvolutionService
+│   │   │   ├── value.rs    # EvolutionConfig, SelectionMethod
+│   │   │   └── mod.rs
+│   │   ├── simulation/     # シミュレーション関連
+│   │   │   ├── aggregate.rs # Simulation アグリゲート
+│   │   │   ├── value.rs    # SimulationConfig, SimulationStats
+│   │   │   └── mod.rs
+│   │   └── mod.rs
+│   ├── application/        # アプリケーション層
+│   │   ├── simulation.rs   # SimulationUseCase
+│   │   ├── battle.rs       # BattleUseCase
+│   │   ├── evolution.rs    # EvolutionUseCase
+│   │   └── mod.rs
+│   ├── infrastructure/     # インフラストラクチャ層
+│   │   ├── wasm.rs         # WASM バインディング
+│   │   ├── serialization.rs # シリアライゼーション
+│   │   ├── persistence.rs  # 永続化・エクスポート
+│   │   └── mod.rs
 ├── pkg/                    # WASMビルド出力 (自動生成)
 ├── web/                    # Reactフロントエンド
 │   ├── index.html
