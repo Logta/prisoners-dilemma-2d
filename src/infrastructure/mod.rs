@@ -2,8 +2,10 @@
 // Infrastructure Layer - 外部システムとの連携
 // ========================================
 
-pub mod persistence;
 pub mod wasm;
+pub mod serialization;
+pub mod persistence;
 
-pub use persistence::*;
 pub use wasm::*;
+pub use serialization::*;
+pub use persistence::*;
