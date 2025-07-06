@@ -1,34 +1,45 @@
-// ========================================
-// Loading Spinner Atom Component
-// ========================================
+import React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
+const spinnerVariants = cva(
+  "animate-spin rounded-full border-2 border-current border-t-transparent",
+  {
+    variants: {
+      size: {
+        sm: "h-4 w-4",
+        default: "h-6 w-6",
+        lg: "h-8 w-8",
+        xl: "h-12 w-12",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+    },
+  }
+);
 
-interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
+export interface LoadingSpinnerProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof spinnerVariants> {
   message?: string;
-  className?: string;
-  'data-testid'?: string;
 }
 
 export function LoadingSpinner({ 
-  size = 'md', 
+  size,
   message, 
-  className = '',
-  'data-testid': testId 
+  className,
+  ...props
 }: LoadingSpinnerProps) {
-  const sizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-6 h-6',
-    lg: 'w-8 h-8'
-  };
-
   return (
     <div 
-      className={`loading flex items-center ${className}`}
-      data-testid={testId}
+      className={cn("flex items-center gap-2", className)}
+      {...props}
     >
-      <div className={`spinner ${sizeClasses[size]}`}></div>
-      {message && <span className="text-sm">{message}</span>}
+      <div className={cn(spinnerVariants({ size }))} />
+      {message && (
+        <span className="text-sm text-muted-foreground">{message}</span>
+      )}
     </div>
   );
 }
