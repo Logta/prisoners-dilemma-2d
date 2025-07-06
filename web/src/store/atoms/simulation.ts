@@ -6,7 +6,6 @@ import type { AgentData, Statistics } from '../../types';
 // ========================================
 
 export const isSimulationRunningAtom = atom<boolean>(false);
-export const errorAtom = atom<string | null>(null);
 
 // ========================================
 // Simulation Data Atoms

@@ -1,5 +1,5 @@
 import { atom } from 'jotai';
-import type { AgentData, Statistics, SimulationConfig } from '../../types';
+import type { AgentData, Statistics } from '../../types';
 import { 
   currentGenerationAtom, 
   agentsAtom, 
@@ -7,9 +7,9 @@ import {
   generationHistoryAtom, 
   selectedAgentAtom, 
   selectedPositionAtom, 
-  errorAtom, 
   isSimulationRunningAtom 
 } from './simulation';
+import { errorAtom, setErrorAtom } from './error';
 import { isLoadingAtom } from './wasm';
 
 // ========================================
@@ -58,22 +58,14 @@ export const updateSimulationDataAtom = atom(
   }
 );
 
-// Set error state
-export const setErrorAtom = atom(
+// Set error with side effects (stops loading and simulation)
+export const setErrorWithSideEffectsAtom = atom(
   null,
   (_get, set, error: string | null) => {
-    set(errorAtom, error);
+    set(setErrorAtom, error);
     if (error) {
       set(isLoadingAtom, false);
       set(isSimulationRunningAtom, false);
     }
-  }
-);
-
-// Clear error state
-export const clearErrorAtom = atom(
-  null,
-  (_get, set) => {
-    set(errorAtom, null);
   }
 );
