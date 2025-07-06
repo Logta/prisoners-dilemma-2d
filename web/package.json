@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run copy-wasm && tsc && vite build",
-    "copy-wasm": "cp -r ../pkg/* src/assets/wasm/",
+    "copy-wasm": "cp -r ../pkg/* src/assets/pkg/",
     "preview": "vite preview",
     "biome:check": "biome check .",
     "biome:fix": "biome check --write .",

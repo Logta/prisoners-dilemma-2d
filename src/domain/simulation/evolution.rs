@@ -137,6 +137,10 @@ impl EvolutionService {
 
     /// トーナメント選択
     fn tournament_selection<'a>(&self, agents: &[&'a Agent]) -> &'a Agent {
+        if agents.is_empty() {
+            panic!("Cannot select from empty agent list");
+        }
+        
         use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
         
@@ -145,12 +149,16 @@ impl EvolutionService {
         
         tournament
             .iter()
-            .max_by(|a, b| a.fitness().partial_cmp(&b.fitness()).unwrap())
-            .unwrap()
+            .max_by(|a, b| a.fitness().partial_cmp(&b.fitness()).unwrap_or(std::cmp::Ordering::Equal))
+            .unwrap_or(&agents[0])
     }
 
     /// ルーレット選択
     fn roulette_selection<'a>(&self, agents: &[&'a Agent]) -> &'a Agent {
+        if agents.is_empty() {
+            panic!("Cannot select from empty agent list");
+        }
+        
         use rand::Rng;
         let mut rng = rand::thread_rng();
         
@@ -174,6 +182,10 @@ impl EvolutionService {
 
     /// ランク選択
     fn rank_selection<'a>(&self, sorted_agents: &[&'a Agent]) -> &'a Agent {
+        if sorted_agents.is_empty() {
+            panic!("Cannot select from empty agent list");
+        }
+        
         use rand::Rng;
         let mut rng = rand::thread_rng();
         
