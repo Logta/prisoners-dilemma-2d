@@ -94,7 +94,19 @@ impl BattleUseCase {
         let agent1 = agents.get(&command.agent1_id).ok_or(BattleUseCaseError::AgentNotFound)?;
         let agent2 = agents.get(&command.agent2_id).ok_or(BattleUseCaseError::AgentNotFound)?;
 
-        let outcome = self.battle_service.execute_battle(agent1, agent2, &self.battle_history);
+        // 新しい戦略システムでは、エージェント自体が戦略を持っているため
+        // 基本的な協力判定のみを行い、相互作用記録は省略
+        let agent1_cooperates = {
+            let mut agent1_clone = agent1.clone();
+            agent1_clone.decides_to_cooperate_with(command.agent2_id)
+        };
+        
+        let agent2_cooperates = {
+            let mut agent2_clone = agent2.clone();
+            agent2_clone.decides_to_cooperate_with(command.agent1_id)
+        };
+        
+        let outcome = self.battle_service.payoff_matrix().calculate_outcome(agent1_cooperates, agent2_cooperates);
 
         // 戦闘履歴を記録
         self.battle_history.add_battle(command.agent1_id, &outcome, command.agent2_id, true);
@@ -209,18 +221,7 @@ impl BattleUseCase {
 
     /// エージェントの戦略名を取得
     fn get_strategy_name(&self, agent: &Agent) -> String {
-        let aggression = agent.traits().aggression_level();
-        let learning = agent.traits().learning_ability();
-
-        if aggression < 0.3 {
-            "Random".to_string()
-        } else if aggression >= 0.3 && aggression < 0.7 && learning > 0.5 {
-            "TitForTat".to_string()
-        } else if aggression >= 0.7 && learning > 0.4 {
-            "Pavlov".to_string()
-        } else {
-            "Random".to_string()
-        }
+        agent.strategy().current_strategy().description().to_string()
     }
 }
 
@@ -245,21 +246,22 @@ impl std::error::Error for BattleUseCaseError {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::{Agent, AgentTraits, Position};
+    use crate::domain::{Agent, AgentTraits, Position, StrategyGenes};
 
-    fn create_test_agent(id: u64, aggression: f64, learning: f64) -> Agent {
+    fn create_test_agent(id: u64, cooperation: f64, strategy_gene: f64) -> Agent {
         let agent_id = AgentId::new(id);
         let position = Position::new(0, 0);
-        let traits = AgentTraits::new(0.5, aggression, learning, 0.5).unwrap();
-        Agent::new(agent_id, position, traits)
+        let traits = AgentTraits::new(cooperation, 0.5, 0.7, 0.5).unwrap();
+        let strategy_genes = StrategyGenes::new(strategy_gene, 0.8, 0.6, 0.7);
+        Agent::new_with_strategy(agent_id, position, traits, strategy_genes)
     }
 
     fn create_test_agents() -> HashMap<AgentId, Agent> {
         let mut agents = HashMap::new();
         
-        let agent1 = create_test_agent(1, 0.2, 0.3); // Random
-        let agent2 = create_test_agent(2, 0.5, 0.8); // TitForTat
-        let agent3 = create_test_agent(3, 0.8, 0.6); // Pavlov
+        let agent1 = create_test_agent(1, 0.8, 0.75); // Random (strategy_gene 0.75)
+        let agent2 = create_test_agent(2, 0.6, 0.4);  // TitForTat (strategy_gene 0.4)
+        let agent3 = create_test_agent(3, 0.5, 0.6);  // Pavlov (strategy_gene 0.6)
         
         agents.insert(agent1.id(), agent1);
         agents.insert(agent2.id(), agent2);
@@ -297,8 +299,8 @@ mod tests {
         
         let result = battle_use_case.execute_battle(command, &agents).unwrap();
         
-        assert_eq!(result.agent1_strategy, "Random");
-        assert_eq!(result.agent2_strategy, "TitForTat");
+        assert_eq!(result.agent1_strategy, "ランダム");
+        assert_eq!(result.agent2_strategy, "しっぺ返し");
         assert!(result.outcome.agent1_score >= 0.0);
         assert!(result.outcome.agent2_score >= 0.0);
     }
@@ -456,13 +458,13 @@ mod tests {
     fn test_strategy_name_detection() {
         let battle_use_case = BattleUseCase::new();
         
-        let random_agent = create_test_agent(1, 0.2, 0.3);
-        let tft_agent = create_test_agent(2, 0.5, 0.8);
-        let pavlov_agent = create_test_agent(3, 0.8, 0.6);
+        let random_agent = create_test_agent(1, 0.5, 0.75); // Random (strategy_gene 0.75)
+        let tft_agent = create_test_agent(2, 0.6, 0.4);   // TitForTat (strategy_gene 0.4)
+        let pavlov_agent = create_test_agent(3, 0.5, 0.6); // Pavlov (strategy_gene 0.6)
         
-        assert_eq!(battle_use_case.get_strategy_name(&random_agent), "Random");
-        assert_eq!(battle_use_case.get_strategy_name(&tft_agent), "TitForTat");
-        assert_eq!(battle_use_case.get_strategy_name(&pavlov_agent), "Pavlov");
+        assert_eq!(battle_use_case.get_strategy_name(&random_agent), "ランダム");
+        assert_eq!(battle_use_case.get_strategy_name(&tft_agent), "しっぺ返し");
+        assert_eq!(battle_use_case.get_strategy_name(&pavlov_agent), "パブロフ戦略");
     }
 
     #[test]

@@ -168,21 +168,41 @@ impl SimulationService {
 
     /// 2つのエージェント間で戦闘を実行
     fn execute_battle(&mut self, agent1_id: AgentId, agent2_id: AgentId) {
-        if let (Some(agent1), Some(agent2)) = (
+        if let (Some(_agent1), Some(_agent2)) = (
             self.grid.get_agent(agent1_id).cloned(),
             self.grid.get_agent(agent2_id).cloned(),
         ) {
-            let outcome = self.battle_service.execute_battle(&agent1, &agent2, &self.battle_history);
+            // 新しい戦略システムでは、mutableなエージェントが必要
+            // 戦略の決定と相互作用記録のため、別のアプローチを使用
+            let agent1_cooperates = {
+                if let Some(agent1_mut) = self.grid.get_agent_mut(agent1_id) {
+                    agent1_mut.decides_to_cooperate_with(agent2_id)
+                } else {
+                    false
+                }
+            };
             
-            // スコアを更新
+            let agent2_cooperates = {
+                if let Some(agent2_mut) = self.grid.get_agent_mut(agent2_id) {
+                    agent2_mut.decides_to_cooperate_with(agent1_id)
+                } else {
+                    false
+                }
+            };
+            
+            let outcome = self.battle_service.payoff_matrix().calculate_outcome(agent1_cooperates, agent2_cooperates);
+            
+            // スコアを更新し、相互作用を記録
             if let Some(agent1_mut) = self.grid.get_agent_mut(agent1_id) {
                 agent1_mut.add_score(outcome.agent1_score);
                 agent1_mut.record_battle();
+                agent1_mut.record_interaction(agent2_id, agent1_cooperates, agent2_cooperates, outcome.agent1_score);
             }
             
             if let Some(agent2_mut) = self.grid.get_agent_mut(agent2_id) {
                 agent2_mut.add_score(outcome.agent2_score);
                 agent2_mut.record_battle();
+                agent2_mut.record_interaction(agent1_id, agent2_cooperates, agent1_cooperates, outcome.agent2_score);
             }
             
             // 戦闘履歴を記録

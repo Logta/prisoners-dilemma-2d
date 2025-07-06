@@ -4,6 +4,7 @@
 
 use crate::domain::shared::{AgentId, Position};
 use super::traits::{AgentTraits, AgentState};
+use super::strategy::{StrategyState, StrategyGenes};
 use serde::{Deserialize, Serialize};
 
 /// エージェントエンティティ
@@ -13,16 +14,31 @@ pub struct Agent {
     position: Position,
     traits: AgentTraits,
     state: AgentState,
+    strategy: StrategyState,
 }
 
 impl Agent {
     /// 新しいエージェントを作成
     pub fn new(id: AgentId, position: Position, traits: AgentTraits) -> Self {
+        let strategy = StrategyState::random();
         Self {
             id,
             position,
             traits,
             state: AgentState::new(),
+            strategy,
+        }
+    }
+
+    /// 戦略遺伝子を指定してエージェントを作成
+    pub fn new_with_strategy(id: AgentId, position: Position, traits: AgentTraits, strategy_genes: StrategyGenes) -> Self {
+        let strategy = StrategyState::new(strategy_genes);
+        Self {
+            id,
+            position,
+            traits,
+            state: AgentState::new(),
+            strategy,
         }
     }
 
@@ -36,10 +52,12 @@ impl Agent {
     pub fn position(&self) -> Position { self.position }
     pub fn traits(&self) -> &AgentTraits { &self.traits }
     pub fn state(&self) -> &AgentState { &self.state }
+    pub fn strategy(&self) -> &StrategyState { &self.strategy }
 
     /// 可変ゲッター
     pub fn traits_mut(&mut self) -> &mut AgentTraits { &mut self.traits }
     pub fn state_mut(&mut self) -> &mut AgentState { &mut self.state }
+    pub fn strategy_mut(&mut self) -> &mut StrategyState { &mut self.strategy }
 
     /// 位置を変更
     pub fn move_to(&mut self, new_position: Position) {
@@ -72,11 +90,8 @@ impl Agent {
         self.state.fitness()
     }
 
-    /// 協力するかどうかの決定（基本版）
-    pub fn decides_to_cooperate(&self) -> bool {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
-        
+    /// 特定の相手に対する協力決定（戦略ベース）
+    pub fn decides_to_cooperate_with(&mut self, opponent_id: AgentId) -> bool {
         let mut cooperation_rate = self.traits.cooperation_tendency();
         
         // 環境要因による調整
@@ -88,7 +103,17 @@ impl Agent {
             cooperation_rate *= 1.2; // 年配エージェントはより協力的
         }
         
-        rng.gen::<f64>() < cooperation_rate.min(1.0)
+        cooperation_rate = cooperation_rate.min(1.0);
+        
+        // 戦略に基づく協力決定
+        self.strategy.decide_cooperation(opponent_id, cooperation_rate)
+    }
+
+    /// 協力するかどうかの決定（一般版 - ダミー相手IDを使用）
+    pub fn decides_to_cooperate(&mut self) -> bool {
+        // ダミーのAgentIdを使用して戦略ベース判定を行う
+        let dummy_opponent = AgentId::new(0);
+        self.decides_to_cooperate_with(dummy_opponent)
     }
 
     /// 移動するかどうかの決定
@@ -100,15 +125,27 @@ impl Agent {
         rng.gen::<f64>() < movement_rate
     }
 
+    /// 相互作用を記録
+    pub fn record_interaction(&mut self, opponent_id: AgentId, my_action: bool, opponent_action: bool, outcome_score: f64) {
+        self.strategy.record_interaction(opponent_id, my_action, opponent_action, outcome_score);
+    }
+
+    /// 戦略の学習と適応
+    pub fn adapt_strategy(&mut self) {
+        self.strategy.adapt_strategy();
+    }
+
     /// 子エージェントを生成（遺伝的アルゴリズム用）
     pub fn reproduce_with(&self, other: &Agent, child_id: AgentId, position: Position) -> Agent {
         let (child_traits, _) = self.traits.crossover(&other.traits);
-        Agent::new(child_id, position, child_traits)
+        let (child_strategy_genes, _) = self.strategy.genes().crossover(other.strategy.genes());
+        Agent::new_with_strategy(child_id, position, child_traits, child_strategy_genes)
     }
 
     /// 突然変異
     pub fn mutate(&mut self, mutation_rate: f64, mutation_strength: f64) {
         self.traits.mutate(mutation_rate, mutation_strength);
+        self.strategy.genes_mut().mutate(mutation_rate, mutation_strength);
     }
 }
 
@@ -121,7 +158,9 @@ mod tests {
         let id = AgentId::new(1);
         let position = Position::new(5, 5);
         let traits = AgentTraits::new(0.6, 0.3, 0.8, 0.4).unwrap();
-        Agent::new(id, position, traits)
+        // 常に協力戦略（strategy_gene = 0.1）で確実な協力を提供
+        let strategy_genes = StrategyGenes::new(0.1, 0.9, 0.5, 0.6);
+        Agent::new_with_strategy(id, position, traits, strategy_genes)
     }
 
     #[test]
@@ -187,7 +226,7 @@ mod tests {
 
     #[test]
     fn test_agent_cooperation_decision() {
-        let agent = create_test_agent();
+        let mut agent = create_test_agent();
         
         // 確率的なので複数回テスト
         let mut cooperation_count = 0;
@@ -197,9 +236,9 @@ mod tests {
             }
         }
         
-        // 協力傾向0.6なので、大体60%前後で協力するはず
-        assert!(cooperation_count > 40);
-        assert!(cooperation_count < 80);
+        // 常に協力戦略なので、ほぼ100%協力するはず（環境要因で若干変動）
+        assert!(cooperation_count > 90);
+        assert!(cooperation_count <= 100);
     }
 
     #[test]
@@ -287,7 +326,9 @@ mod tests {
             }
         }
         
-        // 通常の60%より低いはず（70%掛けなので42%前後）
-        assert!(cooperation_count < 55);
+        // 常に協力戦略だが、エネルギー不足で70%に減少される
+        // 実際の戦略の純度や環境要因で多少の変動があることを考慮
+        assert!(cooperation_count > 50);
+        assert!(cooperation_count < 95);
     }
 }

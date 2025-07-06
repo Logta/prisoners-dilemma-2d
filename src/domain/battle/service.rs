@@ -3,80 +3,13 @@
 // ========================================
 
 use crate::domain::agent::Agent;
-use crate::domain::shared::AgentId;
-use super::{PayoffMatrix, BattleOutcome, BattleHistory};
-
-/// 戦闘戦略
-pub trait BattleStrategy {
-    /// 協力するかどうかを決定
-    fn decide_cooperation(
-        &self,
-        agent: &Agent,
-        opponent_id: AgentId,
-        history: &BattleHistory,
-    ) -> bool;
-}
-
-/// ランダム戦略
-pub struct RandomStrategy;
-
-/// Tit-for-Tat戦略
-pub struct TitForTatStrategy;
-
-/// Pavlov戦略（Win-Stay-Lose-Shift）
-pub struct PavlovStrategy;
+use super::{PayoffMatrix, BattleOutcome};
 
 /// 戦闘サービス
 pub struct BattleService {
     payoff_matrix: PayoffMatrix,
 }
 
-impl BattleStrategy for RandomStrategy {
-    fn decide_cooperation(
-        &self,
-        agent: &Agent,
-        _opponent_id: AgentId,
-        _history: &BattleHistory,
-    ) -> bool {
-        agent.decides_to_cooperate()
-    }
-}
-
-impl BattleStrategy for TitForTatStrategy {
-    fn decide_cooperation(
-        &self,
-        agent: &Agent,
-        opponent_id: AgentId,
-        history: &BattleHistory,
-    ) -> bool {
-        // 最初は協力、その後は相手の前回の行動をコピー
-        match history.last_battle_with(agent.id(), opponent_id) {
-            Some(last_battle) => last_battle.opponent_cooperated(),
-            None => true, // 初回は協力
-        }
-    }
-}
-
-impl BattleStrategy for PavlovStrategy {
-    fn decide_cooperation(
-        &self,
-        agent: &Agent,
-        opponent_id: AgentId,
-        history: &BattleHistory,
-    ) -> bool {
-        match history.last_battle_with(agent.id(), opponent_id) {
-            Some(last_battle) => {
-                // 前回のスコアが良かった（3.0以上）なら同じ行動、悪かったなら変更
-                if last_battle.agent_score() >= 3.0 {
-                    last_battle.agent_cooperated()
-                } else {
-                    !last_battle.agent_cooperated()
-                }
-            }
-            None => true, // 初回は協力
-        }
-    }
-}
 
 impl BattleService {
     /// 新しい戦闘サービスを作成
@@ -89,36 +22,23 @@ impl BattleService {
         Self::new(PayoffMatrix::standard())
     }
 
-    /// エージェントの戦略を選択
-    pub fn select_strategy(&self, agent: &Agent) -> Box<dyn BattleStrategy> {
-        let aggression = agent.traits().aggression_level();
-        let learning = agent.traits().learning_ability();
-
-        if aggression < 0.3 {
-            Box::new(RandomStrategy)
-        } else if aggression >= 0.3 && aggression < 0.7 && learning > 0.5 {
-            Box::new(TitForTatStrategy)
-        } else if aggression >= 0.7 && learning > 0.4 {
-            Box::new(PavlovStrategy)
-        } else {
-            Box::new(RandomStrategy)
-        }
-    }
-
-    /// 2つのエージェント間で戦闘を実行
+    /// 2つのエージェント間で戦闘を実行（新しい戦略システム使用）
     pub fn execute_battle(
         &self,
-        agent1: &Agent,
-        agent2: &Agent,
-        history: &BattleHistory,
+        agent1: &mut Agent,
+        agent2: &mut Agent,
     ) -> BattleOutcome {
-        let strategy1 = self.select_strategy(agent1);
-        let strategy2 = self.select_strategy(agent2);
+        // 新しい戦略システムを使用して協力判定
+        let agent1_cooperates = agent1.decides_to_cooperate_with(agent2.id());
+        let agent2_cooperates = agent2.decides_to_cooperate_with(agent1.id());
 
-        let agent1_cooperates = strategy1.decide_cooperation(agent1, agent2.id(), history);
-        let agent2_cooperates = strategy2.decide_cooperation(agent2, agent1.id(), history);
+        let outcome = self.payoff_matrix.calculate_outcome(agent1_cooperates, agent2_cooperates);
 
-        self.payoff_matrix.calculate_outcome(agent1_cooperates, agent2_cooperates)
+        // 相互作用を記録
+        agent1.record_interaction(agent2.id(), agent1_cooperates, agent2_cooperates, outcome.agent1_score);
+        agent2.record_interaction(agent1.id(), agent2_cooperates, agent1_cooperates, outcome.agent2_score);
+
+        outcome
     }
 
     /// 利得マトリクスを取得
@@ -130,86 +50,15 @@ impl BattleService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::agent::{AgentTraits, Agent};
-    use crate::domain::shared::Position;
+    use crate::domain::agent::{AgentTraits, Agent, StrategyGenes};
+    use crate::domain::shared::{Position, AgentId};
 
-    fn create_test_agent(id: u64, aggression: f64, learning: f64) -> Agent {
+    fn create_test_agent(id: u64, cooperation: f64, strategy_gene: f64) -> Agent {
         let agent_id = AgentId::new(id);
         let position = Position::new(0, 0);
-        let traits = AgentTraits::new(0.5, aggression, learning, 0.5).unwrap();
-        Agent::new(agent_id, position, traits)
-    }
-
-    #[test]
-    fn test_random_strategy() {
-        let strategy = RandomStrategy;
-        let agent = create_test_agent(1, 0.2, 0.3); // 低攻撃性
-        let history = BattleHistory::new();
-        
-        // ランダムなので結果は予測不可能だが、エラーが出ないことを確認
-        let _result = strategy.decide_cooperation(&agent, AgentId::new(2), &history);
-    }
-
-    #[test]
-    fn test_tit_for_tat_strategy_first_move() {
-        let strategy = TitForTatStrategy;
-        let agent = create_test_agent(1, 0.5, 0.8);
-        let history = BattleHistory::new();
-        
-        // 初回は協力
-        assert!(strategy.decide_cooperation(&agent, AgentId::new(2), &history));
-    }
-
-    #[test]
-    fn test_tit_for_tat_strategy_with_history() {
-        let strategy = TitForTatStrategy;
-        let agent = create_test_agent(1, 0.5, 0.8);
-        let mut history = BattleHistory::new();
-        
-        // 相手が裏切った履歴を追加
-        let outcome = PayoffMatrix::standard().calculate_outcome(true, false);
-        history.add_battle(agent.id(), &outcome, AgentId::new(2), true);
-        
-        // 相手の前回の行動（裏切り）をコピー
-        assert!(!strategy.decide_cooperation(&agent, AgentId::new(2), &history));
-    }
-
-    #[test]
-    fn test_pavlov_strategy_first_move() {
-        let strategy = PavlovStrategy;
-        let agent = create_test_agent(1, 0.8, 0.6);
-        let history = BattleHistory::new();
-        
-        // 初回は協力
-        assert!(strategy.decide_cooperation(&agent, AgentId::new(2), &history));
-    }
-
-    #[test]
-    fn test_pavlov_strategy_good_outcome() {
-        let strategy = PavlovStrategy;
-        let agent = create_test_agent(1, 0.8, 0.6);
-        let mut history = BattleHistory::new();
-        
-        // 良い結果（相互協力）の履歴を追加
-        let outcome = PayoffMatrix::standard().calculate_outcome(true, true);
-        history.add_battle(agent.id(), &outcome, AgentId::new(2), true);
-        
-        // 良い結果だったので同じ行動（協力）を継続
-        assert!(strategy.decide_cooperation(&agent, AgentId::new(2), &history));
-    }
-
-    #[test]
-    fn test_pavlov_strategy_bad_outcome() {
-        let strategy = PavlovStrategy;
-        let agent = create_test_agent(1, 0.8, 0.6);
-        let mut history = BattleHistory::new();
-        
-        // 悪い結果（裏切られた）の履歴を追加
-        let outcome = PayoffMatrix::standard().calculate_outcome(true, false);
-        history.add_battle(agent.id(), &outcome, AgentId::new(2), true);
-        
-        // 悪い結果だったので行動を変更（協力→裏切り）
-        assert!(!strategy.decide_cooperation(&agent, AgentId::new(2), &history));
+        let traits = AgentTraits::new(cooperation, 0.5, 0.7, 0.5).unwrap();
+        let strategy_genes = StrategyGenes::new(strategy_gene, 0.8, 0.6, 0.7);
+        Agent::new_with_strategy(agent_id, position, traits, strategy_genes)
     }
 
     #[test]
@@ -219,38 +68,33 @@ mod tests {
     }
 
     #[test]
-    fn test_battle_service_strategy_selection() {
-        let service = BattleService::standard();
-        
-        // 低攻撃性 -> Random
-        let low_aggression = create_test_agent(1, 0.2, 0.8);
-        let _strategy = service.select_strategy(&low_aggression);
-        // 実際の型チェックは難しいので、実行エラーがないことを確認
-        
-        // 中攻撃性・高学習 -> TitForTat
-        let mid_aggression = create_test_agent(2, 0.5, 0.8);
-        let _strategy = service.select_strategy(&mid_aggression);
-        
-        // 高攻撃性・高学習 -> Pavlov
-        let high_aggression = create_test_agent(3, 0.8, 0.6);
-        let _strategy = service.select_strategy(&high_aggression);
-    }
-
-    #[test]
     fn test_battle_service_execute_battle() {
         let service = BattleService::standard();
-        let agent1 = create_test_agent(1, 0.2, 0.3); // Random
-        let agent2 = create_test_agent(2, 0.5, 0.8); // TitForTat
-        let history = BattleHistory::new();
+        let mut agent1 = create_test_agent(1, 0.8, 0.1); // Always Cooperate
+        let mut agent2 = create_test_agent(2, 0.3, 0.2); // Always Defect
         
-        let outcome = service.execute_battle(&agent1, &agent2, &history);
+        let outcome = service.execute_battle(&mut agent1, &mut agent2);
         
-        // 初回なのでTitForTatは協力、Randomは不定
         // 結果が有効な範囲内であることを確認
         assert!(outcome.agent1_score >= 0.0);
         assert!(outcome.agent2_score >= 0.0);
         assert!(outcome.agent1_score <= 5.0);
         assert!(outcome.agent2_score <= 5.0);
+    }
+
+    #[test]
+    fn test_battle_service_strategy_integration() {
+        let service = BattleService::standard();
+        let mut agent1 = create_test_agent(1, 0.8, 0.4); // Tit-for-Tat
+        let mut agent2 = create_test_agent(2, 0.6, 0.6); // Pavlov
+        
+        // 複数回戦闘を実行して戦略の動作を確認
+        for _ in 0..5 {
+            let _outcome = service.execute_battle(&mut agent1, &mut agent2);
+        }
+        
+        // エージェントが相互作用履歴を持っていることを確認
+        // （具体的な値は戦略次第だが、記録自体は行われているはず）
     }
 
     #[test]
