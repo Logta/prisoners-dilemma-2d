@@ -197,8 +197,9 @@ impl WasmSimulationManager {
         
         let result = handle_result(self.simulation_use_case.initialize(command))?;
         
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        let json_result = serde_json::to_string(&result)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// 指定世代数のシミュレーションを実行
@@ -212,40 +213,56 @@ impl WasmSimulationManager {
         
         let result = handle_result(self.simulation_use_case.run_simulation(command))?;
         
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        let json_result = serde_json::to_string(&result)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// 1ステップ実行
     #[wasm_bindgen]
     pub fn step(&mut self) -> Result<JsValue, JsValue> {
         let result = handle_result(self.simulation_use_case.step())?;
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        
+        let json_result = serde_json::to_string(&result)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// 1世代実行
     #[wasm_bindgen]
     pub fn run_generation(&mut self) -> Result<JsValue, JsValue> {
         let result = handle_result(self.simulation_use_case.run_generation())?;
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        
+        let json_result = serde_json::to_string(&result)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// 現在の統計を取得
     #[wasm_bindgen]
     pub fn get_current_stats(&self) -> Result<JsValue, JsValue> {
         let result = handle_result(self.simulation_use_case.get_current_stats())?;
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        
+        let json_result = serde_json::to_string(&result)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// 現在のエージェント情報を取得
     #[wasm_bindgen]
     pub fn get_current_agents(&self) -> Result<JsValue, JsValue> {
-        let result = handle_result(self.simulation_use_case.get_current_agents())?;
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        let agents_map = handle_result(self.simulation_use_case.get_current_agents())?;
+        
+        // HashMapをVecに変換してフロントエンドで使いやすくする
+        // AgentCsvDataに変換してフラットな構造にする
+        let agents_vec: Vec<_> = agents_map
+            .values()
+            .map(|agent| crate::infrastructure::serialization::AgentCsvData::from_agent(agent))
+            .collect();
+        
+        let json_result = serde_json::to_string(&agents_vec)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// 指定位置のエージェントを取得
@@ -253,8 +270,10 @@ impl WasmSimulationManager {
     pub fn get_agent_at(&self, x: u32, y: u32) -> Result<JsValue, JsValue> {
         let position = Position::new(x, y);
         let result = handle_result(self.simulation_use_case.get_agent_at(position))?;
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        
+        let json_result = serde_json::to_string(&result)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// シミュレーションが完了しているかチェック
@@ -316,8 +335,10 @@ impl WasmBattleManager {
         };
 
         let result = handle_result(self.battle_use_case.execute_battle(command, &agents))?;
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        
+        let json_result = serde_json::to_string(&result)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// 戦闘履歴を取得
@@ -330,8 +351,10 @@ impl WasmBattleManager {
         };
 
         let result = handle_result(self.battle_use_case.get_battle_history(query))?;
-        // Ok(serde_wasm_bindgen::to_value(&result)?) // 依存関係不足のためコメントアウト
-        Ok(JsValue::from_str("result_placeholder"))
+        
+        let json_result = serde_json::to_string(&result)
+            .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+        Ok(JsValue::from_str(&json_result))
     }
 
     /// 現在のラウンドを取得

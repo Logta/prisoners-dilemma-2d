@@ -59,6 +59,27 @@ pub enum SerializationError {
     InvalidData,
 }
 
+impl AgentCsvData {
+    /// エージェントから作成
+    pub fn from_agent(agent: &Agent) -> Self {
+        Self {
+            id: agent.id().value(),
+            x: agent.position().x,
+            y: agent.position().y,
+            cooperation_tendency: agent.traits().cooperation_tendency(),
+            aggression_level: agent.traits().aggression_level(),
+            learning_ability: agent.traits().learning_ability(),
+            movement_tendency: agent.traits().movement_tendency(),
+            score: agent.state().score(),
+            energy: agent.state().energy(),
+            age: agent.state().age(),
+            battles_fought: agent.state().battles_fought(),
+            fitness: agent.fitness(),
+            is_alive: agent.is_alive(),
+        }
+    }
+}
+
 impl SerializationService {
     /// エージェントをJSONにシリアライズ
     pub fn agents_to_json(agents: &HashMap<AgentId, Agent>) -> Result<String, SerializationError> {
