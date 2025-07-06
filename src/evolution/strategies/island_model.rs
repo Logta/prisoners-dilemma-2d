@@ -3,6 +3,7 @@
 // ========================================
 
 use crate::core::{Agent, SimulationWorld};
+use crate::domain::errors::{SafeAccessError, IndexOutOfBoundsError, safe_slice_access, safe_index_access};
 use crate::evolution::{
     EvolutionConfig, EvolutionError, EvolutionResult, GeneticAlgorithm,
     TournamentSelection, OnePointCrossover, TwoPointCrossover, UniformCrossover,
@@ -96,7 +97,19 @@ impl IslandModelEvolution {
 
 impl EvolutionStrategy for IslandModelEvolution {
     fn evolve(&mut self, world: &SimulationWorld) -> Result<EvolutionResult, EvolutionError> {
-        // 人口を島に分割
+        if self.islands.is_empty() {
+            return Err(EvolutionError::ConfigurationError(
+                "Island model must have at least one island".to_string()
+            ));
+        }
+
+        if world.agents.is_empty() {
+            return Err(EvolutionError::ConfigurationError(
+                "Cannot evolve with empty agent population".to_string()
+            ));
+        }
+
+        // 人口を島に分割（安全版）
         let island_size = world.agents.len() / self.islands.len();
         let mut island_populations: Vec<Vec<Agent>> = Vec::new();
 
@@ -108,10 +121,18 @@ impl EvolutionStrategy for IslandModelEvolution {
                 (i + 1) * island_size
             };
 
-            island_populations.push(world.agents[start..end].to_vec());
+            // 安全なスライスアクセス
+            match safe_slice_access(&world.agents, start, end, "world.agents", "island population division") {
+                Ok(slice) => island_populations.push(slice.to_vec()),
+                Err(err) => {
+                    return Err(EvolutionError::ConfigurationError(
+                        format!("Failed to divide population into islands: {}", err)
+                    ));
+                }
+            }
         }
 
-        // 各島で進化
+        // 各島で進化（安全版）
         let mut evolved_populations = Vec::new();
         for (i, population) in island_populations.iter().enumerate() {
             let island_world = SimulationWorld {
@@ -121,7 +142,15 @@ impl EvolutionStrategy for IslandModelEvolution {
                 environment: world.environment.clone(),
             };
 
-            let result = self.islands[i].evolve(&island_world)?;
+            // 安全な島アクセス
+            let result = match safe_index_access(&self.islands, i, "islands", "island evolution") {
+                Ok(island) => island.evolve(&island_world)?,
+                Err(err) => {
+                    return Err(EvolutionError::ConfigurationError(
+                        format!("Failed to access island {}: {}", i, err)
+                    ));
+                }
+            };
             evolved_populations.push(result.new_generation);
         }
 
@@ -162,7 +191,8 @@ impl EvolutionStrategy for IslandModelEvolution {
 
     fn get_config(&self) -> &EvolutionConfig {
         self.islands.first().map(|i| &i.config).unwrap_or_else(|| {
-            panic!("Island model must have at least one island")
+            eprintln!("Error: Island model has no islands, returning default config");
+            &EvolutionConfig::default()
         })
     }
 

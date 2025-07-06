@@ -4,6 +4,7 @@
 
 use crate::domain::agent::Agent;
 use crate::domain::shared::AgentId;
+use crate::domain::errors::{SafeAccessError, EmptyCollectionError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -119,8 +120,20 @@ impl EvolutionService {
                 break;
             }
 
-            let parent1 = self.select_parent(&sorted_agents);
-            let parent2 = self.select_parent(&sorted_agents);
+            let parent1 = match self.select_parent(&sorted_agents) {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("Warning: Failed to select parent1: {}", e);
+                    break;
+                }
+            };
+            let parent2 = match self.select_parent(&sorted_agents) {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("Warning: Failed to select parent2: {}", e);
+                    break;
+                }
+            };
 
             // 異なる親または一定回数試行したら強制的に子を生成
             if parent1.id() != parent2.id() || attempts > target_population * 5 {
@@ -142,7 +155,7 @@ impl EvolutionService {
     }
 
     /// 親を選択
-    fn select_parent<'a>(&self, sorted_agents: &[&'a Agent]) -> &'a Agent {
+    fn select_parent<'a>(&self, sorted_agents: &[&'a Agent]) -> Result<&'a Agent, SafeAccessError> {
         match self.config.selection_method {
             SelectionMethod::Tournament => self.tournament_selection(sorted_agents),
             SelectionMethod::Roulette => self.roulette_selection(sorted_agents),
@@ -151,28 +164,57 @@ impl EvolutionService {
     }
 
     /// トーナメント選択
-    fn tournament_selection<'a>(&self, agents: &[&'a Agent]) -> &'a Agent {
+    fn tournament_selection<'a>(&self, agents: &[&'a Agent]) -> Result<&'a Agent, SafeAccessError> {
         if agents.is_empty() {
-            panic!("Cannot select from empty agent list");
+            return Err(EmptyCollectionError::empty_selection(
+                "tournament_selection",
+                "EvolutionService::tournament_selection"
+            ).into());
         }
         
         use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
         
         let tournament_size = 3.min(agents.len());
-        let tournament: Vec<&Agent> = agents.choose_multiple(&mut rng, tournament_size).cloned().collect();
         
-        tournament
+        // 安全なトーナメント選択
+        let tournament: Vec<&Agent> = if tournament_size > 0 {
+            agents.choose_multiple(&mut rng, tournament_size).cloned().collect()
+        } else {
+            return Err(EmptyCollectionError::empty_selection(
+                "tournament_selection",
+                "insufficient tournament size"
+            ).into());
+        };
+        
+        if tournament.is_empty() {
+            return Err(EmptyCollectionError::empty_selection(
+                "tournament_selection",
+                "tournament is empty after selection"
+            ).into());
+        }
+        
+        let winner = tournament
             .iter()
             .max_by(|a, b| a.fitness().partial_cmp(&b.fitness()).unwrap_or(std::cmp::Ordering::Equal))
             .copied()
-            .unwrap_or(&agents[0])
+            .or_else(|| agents.first().copied())
+            .ok_or_else(|| {
+                SafeAccessError::EmptyCollection(
+                    EmptyCollectionError::empty_selection("tournament_selection", "fallback")
+                )
+            })?;
+        
+        Ok(winner)
     }
 
     /// ルーレット選択
-    fn roulette_selection<'a>(&self, agents: &[&'a Agent]) -> &'a Agent {
+    fn roulette_selection<'a>(&self, agents: &[&'a Agent]) -> Result<&'a Agent, SafeAccessError> {
         if agents.is_empty() {
-            panic!("Cannot select from empty agent list");
+            return Err(EmptyCollectionError::empty_selection(
+                "roulette_selection",
+                "EvolutionService::roulette_selection"
+            ).into());
         }
         
         use rand::Rng;
@@ -181,31 +223,55 @@ impl EvolutionService {
         let total_fitness: f64 = agents.iter().map(|a| a.fitness().max(0.0)).sum();
         
         if total_fitness <= 0.0 {
-            return &agents[0];
+            eprintln!("Warning: All agents have zero or negative fitness, using uniform selection");
+            use rand::seq::SliceRandom;
+            return agents.choose(&mut rng).copied().ok_or_else(|| {
+                SafeAccessError::EmptyCollection(
+                    EmptyCollectionError::empty_selection("roulette_selection", "zero fitness fallback")
+                )
+            });
         }
         
         let mut target = rng.gen_range(0.0..total_fitness);
         
         for agent in agents {
-            target -= agent.fitness().max(0.0);
+            let fitness = agent.fitness().max(0.0);
+            target -= fitness;
             if target <= 0.0 {
-                return agent;
+                return Ok(agent);
             }
         }
         
-        &agents[0] // フォールバック
+        // フォールバック: 最初のエージェントを安全に取得
+        agents.first().copied().ok_or_else(|| {
+            SafeAccessError::EmptyCollection(
+                EmptyCollectionError::empty_selection("roulette_selection", "fallback")
+            )
+        })
     }
 
     /// ランク選択
-    fn rank_selection<'a>(&self, sorted_agents: &[&'a Agent]) -> &'a Agent {
+    fn rank_selection<'a>(&self, sorted_agents: &[&'a Agent]) -> Result<&'a Agent, SafeAccessError> {
         if sorted_agents.is_empty() {
-            panic!("Cannot select from empty agent list");
+            return Err(EmptyCollectionError::empty_selection(
+                "rank_selection",
+                "EvolutionService::rank_selection"
+            ).into());
         }
         
         use rand::Rng;
         let mut rng = rand::thread_rng();
         
         let n = sorted_agents.len() as f64;
+        
+        // ゼロ除算を防ぐチェック
+        if n <= 0.0 {
+            return Err(EmptyCollectionError::empty_selection(
+                "rank_selection",
+                "invalid population size"
+            ).into());
+        }
+        
         let rank_sum = n * (n + 1.0) / 2.0;
         let mut target = rng.gen_range(0.0..rank_sum);
         
@@ -213,11 +279,16 @@ impl EvolutionService {
             let rank = n - i as f64;
             target -= rank;
             if target <= 0.0 {
-                return agent;
+                return Ok(agent);
             }
         }
         
-        &sorted_agents[0] // フォールバック
+        // フォールバック: 最初のエージェントを安全に取得
+        sorted_agents.first().copied().ok_or_else(|| {
+            SafeAccessError::EmptyCollection(
+                EmptyCollectionError::empty_selection("rank_selection", "fallback")
+            )
+        })
     }
 
     /// 設定を取得

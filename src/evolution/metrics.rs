@@ -2,6 +2,7 @@
 // Evolution Metrics - 進化過程の監視と分析
 // ========================================
 
+use crate::domain::errors::{SafeAccessError, IndexOutOfBoundsError, safe_index_access};
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::time::Duration;
@@ -381,9 +382,16 @@ impl MetricsCalculator {
         }
     }
 
-    /// パーセンタイルを計算
+    /// パーセンタイルを計算（安全版）
     fn percentile(sorted_values: &[f64], p: f64) -> f64 {
         if sorted_values.is_empty() {
+            eprintln!("Warning: percentile calculation called on empty data");
+            return 0.0;
+        }
+
+        // パーセンタイル値の範囲チェック
+        if !(0.0..=1.0).contains(&p) {
+            eprintln!("Warning: percentile value {} out of range [0.0, 1.0]", p);
             return 0.0;
         }
 
@@ -391,11 +399,34 @@ impl MetricsCalculator {
         let lower = index.floor() as usize;
         let upper = index.ceil() as usize;
 
+        // 安全なインデックスアクセス
         if lower == upper {
-            sorted_values[lower]
+            match safe_index_access(sorted_values, lower, "sorted_values", "percentile calculation") {
+                Ok(value) => *value,
+                Err(err) => {
+                    eprintln!("Error in percentile calculation: {}", err);
+                    0.0
+                }
+            }
         } else {
+            let lower_val = match safe_index_access(sorted_values, lower, "sorted_values", "percentile lower bound") {
+                Ok(value) => *value,
+                Err(err) => {
+                    eprintln!("Error accessing lower bound in percentile: {}", err);
+                    return 0.0;
+                }
+            };
+            
+            let upper_val = match safe_index_access(sorted_values, upper, "sorted_values", "percentile upper bound") {
+                Ok(value) => *value,
+                Err(err) => {
+                    eprintln!("Error accessing upper bound in percentile: {}", err);
+                    return lower_val; // フォールバック
+                }
+            };
+
             let weight = index - index.floor();
-            sorted_values[lower] * (1.0 - weight) + sorted_values[upper] * weight
+            lower_val * (1.0 - weight) + upper_val * weight
         }
     }
 
@@ -436,9 +467,15 @@ impl MetricsCalculator {
         (d1 + d2 + d3 + d4).sqrt()
     }
 
-    /// エントロピーを計算
+    /// エントロピーを計算（安全版）
     pub fn calculate_entropy(values: &[f64], bins: usize) -> f64 {
         if values.is_empty() {
+            eprintln!("Warning: entropy calculation called on empty data");
+            return 0.0;
+        }
+
+        if bins == 0 {
+            eprintln!("Warning: entropy calculation with zero bins");
             return 0.0;
         }
 
@@ -455,7 +492,18 @@ impl MetricsCalculator {
         for &value in values {
             let bin_index = ((value - min_val) / bin_width).floor() as usize;
             let bin_index = bin_index.min(bins - 1);
-            histogram[bin_index] += 1;
+            
+            // 安全なヒストグラムアクセス
+            if bin_index < histogram.len() {
+                histogram[bin_index] += 1;
+            } else {
+                eprintln!("Error in entropy histogram calculation: bin_index {} out of range for histogram length {}", 
+                         bin_index, histogram.len());
+                eprintln!("Details: bins: {}, value: {}, min_val: {}, max_val: {}, bin_width: {}", 
+                         bins, value, min_val, max_val, bin_width);
+                // スキップして続行
+                continue;
+            }
         }
 
         let total = values.len() as f64;

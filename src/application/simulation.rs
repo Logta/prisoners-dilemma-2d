@@ -165,8 +165,9 @@ impl SimulationUseCase {
     }
 
     /// シミュレーションをリセット
-    pub fn reset(&mut self) {
+    pub fn reset(&mut self) -> Result<(), SimulationUseCaseError> {
         self.service = None;
+        Ok(())
     }
 }
 
@@ -323,7 +324,7 @@ mod tests {
         use_case.initialize(InitializeSimulationCommand { config }).unwrap();
         assert!(use_case.get_current_stats().is_ok());
         
-        use_case.reset();
+        use_case.reset().unwrap();
         assert!(matches!(
             use_case.get_current_stats().unwrap_err(),
             SimulationUseCaseError::NotInitialized

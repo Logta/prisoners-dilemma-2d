@@ -247,13 +247,96 @@ impl WasmSimulationManager {
     #[wasm_bindgen]
     pub fn step(&mut self) -> Result<JsValue, JsValue> {
         // ステップ実行前にシミュレーションが終了していないかチェック
-        if let Ok(is_finished) = handle_result(self.simulation_use_case.is_finished()) {
+        if let Ok(is_finished) = self.simulation_use_case.is_finished() {
             if is_finished {
-                return Err(JsValue::from_str("Simulation has finished"));
+                console_log!("Simulation has finished, cannot step further");
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str("Simulation has finished"),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("SimulationFinished"),
+                ).unwrap();
+                return Err(error_obj.into());
             }
         }
         
-        let result = handle_result(self.simulation_use_case.step())?;
+        // ステップ実行前にエージェント数をチェック（強化版）
+        if let Ok(stats) = self.simulation_use_case.get_current_stats() {
+            console_log!("Step execution - population: {}, generation: {}", stats.population, stats.generation);
+            if stats.population == 0 {
+                console_error!("Critical: No agents available for step execution - attempting recovery");
+                
+                // 自動復旧を試みる
+                if let Err(recovery_err) = self.simulation_use_case.reset() {
+                    console_error!("Failed to reset simulation during recovery: {}", recovery_err);
+                }
+                
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str("Population reached zero. Simulation reset attempted."),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("PopulationExtinctionError"),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("generation"),
+                    &JsValue::from_f64(stats.generation as f64),
+                ).unwrap();
+                return Err(error_obj.into());
+            }
+        } else {
+            console_error!("Failed to get simulation stats before step execution");
+            let error_obj = js_sys::Object::new();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("message"),
+                &JsValue::from_str("Unable to verify simulation state before step"),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("type"),
+                &JsValue::from_str("SimulationStateError"),
+            ).unwrap();
+            return Err(error_obj.into());
+        }
+        
+        // 実際のステップ実行をtry-catchで包む
+        let result = match self.simulation_use_case.step() {
+            Ok(result) => result,
+            Err(e) => {
+                console_error!("Step execution failed: {}", e);
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str(&format!("Step execution failed: {}", e)),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("StepExecutionError"),
+                ).unwrap();
+                return Err(error_obj.into());
+            }
+        };
+        
+        // ステップ実行後の結果をログ出力と安全性チェック
+        console_log!("Step result: population: {}, generation: {}", result.population, result.generation);
+        
+        // ステップ後に人口が0になった場合の警告
+        if result.population == 0 {
+            console_error!("Warning: Population became zero after step execution at generation {}", result.generation);
+        }
         
         let json_result = serde_json::to_string(&result)
             .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
@@ -264,13 +347,96 @@ impl WasmSimulationManager {
     #[wasm_bindgen]
     pub fn run_generation(&mut self) -> Result<JsValue, JsValue> {
         // 世代実行前にシミュレーションが終了していないかチェック
-        if let Ok(is_finished) = handle_result(self.simulation_use_case.is_finished()) {
+        if let Ok(is_finished) = self.simulation_use_case.is_finished() {
             if is_finished {
-                return Err(JsValue::from_str("Simulation has finished"));
+                console_log!("Simulation has finished, cannot run generation");
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str("Simulation has finished"),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("SimulationFinished"),
+                ).unwrap();
+                return Err(error_obj.into());
             }
         }
         
-        let result = handle_result(self.simulation_use_case.run_generation())?;
+        // 世代実行前にエージェント数をチェック（強化版）
+        if let Ok(stats) = self.simulation_use_case.get_current_stats() {
+            console_log!("Generation execution - population: {}, generation: {}", stats.population, stats.generation);
+            if stats.population == 0 {
+                console_error!("Critical: No agents available for generation execution - attempting recovery");
+                
+                // 自動復旧を試みる
+                if let Err(recovery_err) = self.simulation_use_case.reset() {
+                    console_error!("Failed to reset simulation during recovery: {}", recovery_err);
+                }
+                
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str("Population reached zero. Simulation reset attempted."),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("PopulationExtinctionError"),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("generation"),
+                    &JsValue::from_f64(stats.generation as f64),
+                ).unwrap();
+                return Err(error_obj.into());
+            }
+        } else {
+            console_error!("Failed to get simulation stats before generation execution");
+            let error_obj = js_sys::Object::new();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("message"),
+                &JsValue::from_str("Unable to verify simulation state before generation"),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("type"),
+                &JsValue::from_str("SimulationStateError"),
+            ).unwrap();
+            return Err(error_obj.into());
+        }
+        
+        // 実際の世代実行をtry-catchで包む
+        let result = match self.simulation_use_case.run_generation() {
+            Ok(result) => result,
+            Err(e) => {
+                console_error!("Generation execution failed: {}", e);
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str(&format!("Generation execution failed: {}", e)),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("GenerationExecutionError"),
+                ).unwrap();
+                return Err(error_obj.into());
+            }
+        };
+        
+        // 世代実行後の結果をログ出力と安全性チェック
+        console_log!("Generation result: population: {}, generation: {}", result.population, result.generation);
+        
+        // 世代後に人口が0になった場合の警告
+        if result.population == 0 {
+            console_error!("Warning: Population became zero after generation {} execution", result.generation);
+        }
         
         let json_result = serde_json::to_string(&result)
             .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
@@ -280,6 +446,26 @@ impl WasmSimulationManager {
     /// 現在の統計を取得
     #[wasm_bindgen]
     pub fn get_current_stats(&self) -> Result<JsValue, JsValue> {
+        // シミュレーションが初期化されていない場合の安全チェック
+        if let Err(e) = self.simulation_use_case.get_current_stats() {
+            console_error!("get_current_stats error: {}", e);
+            
+            // カスタムエラーオブジェクトを返す
+            let error_obj = js_sys::Object::new();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("message"),
+                &JsValue::from_str(&format!("Failed to get current stats: {}", e)),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("type"),
+                &JsValue::from_str("StatsError"),
+            ).unwrap();
+            
+            return Err(error_obj.into());
+        }
+        
         let result = handle_result(self.simulation_use_case.get_current_stats())?;
         
         let json_result = serde_json::to_string(&result)
@@ -290,21 +476,57 @@ impl WasmSimulationManager {
     /// 現在のエージェント情報を取得
     #[wasm_bindgen]
     pub fn get_current_agents(&self) -> Result<JsValue, JsValue> {
-        let agents_map = handle_result(self.simulation_use_case.get_current_agents())?;
+        // シミュレーションが初期化されていない場合の安全チェック
+        let agents_map = match self.simulation_use_case.get_current_agents() {
+            Ok(agents) => agents,
+            Err(e) => {
+                console_error!("get_current_agents error: {}", e);
+                
+                // カスタムエラーオブジェクトを返す
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str(&format!("Failed to get current agents: {}", e)),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("AgentsError"),
+                ).unwrap();
+                
+                return Err(error_obj.into());
+            }
+        };
         
         // エージェントが0の場合は空の配列を返す
         if agents_map.is_empty() {
-            let empty_vec: Vec<crate::infrastructure::serialization::AgentCsvData> = Vec::new();
+            console_log!("No agents found, returning empty array");
+            let empty_vec: Vec<serde_json::Value> = Vec::new();
             let json_result = serde_json::to_string(&empty_vec)
                 .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
             return Ok(JsValue::from_str(&json_result));
         }
         
         // HashMapをVecに変換してフロントエンドで使いやすくする
-        // AgentCsvDataに変換してフラットな構造にする
-        let agents_vec: Vec<_> = agents_map
+        // 安全にエージェントデータを変換
+        let agents_vec: Vec<serde_json::Value> = agents_map
             .values()
-            .map(|agent| crate::infrastructure::serialization::AgentCsvData::from_agent(agent))
+            .map(|agent| {
+                serde_json::json!({
+                    "id": agent.id().value(),
+                    "x": agent.position().x,
+                    "y": agent.position().y,
+                    "cooperation_tendency": agent.traits().cooperation_tendency(),
+                    "aggression_level": agent.traits().aggression_level(),
+                    "learning_ability": agent.traits().learning_ability(),
+                    "movement_tendency": agent.traits().movement_tendency(),
+                    "score": agent.state().score(),
+                    "age": agent.state().age(),
+                    "battles_fought": agent.state().battles_fought(),
+                    "fitness": agent.fitness()
+                })
+            })
             .collect();
         
         let json_result = serde_json::to_string(&agents_vec)
@@ -331,8 +553,28 @@ impl WasmSimulationManager {
 
     /// シミュレーションをリセット
     #[wasm_bindgen]
-    pub fn reset(&mut self) {
-        self.simulation_use_case.reset();
+    pub fn reset(&mut self) -> Result<JsValue, JsValue> {
+        match self.simulation_use_case.reset() {
+            Ok(()) => {
+                console_log!("Simulation reset successfully");
+                Ok(JsValue::from_str("Reset successful"))
+            },
+            Err(e) => {
+                console_error!("Failed to reset simulation: {}", e);
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str(&format!("Reset failed: {}", e)),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("ResetError"),
+                ).unwrap();
+                Err(error_obj.into())
+            }
+        }
     }
 }
 
@@ -455,6 +697,200 @@ pub fn test_agent_cooperation_decision(agent_json: &str, opponent_id: u64) -> Re
             Err(error_obj.into())
         }
     }
+}
+
+/// 安全なパーセンタイル計算をテストする関数
+#[wasm_bindgen]
+pub fn test_safe_percentile_calculation(values_json: &str, percentile: f64) -> Result<f64, JsValue> {
+    
+    let values: Vec<f64> = serde_json::from_str(values_json)
+        .map_err(|e| JsValue::from_str(&format!("JSON parse error: {}", e)))?;
+    
+    if values.is_empty() {
+        let error_obj = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("message"),
+            &JsValue::from_str("Cannot calculate percentile on empty data"),
+        ).unwrap();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("type"),
+            &JsValue::from_str("EmptyDataError"),
+        ).unwrap();
+        return Err(error_obj.into());
+    }
+    
+    if !(0.0..=1.0).contains(&percentile) {
+        let error_obj = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("message"),
+            &JsValue::from_str(&format!("Percentile {} out of range [0.0, 1.0]", percentile)),
+        ).unwrap();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("type"),
+            &JsValue::from_str("InvalidPercentileError"),
+        ).unwrap();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("percentile"),
+            &JsValue::from_f64(percentile),
+        ).unwrap();
+        return Err(error_obj.into());
+    }
+    
+    let mut sorted_values = values;
+    sorted_values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    
+    // 簡単なパーセンタイル計算
+    let result = match percentile {
+        p if (p - 0.25).abs() < f64::EPSILON => {
+            let index = (sorted_values.len() as f64 - 1.0) * 0.25;
+            let lower = index.floor() as usize;
+            if lower < sorted_values.len() { sorted_values[lower] } else { 0.0 }
+        },
+        p if (p - 0.5).abs() < f64::EPSILON => {
+            let index = (sorted_values.len() as f64 - 1.0) * 0.5;
+            let lower = index.floor() as usize;
+            if lower < sorted_values.len() { sorted_values[lower] } else { 0.0 }
+        },
+        p if (p - 0.75).abs() < f64::EPSILON => {
+            let index = (sorted_values.len() as f64 - 1.0) * 0.75;
+            let lower = index.floor() as usize;
+            if lower < sorted_values.len() { sorted_values[lower] } else { 0.0 }
+        },
+        _ => {
+            // カスタムパーセンタイル計算
+            let index = (sorted_values.len() as f64 - 1.0) * percentile;
+            let lower = index.floor() as usize;
+            let upper = index.ceil() as usize;
+            
+            if lower >= sorted_values.len() || upper >= sorted_values.len() {
+                let error_obj = js_sys::Object::new();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("message"),
+                    &JsValue::from_str(&format!("Index out of bounds in percentile calculation: lower={}, upper={}, length={}", lower, upper, sorted_values.len())),
+                ).unwrap();
+                js_sys::Reflect::set(
+                    &error_obj,
+                    &JsValue::from_str("type"),
+                    &JsValue::from_str("IndexOutOfBoundsError"),
+                ).unwrap();
+                return Err(error_obj.into());
+            }
+            
+            if lower == upper {
+                sorted_values[lower]
+            } else {
+                let weight = index - index.floor();
+                sorted_values[lower] * (1.0 - weight) + sorted_values[upper] * weight
+            }
+        }
+    };
+    
+    Ok(result)
+}
+
+/// 安全な島モデル進化をテストする関数
+#[wasm_bindgen]
+pub fn test_safe_island_evolution(agents_json: &str, num_islands: usize) -> Result<JsValue, JsValue> {
+    
+    let agents: Vec<Agent> = serde_json::from_str(agents_json)
+        .map_err(|e| JsValue::from_str(&format!("JSON parse error: {}", e)))?;
+    
+    if agents.is_empty() {
+        let error_obj = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("message"),
+            &JsValue::from_str("Cannot perform island evolution with empty agent population"),
+        ).unwrap();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("type"),
+            &JsValue::from_str("EmptyPopulationError"),
+        ).unwrap();
+        return Err(error_obj.into());
+    }
+    
+    if num_islands == 0 {
+        let error_obj = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("message"),
+            &JsValue::from_str("Number of islands must be greater than 0"),
+        ).unwrap();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("type"),
+            &JsValue::from_str("InvalidIslandCountError"),
+        ).unwrap();
+        js_sys::Reflect::set(
+            &error_obj,
+            &JsValue::from_str("numIslands"),
+            &JsValue::from_f64(num_islands as f64),
+        ).unwrap();
+        return Err(error_obj.into());
+    }
+    
+    // 島に人口を分割（安全版の模倣）
+    let island_size = agents.len() / num_islands;
+    let mut island_populations = Vec::new();
+    
+    for i in 0..num_islands {
+        let start = i * island_size;
+        let end = if i == num_islands - 1 {
+            agents.len()
+        } else {
+            (i + 1) * island_size
+        };
+        
+        if start >= agents.len() || end > agents.len() || start > end {
+            let error_obj = js_sys::Object::new();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("message"),
+                &JsValue::from_str(&format!("Invalid slice range [{}..{}] for agents length {}", start, end, agents.len())),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("type"),
+                &JsValue::from_str("IndexOutOfBoundsError"),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("start"),
+                &JsValue::from_f64(start as f64),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("end"),
+                &JsValue::from_f64(end as f64),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("length"),
+                &JsValue::from_f64(agents.len() as f64),
+            ).unwrap();
+            return Err(error_obj.into());
+        }
+        
+        island_populations.push(agents[start..end].to_vec());
+    }
+    
+    // 結果をJSONとして返す
+    let result = serde_json::json!({
+        "success": true,
+        "numIslands": num_islands,
+        "islandSizes": island_populations.iter().map(|pop| pop.len()).collect::<Vec<_>>(),
+        "totalAgents": agents.len(),
+        "message": "Island division completed successfully"
+    });
+    
+    Ok(JsValue::from_str(&result.to_string()))
 }
 
 // ========================================

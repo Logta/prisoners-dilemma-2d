@@ -290,16 +290,37 @@ impl SimulationService {
         
         // 現在のエージェントが空の場合は進化をスキップ
         if current_agents.is_empty() {
-            eprintln!("Warning: No agents available for evolution, skipping generation");
+            eprintln!("Critical: No agents available for evolution (population: 0), attempting emergency recovery");
+            self.add_emergency_agents();
             return;
         }
         
-        let next_generation = self.evolution_service.evolve_generation(&current_agents, target_population);
+        // 人口が極端に少ない場合の安全チェック
+        if current_agents.len() < 3 {
+            eprintln!("Warning: Very low population for evolution ({}), adding emergency agents first", current_agents.len());
+            self.add_emergency_agents();
+            // 緊急エージェント追加後に再度チェック
+            let updated_agents = self.grid.agents().clone();
+            if updated_agents.len() < 2 {
+                eprintln!("Critical: Still insufficient population after emergency agents, skipping evolution");
+                return;
+            }
+        }
+        
+        // 最新のエージェント情報を取得
+        let evolution_agents = self.grid.agents().clone();
+        let next_generation = self.evolution_service.evolve_generation(&evolution_agents, target_population);
         
         // 次世代が空の場合は進化をスキップして現在の世代を保持
         if next_generation.is_empty() {
-            eprintln!("Warning: Evolution produced no agents, keeping current generation");
+            eprintln!("Critical: Evolution produced no agents, keeping current generation and adding emergency agents");
+            self.add_emergency_agents();
             return;
+        }
+        
+        // 次世代が極端に少ない場合
+        if next_generation.len() < target_population / 2 {
+            eprintln!("Warning: Evolution produced very few agents ({}/{}), adding emergency agents", next_generation.len(), target_population);
         }
         
         // 新しい世代でグリッドをリセット
@@ -339,23 +360,68 @@ impl SimulationService {
         
         if placed_count == 0 {
             eprintln!("Critical: No agents were placed during evolution! Total agents: {}", total_agents);
-            eprintln!("Attempting to add random agents to prevent extinction...");
-            
-            // 絶滅を防ぐため、最小限のランダムエージェントを追加
-            let min_population = 10; // 最小10個のエージェント
-            for _ in 0..min_population {
-                if let Ok(_) = self.grid.add_random_agent() {
-                    placed_count += 1;
-                }
-            }
-            
-            if placed_count > 0 {
-                eprintln!("Added {} random agents to prevent extinction", placed_count);
-            } else {
-                eprintln!("Failed to add any agents - simulation may have issues");
-            }
+            self.add_emergency_agents();
         } else if placed_count < total_agents {
             eprintln!("Warning: Only {} out of {} agents were placed during evolution", placed_count, total_agents);
+        }
+    }
+    
+    /// 緊急時にランダムエージェントを追加
+    fn add_emergency_agents(&mut self) {
+        eprintln!("Adding emergency agents to prevent extinction...");
+        
+        // 現在の人口を確認
+        let current_population = self.grid.agent_count();
+        eprintln!("Current population before emergency intervention: {}", current_population);
+        
+        // 最小限のランダムエージェントを追加
+        let min_population = if self.config.initial_population < 20 {
+            self.config.initial_population / 2
+        } else {
+            10.max(self.config.initial_population / 4) // より多くの緊急エージェントを追加
+        };
+        
+        let mut added_count = 0;
+        let mut failed_attempts = 0;
+        let max_attempts = min_population * 3; // より多くの試行回数
+        
+        for attempt in 0..max_attempts {
+            if added_count >= min_population {
+                break;
+            }
+            
+            match self.grid.add_random_agent() {
+                Ok(_) => {
+                    added_count += 1;
+                },
+                Err(e) => {
+                    failed_attempts += 1;
+                    if attempt % 10 == 0 { // 10回ごとにログ出力
+                        eprintln!("Failed to add emergency agent (attempt {}): {}", attempt + 1, e);
+                    }
+                    
+                    // 失敗が多すぎる場合は諦める
+                    if failed_attempts > min_population * 2 {
+                        eprintln!("Too many failures adding emergency agents, stopping attempts");
+                        break;
+                    }
+                }
+            }
+        }
+        
+        let final_population = self.grid.agent_count();
+        
+        if added_count > 0 {
+            eprintln!("Successfully added {} emergency agents (population: {} -> {})", 
+                     added_count, current_population, final_population);
+        } else {
+            eprintln!("Critical: Failed to add any emergency agents - simulation may have critical issues");
+            eprintln!("Current grid state: agent_count={}, world_size={}x{}", 
+                     final_population, self.config.world_size.width, self.config.world_size.height);
+            
+            // デバッグ情報: 空きポジションを確認
+            let empty_positions = self.grid.get_empty_positions();
+            eprintln!("Available empty positions: {}", empty_positions.len());
         }
     }
 
@@ -378,16 +444,33 @@ impl SimulationService {
         let scores: Vec<f64> = agents.values().map(|a| a.state().score()).collect();
         let cooperations: Vec<f64> = agents.values().map(|a| a.traits().cooperation_tendency()).collect();
         
+        // 安全なスコア計算
         let total_score: f64 = scores.iter().sum();
         let total_cooperation: f64 = cooperations.iter().sum();
         
+        let agent_count = agents.len();
+        let average_score = if agent_count > 0 { total_score / agent_count as f64 } else { 0.0 };
+        let average_cooperation = if agent_count > 0 { total_cooperation / agent_count as f64 } else { 0.0 };
+        
+        // 安全なmin/max計算
+        let (max_score, min_score) = if scores.is_empty() {
+            (0.0, 0.0)
+        } else {
+            let max_val = scores.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
+            let min_val = scores.iter().fold(f64::INFINITY, |a, &b| a.min(b));
+            // 無限値の場合は0で置き換え
+            let max_score = if max_val.is_infinite() { 0.0 } else { max_val };
+            let min_score = if min_val.is_infinite() { 0.0 } else { min_val };
+            (max_score, min_score)
+        };
+        
         SimulationStats {
             generation: self.current_generation,
-            population: agents.len(),
-            average_score: total_score / agents.len() as f64,
-            max_score: scores.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b)),
-            min_score: scores.iter().fold(f64::INFINITY, |a, &b| a.min(b)),
-            average_cooperation: total_cooperation / agents.len() as f64,
+            population: agent_count,
+            average_score,
+            max_score,
+            min_score,
+            average_cooperation,
             total_battles: self.total_battles,
         }
     }
@@ -406,7 +489,17 @@ impl SimulationService {
     }
 
     pub fn is_finished(&self) -> bool {
-        self.current_generation >= self.config.max_generations || self.grid.agent_count() == 0
+        let generation_limit_reached = self.current_generation >= self.config.max_generations;
+        let no_agents = self.grid.agent_count() == 0;
+        
+        if generation_limit_reached {
+            eprintln!("Simulation finished: Generation limit reached ({}/{})", self.current_generation, self.config.max_generations);
+        }
+        if no_agents {
+            eprintln!("Simulation finished: No agents remaining");
+        }
+        
+        generation_limit_reached || no_agents
     }
 }
 
