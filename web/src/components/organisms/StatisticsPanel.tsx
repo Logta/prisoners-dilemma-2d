@@ -8,11 +8,13 @@ import { Button } from '../atoms/Button';
 import {
   statisticsAtom,
   generationHistoryAtom,
-  agentStatsByTypeAtom,
   selectedAgentAtom,
   currentGenerationAtom,
+} from '../../store/atoms/simulation';
+import {
+  agentStatsByTypeAtom,
   simulationProgressAtom,
-} from '../../store/atoms';
+} from '../../store/atoms/derived';
 import type { StatisticsPanelProps, Statistics } from '../../types';
 
 export function StatisticsPanel({

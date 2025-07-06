@@ -6,13 +6,15 @@ import { useState, useMemo, useCallback } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
 import {
   agentsAtom,
-  gridDimensionsAtom,
+  selectedAgentAtom,
+  selectedPositionAtom,
+} from '../../store/atoms/simulation';
+import { gridDimensionsAtom } from '../../store/atoms/derived';
+import {
   visualizationModeAtom,
   showGridAtom,
   showCoordinatesAtom,
-  selectedAgentAtom,
-  selectedPositionAtom,
-} from '../../store/atoms';
+} from '../../store/atoms/ui';
 import { useWasmSimulation } from '../../hooks/useWasmSimulation';
 import type { AgentData, GridComponentProps } from '../../types';
 

@@ -1,7 +1,7 @@
 import { Link, Outlet } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { ErrorDisplay } from '../molecules/ErrorDisplay';
-import { errorAtom } from '../../store/atoms';
+import { errorAtom } from '../../store/atoms/error';
 
 export function Layout() {
   const error = useAtomValue(errorAtom);

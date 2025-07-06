@@ -6,11 +6,8 @@ import { StatisticsPanel } from '../organisms/StatisticsPanel';
 import { ErrorDisplay } from '../molecules/ErrorDisplay';
 import { LoadingSpinner } from '../atoms/LoadingSpinner';
 import { useWasmSimulation } from '../../hooks/useWasmSimulation';
-import { 
-  isWasmInitializedAtom, 
-  isLoadingAtom, 
-  errorAtom 
-} from '../../store/atoms';
+import { isWasmInitializedAtom, isLoadingAtom } from '../../store/atoms/wasm';
+import { errorAtom } from '../../store/atoms/error';
 
 export function HomePage() {
   const isInitialized = useAtomValue(isWasmInitializedAtom);

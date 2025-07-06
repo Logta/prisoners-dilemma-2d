@@ -10,17 +10,23 @@ import {
   simulationConfigAtom,
   updateConfigAtom,
   loadPresetConfigAtom,
+} from '../../store/atoms/config';
+import {
   visualizationModeAtom,
   showGridAtom,
   showCoordinatesAtom,
   autoRunAtom,
   autoRunSpeedAtom,
+} from '../../store/atoms/ui';
+import {
   isSimulationRunningAtom,
-  isLoadingAtom,
   currentGenerationAtom,
+} from '../../store/atoms/simulation';
+import { isLoadingAtom } from '../../store/atoms/wasm';
+import {
   simulationProgressAtom,
   isSimulationFinishedAtom,
-} from '../../store/atoms';
+} from '../../store/atoms/derived';
 import { useWasmSimulation } from '../../hooks/useWasmSimulation';
 import type { ControlPanelProps, PresetType, SimulationConfig, VisualizationMode } from '../../types';
 
