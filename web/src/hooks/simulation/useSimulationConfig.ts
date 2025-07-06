@@ -47,7 +47,7 @@ export function useSimulationConfig() {
       setIsLoading(true);
       
       // Import WASM module again for new config
-      const wasmModule = await import('../../assets/wasm/prisoners_dilemma_2d.js');
+      const wasmModule = await import('../../assets/pkg/prisoners_dilemma_2d.js');
       
       // Free old config
       if (configRef.current && typeof configRef.current.free === 'function') {

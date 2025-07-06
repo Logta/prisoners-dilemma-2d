@@ -39,7 +39,7 @@ export function useWasmManager() {
 
       console.log('Initializing WASM module...');
       // Dynamic import of WASM module from assets directory
-      const wasmModule = await import('../../assets/wasm/prisoners_dilemma_2d.js');
+      const wasmModule = await import('../../assets/pkg/prisoners_dilemma_2d.js');
       await wasmModule.default(); // Initialize WASM
       
       console.log('Creating simulation manager...');
