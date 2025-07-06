@@ -57,8 +57,9 @@ jspm_packages/
 .parcel-cache
 
 # Build outputs
-/dist/
+dist
 /build/
+/web/dist/
 
 # IDE
 .vscode/
