@@ -1,363 +1,667 @@
 // ========================================
-// StatisticsPanel Organism Component
+// Statistics Panel Organism Component
 // ========================================
 
-import React, { useMemo } from 'react';
-import { useTheme } from '../../contexts/ApplicationContext';
-import { useSimulationContext } from '../../contexts/SimulationContext';
-import { Statistics } from '../../types';
-import { StatCard } from '../molecules/StatCard';
+import { useState } from 'react';
+import { useAtomValue } from 'jotai';
+import { Button } from '../atoms/Button';
+import {
+  statisticsAtom,
+  generationHistoryAtom,
+  agentStatsByTypeAtom,
+  selectedAgentAtom,
+  currentGenerationAtom,
+  simulationProgressAtom,
+} from '../../store/atoms';
+import type { StatisticsPanelProps, Statistics } from '../../types';
 
-export interface StatisticsPanelProps {
-  className?: string;
-  'data-testid'?: string;
-}
+export function StatisticsPanel({
+  className = '',
+  'data-testid': testId,
+  showHistory = true,
+}: StatisticsPanelProps) {
+  // Jotai state
+  const statistics = useAtomValue(statisticsAtom);
+  const generationHistory = useAtomValue(generationHistoryAtom);
+  const agentStats = useAtomValue(agentStatsByTypeAtom);
+  const selectedAgent = useAtomValue(selectedAgentAtom);
+  const currentGeneration = useAtomValue(currentGenerationAtom);
+  const progress = useAtomValue(simulationProgressAtom);
 
-export function StatisticsPanel({ className = '', 'data-testid': testId }: StatisticsPanelProps) {
-  const { simulation } = useSimulationContext();
-  const { theme } = useTheme();
+  // Local state
+  const [activeTab, setActiveTab] = useState<'current' | 'history' | 'agent'>('current');
+  const [historyRange, setHistoryRange] = useState(20); // Show last N generations
 
-  const currentSimulation = simulation.currentSimulation;
-  const statistics = currentSimulation?.statistics || [];
-  const latestStats = currentSimulation?.getLatestStatistics();
-
-  // トレンド計算
-  const trends = useMemo(() => {
-    if (statistics.length < 2) {
-      return {
-        cooperation: 'stable' as const,
-        movement: 'stable' as const,
-        population: 'stable' as const,
-        score: 'stable' as const,
-      };
-    }
-
-    const recent = statistics.slice(-5);
-    const older = statistics.slice(-10, -5);
-
-    if (recent.length === 0 || older.length === 0) {
-      return {
-        cooperation: 'stable' as const,
-        movement: 'stable' as const,
-        population: 'stable' as const,
-        score: 'stable' as const,
-      };
-    }
-
-    const recentAvg = {
-      cooperation: recent.reduce((sum, s) => sum + s.avg_cooperation, 0) / recent.length,
-      movement: recent.reduce((sum, s) => sum + s.avg_movement, 0) / recent.length,
-      population: recent.reduce((sum, s) => sum + s.population, 0) / recent.length,
-      score: recent.reduce((sum, s) => sum + s.avg_score, 0) / recent.length,
-    };
-
-    const olderAvg = {
-      cooperation: older.reduce((sum, s) => sum + s.avg_cooperation, 0) / older.length,
-      movement: older.reduce((sum, s) => sum + s.avg_movement, 0) / older.length,
-      population: older.reduce((sum, s) => sum + s.population, 0) / older.length,
-      score: older.reduce((sum, s) => sum + s.avg_score, 0) / older.length,
-    };
-
-    const threshold = 0.05; // 5%の変化を閾値とする
-
-    return {
-      cooperation:
-        recentAvg.cooperation > olderAvg.cooperation * (1 + threshold)
-          ? 'up'
-          : recentAvg.cooperation < olderAvg.cooperation * (1 - threshold)
-            ? 'down'
-            : 'stable',
-      movement:
-        recentAvg.movement > olderAvg.movement * (1 + threshold)
-          ? 'up'
-          : recentAvg.movement < olderAvg.movement * (1 - threshold)
-            ? 'down'
-            : 'stable',
-      population:
-        recentAvg.population > olderAvg.population * (1 + threshold)
-          ? 'up'
-          : recentAvg.population < olderAvg.population * (1 - threshold)
-            ? 'down'
-            : 'stable',
-      score:
-        recentAvg.score > olderAvg.score * (1 + threshold)
-          ? 'up'
-          : recentAvg.score < olderAvg.score * (1 - threshold)
-            ? 'down'
-            : 'stable',
-    };
-  }, [statistics]);
-
-  // パフォーマンスメトリクス
-  const performanceMetrics = currentSimulation?.getPerformanceMetrics();
-
-  const panelStyle = {
-    backgroundColor: theme.backgroundColor,
-    border: `1px solid ${theme.mode === 'dark' ? '#444' : '#e0e0e0'}`,
-    borderRadius: '8px',
-    boxShadow:
-      theme.mode === 'dark' ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)',
-    padding: '1.5rem',
+  // Calculate trends from history
+  const getTrend = (key: keyof Statistics): string => {
+    if (generationHistory.length < 2) return '—';
+    
+    const recent = generationHistory.slice(-5);
+    if (recent.length < 2) return '—';
+    
+    const first = recent[0][key] as number;
+    const last = recent[recent.length - 1][key] as number;
+    
+    if (Math.abs(last - first) < 0.001) return '→';
+    return last > first ? '↗' : '↘';
   };
 
-  const sectionStyle = {
-    marginBottom: '2rem',
+  // Format number with appropriate precision
+  const formatNumber = (value: number, precision: number = 2): string => {
+    if (value === 0) return '0';
+    if (Math.abs(value) < 0.001) return '~0';
+    return value.toFixed(precision);
   };
 
-  const sectionTitleStyle = {
-    alignItems: 'center',
-    color: theme.textColor,
-    display: 'flex',
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    gap: '0.5rem',
-    marginBottom: '1rem',
+  // Format percentage
+  const formatPercent = (value: number): string => {
+    return `${(value * 100).toFixed(1)}%`;
   };
 
-  const gridStyle = {
-    display: 'grid',
-    gap: '1rem',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-  };
+  // Export statistics as CSV
+  const exportStatistics = () => {
+    if (generationHistory.length === 0) return;
 
-  if (!latestStats) {
-    return (
-      <div className={className} data-testid={testId} style={panelStyle}>
-        <div
-          style={{
-            color: theme.mode === 'dark' ? '#888' : '#6c757d',
-            padding: '3rem',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📊</div>
-          <h3>統計データなし</h3>
-          <p>シミュレーションを開始すると統計情報が表示されます</p>
-        </div>
-      </div>
-    );
-  }
+    const csvHeaders = [
+      'Generation',
+      'Population',
+      'Average Score',
+      'Max Score',
+      'Min Score',
+      'Average Cooperation',
+      'Total Battles'
+    ].join(',');
+
+    const csvData = generationHistory
+      .map(stats => [
+        stats.generation,
+        stats.population,
+        stats.average_score,
+        stats.max_score,
+        stats.min_score,
+        stats.average_cooperation,
+        stats.total_battles
+      ].join(','))
+      .join('\n');
+
+    const csvContent = `${csvHeaders}\n${csvData}`;
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `simulation_statistics_gen${currentGeneration}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div className={className} data-testid={testId} style={panelStyle}>
-      {/* 基本統計 */}
-      <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>
-          <span>📈</span>
-          基本統計
-        </h3>
-
-        <div style={gridStyle}>
-          <StatCard icon="🔄" title="世代" value={latestStats.generation} variant="primary" />
-
-          <StatCard
-            icon="👥"
-            title="人口"
-            trend={trends.population}
-            trendValue={
-              trends.population !== 'stable'
-                ? `${Math.abs((statistics[statistics.length - 1]?.population || 0) - (statistics[statistics.length - 6]?.population || 0))}`
-                : undefined
-            }
-            value={latestStats.population}
-            variant="info"
-          />
-
-          <StatCard
-            icon="🤝"
-            title="平均協力率"
-            trend={trends.cooperation}
-            trendValue={
-              trends.cooperation !== 'stable'
-                ? `${Math.abs(((latestStats.avg_cooperation || 0) - (statistics[statistics.length - 6]?.avg_cooperation || 0)) * 100).toFixed(1)}%`
-                : undefined
-            }
-            value={`${(latestStats.avg_cooperation * 100).toFixed(1)}%`}
-            variant="success"
-          />
-
-          <StatCard
-            icon="🏆"
-            title="平均スコア"
-            trend={trends.score}
-            trendValue={
-              trends.score !== 'stable'
-                ? `${Math.abs((latestStats.avg_score || 0) - (statistics[statistics.length - 6]?.avg_score || 0)).toFixed(2)}`
-                : undefined
-            }
-            value={latestStats.avg_score.toFixed(2)}
-            variant="warning"
-          />
-        </div>
+    <div className={`statistics-panel ${className}`} data-testid={testId}>
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button
+          onClick={() => setActiveTab('current')}
+          className={`tab-button ${activeTab === 'current' ? 'active' : ''}`}
+        >
+          Current
+        </button>
+        {showHistory && (
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+          >
+            History
+          </button>
+        )}
+        {selectedAgent && (
+          <button
+            onClick={() => setActiveTab('agent')}
+            className={`tab-button ${activeTab === 'agent' ? 'active' : ''}`}
+          >
+            Agent
+          </button>
+        )}
       </div>
 
-      {/* 詳細統計 */}
-      <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>
-          <span>🔍</span>
-          詳細統計
-        </h3>
+      {/* Current Statistics Tab */}
+      {activeTab === 'current' && (
+        <div className="stats-content">
+          <div className="stats-section">
+            <h4 className="stats-title">Simulation Status</h4>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="stat-label">Generation:</span>
+                <span className="stat-value">{currentGeneration}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Progress:</span>
+                <span className="stat-value">{formatPercent(progress / 100)}</span>
+              </div>
+            </div>
+          </div>
 
-        <div style={gridStyle}>
-          <StatCard
-            icon="⬆️"
-            subtitle="人口中の最高協力率"
-            title="最大協力率"
-            value={`${(latestStats.max_cooperation * 100).toFixed(1)}%`}
-            variant="success"
-          />
+          <div className="stats-section">
+            <h4 className="stats-title">Population</h4>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="stat-label">Total:</span>
+                <span className="stat-value">{agentStats.total}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Alive:</span>
+                <span className="stat-value">{agentStats.alive}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Cooperators:</span>
+                <span className="stat-value">{agentStats.cooperators}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Defectors:</span>
+                <span className="stat-value">{agentStats.defectors}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Cooperation Rate:</span>
+                <span className="stat-value">{formatPercent(agentStats.cooperationRate)}</span>
+              </div>
+            </div>
+          </div>
 
-          <StatCard
-            icon="⬇️"
-            subtitle="人口中の最低協力率"
-            title="最小協力率"
-            value={`${(latestStats.min_cooperation * 100).toFixed(1)}%`}
-            variant="danger"
-          />
+          <div className="stats-section">
+            <h4 className="stats-title">Performance Metrics</h4>
+            <div className="stats-grid">
+              <div className="stat-item">
+                <span className="stat-label">Avg Score:</span>
+                <span className="stat-value">
+                  {formatNumber(statistics.average_score)}
+                  <span className="trend">{getTrend('average_score')}</span>
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Max Score:</span>
+                <span className="stat-value">
+                  {formatNumber(statistics.max_score)}
+                  <span className="trend">{getTrend('max_score')}</span>
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Min Score:</span>
+                <span className="stat-value">
+                  {formatNumber(statistics.min_score)}
+                  <span className="trend">{getTrend('min_score')}</span>
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Avg Cooperation:</span>
+                <span className="stat-value">
+                  {formatPercent(statistics.average_cooperation)}
+                  <span className="trend">{getTrend('average_cooperation')}</span>
+                </span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Total Battles:</span>
+                <span className="stat-value">{statistics.total_battles}</span>
+              </div>
+            </div>
+          </div>
 
-          <StatCard
-            icon="📊"
-            subtitle="人口の多様性指標"
-            title="協力率標準偏差"
-            value={`${(latestStats.std_cooperation * 100).toFixed(1)}%`}
-            variant="info"
-          />
-
-          <StatCard
-            icon="🏃"
-            subtitle="エージェントの活動性"
-            title="平均移動率"
-            trend={trends.movement}
-            value={`${(latestStats.avg_movement * 100).toFixed(1)}%`}
-            variant="secondary"
-          />
-        </div>
-      </div>
-
-      {/* パフォーマンス指標 */}
-      {performanceMetrics && (
-        <div style={sectionStyle}>
-          <h3 style={sectionTitleStyle}>
-            <span>⚡</span>
-            パフォーマンス
-          </h3>
-
-          <div style={gridStyle}>
-            <StatCard
-              icon="🚀"
-              subtitle="実行速度"
-              title="世代/秒"
-              value={performanceMetrics.generationsPerSecond.toFixed(2)}
-              variant="primary"
-            />
-
-            <StatCard
-              icon="👥"
-              subtitle="平均人口サイズ"
-              title="世代あたりエージェント数"
-              value={performanceMetrics.agentsPerGeneration.toFixed(0)}
-              variant="info"
-            />
-
-            <StatCard
-              icon="🎯"
-              subtitle="協力率の安定度"
-              title="協力安定性"
-              value={`${(performanceMetrics.cooperationStability * 100).toFixed(1)}%`}
-              variant="success"
-            />
-
-            <StatCard
-              icon="⏱️"
-              subtitle="累計実行時間"
-              title="実行時間"
-              value={
-                currentSimulation ? `${(currentSimulation.getRuntime() / 1000).toFixed(1)}s` : '0s'
-              }
+          {/* Export Button */}
+          <div className="stats-actions">
+            <Button
+              onClick={exportStatistics}
+              size="sm"
               variant="secondary"
-            />
+              disabled={generationHistory.length === 0}
+            >
+              Export CSV
+            </Button>
           </div>
         </div>
       )}
 
-      {/* 収束指標 */}
-      <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>
-          <span>🎯</span>
-          収束状況
-        </h3>
+      {/* History Tab */}
+      {activeTab === 'history' && showHistory && (
+        <div className="stats-content">
+          <div className="history-controls">
+            <label className="label">
+              Show last:
+              <select
+                value={historyRange}
+                onChange={(e) => setHistoryRange(Number(e.target.value))}
+                className="input select"
+              >
+                <option value={10}>10 generations</option>
+                <option value={20}>20 generations</option>
+                <option value={50}>50 generations</option>
+                <option value={100}>100 generations</option>
+                <option value={-1}>All</option>
+              </select>
+            </label>
+          </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gap: '1rem',
-            gridTemplateColumns: '1fr 1fr',
-          }}
-        >
-          <StatCard
-            icon={currentSimulation?.isConverged() ? '🔒' : '🔄'}
-            title="収束状態"
-            value={currentSimulation?.isConverged() ? '収束済み' : '進化中'}
-            variant={currentSimulation?.isConverged() ? 'warning' : 'success'}
-          />
+          <div className="history-table-container">
+            <table className="history-table">
+              <thead>
+                <tr>
+                  <th>Gen</th>
+                  <th>Pop</th>
+                  <th>Avg Score</th>
+                  <th>Coop %</th>
+                  <th>Battles</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(historyRange === -1 
+                  ? generationHistory 
+                  : generationHistory.slice(-historyRange)
+                ).map((stats) => (
+                  <tr key={stats.generation}>
+                    <td>{stats.generation}</td>
+                    <td>{stats.population}</td>
+                    <td>{formatNumber(stats.average_score, 1)}</td>
+                    <td>{formatPercent(stats.average_cooperation)}</td>
+                    <td>{stats.total_battles}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <StatCard
-            icon={
-              currentSimulation?.calculatePopulationTrend() === 'increasing'
-                ? '📈'
-                : currentSimulation?.calculatePopulationTrend() === 'decreasing'
-                  ? '📉'
-                  : '➡️'
-            }
-            title="人口トレンド"
-            value={currentSimulation?.calculatePopulationTrend() || 'stable'}
-            variant={
-              currentSimulation?.calculatePopulationTrend() === 'increasing'
-                ? 'success'
-                : currentSimulation?.calculatePopulationTrend() === 'decreasing'
-                  ? 'danger'
-                  : 'info'
-            }
-          />
+          {generationHistory.length === 0 && (
+            <div className="empty-state">
+              <p>No generation history available.</p>
+              <p>Start a simulation to see historical data.</p>
+            </div>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* 統計履歴サマリー */}
-      {statistics.length > 0 && (
-        <div
-          style={{
-            backgroundColor: theme.mode === 'dark' ? '#222' : '#f8f9fa',
-            borderRadius: '4px',
-            color: theme.mode === 'dark' ? '#b0b0b0' : '#6c757d',
-            fontSize: '0.875rem',
-            marginTop: '1.5rem',
-            padding: '1rem',
-          }}
-        >
-          <div
-            style={{
-              display: 'grid',
-              gap: '1rem',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            }}
-          >
-            <div>
-              <strong>総世代数:</strong> {statistics.length}
+      {/* Selected Agent Tab */}
+      {activeTab === 'agent' && selectedAgent && (
+        <div className="stats-content">
+          <div className="agent-info">
+            <h4 className="stats-title">Agent #{selectedAgent.id}</h4>
+            
+            <div className="agent-status">
+              <span className={`status-badge ${selectedAgent.is_alive ? 'alive' : 'dead'}`}>
+                {selectedAgent.is_alive ? 'Alive' : 'Dead'}
+              </span>
             </div>
-            <div>
-              <strong>最大人口:</strong> {Math.max(...statistics.map((s) => s.population))}
+
+            <div className="stats-section">
+              <h5 className="subsection-title">Position & Basic Info</h5>
+              <div className="stats-grid">
+                <div className="stat-item">
+                  <span className="stat-label">Position:</span>
+                  <span className="stat-value">({selectedAgent.x}, {selectedAgent.y})</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Age:</span>
+                  <span className="stat-value">{selectedAgent.age}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Energy:</span>
+                  <span className="stat-value">{formatNumber(selectedAgent.energy, 1)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Battles Fought:</span>
+                  <span className="stat-value">{selectedAgent.battles_fought}</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <strong>最高スコア:</strong>{' '}
-              {Math.max(...statistics.map((s) => s.avg_score)).toFixed(2)}
+
+            <div className="stats-section">
+              <h5 className="subsection-title">Traits</h5>
+              <div className="traits-display">
+                <div className="trait-bar">
+                  <span className="trait-label">Cooperation:</span>
+                  <div className="trait-bar-container">
+                    <div 
+                      className="trait-bar-fill cooperation"
+                      style={{ width: `${selectedAgent.cooperation_tendency * 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="trait-value">{formatPercent(selectedAgent.cooperation_tendency)}</span>
+                </div>
+
+                <div className="trait-bar">
+                  <span className="trait-label">Aggression:</span>
+                  <div className="trait-bar-container">
+                    <div 
+                      className="trait-bar-fill aggression"
+                      style={{ width: `${selectedAgent.aggression_level * 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="trait-value">{formatPercent(selectedAgent.aggression_level)}</span>
+                </div>
+
+                <div className="trait-bar">
+                  <span className="trait-label">Learning:</span>
+                  <div className="trait-bar-container">
+                    <div 
+                      className="trait-bar-fill learning"
+                      style={{ width: `${selectedAgent.learning_ability * 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="trait-value">{formatPercent(selectedAgent.learning_ability)}</span>
+                </div>
+
+                <div className="trait-bar">
+                  <span className="trait-label">Movement:</span>
+                  <div className="trait-bar-container">
+                    <div 
+                      className="trait-bar-fill movement"
+                      style={{ width: `${selectedAgent.movement_tendency * 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="trait-value">{formatPercent(selectedAgent.movement_tendency)}</span>
+                </div>
+              </div>
             </div>
-            <div>
-              <strong>協力トレンド:</strong>{' '}
-              {(currentSimulation?.calculateCooperationTrend() || 0).toFixed(3)}
+
+            <div className="stats-section">
+              <h5 className="subsection-title">Performance</h5>
+              <div className="stats-grid">
+                <div className="stat-item">
+                  <span className="stat-label">Score:</span>
+                  <span className="stat-value">{formatNumber(selectedAgent.score)}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">Fitness:</span>
+                  <span className="stat-value">{formatNumber(selectedAgent.fitness)}</span>
+                </div>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* No agent selected state */}
+      {activeTab === 'agent' && !selectedAgent && (
+        <div className="stats-content">
+          <div className="empty-state">
+            <p>No agent selected.</p>
+            <p>Click on an agent in the grid to view details.</p>
           </div>
         </div>
       )}
     </div>
   );
+}
+
+// Component styles
+const styles = `
+.statistics-panel {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  max-height: 80vh;
+}
+
+.tab-navigation {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-background);
+}
+
+.tab-button {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.tab-button:hover {
+  background-color: var(--color-border);
+}
+
+.tab-button.active {
+  color: var(--color-primary);
+  background-color: var(--color-surface);
+  border-bottom: 2px solid var(--color-primary);
+}
+
+.stats-content {
+  flex: 1;
+  padding: var(--spacing-md);
+  overflow-y: auto;
+}
+
+.stats-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.stats-title {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.subsection-title {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-sm);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.stat-value {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.trend {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.stats-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.history-controls {
+  margin-bottom: var(--spacing-md);
+}
+
+.history-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-sm);
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.history-table th,
+.history-table td {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  text-align: right;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.history-table th {
+  background-color: var(--color-background);
+  font-weight: 600;
+  color: var(--color-text);
+  position: sticky;
+  top: 0;
+}
+
+.history-table td {
+  color: var(--color-text-secondary);
+}
+
+.history-table tr:hover {
+  background-color: var(--color-background);
+}
+
+.agent-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.agent-status {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.status-badge {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.alive {
+  background-color: var(--color-success);
+  color: white;
+}
+
+.status-badge.dead {
+  background-color: var(--color-error);
+  color: white;
+}
+
+.traits-display {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.trait-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.trait-label {
+  min-width: 80px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.trait-bar-container {
+  flex: 1;
+  height: 8px;
+  background-color: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.trait-bar-fill {
+  height: 100%;
+  transition: width var(--transition-normal);
+}
+
+.trait-bar-fill.cooperation {
+  background: linear-gradient(90deg, #f44336 0%, #4caf50 100%);
+}
+
+.trait-bar-fill.aggression {
+  background: linear-gradient(90deg, #2196f3 0%, #f44336 100%);
+}
+
+.trait-bar-fill.learning {
+  background: linear-gradient(90deg, #9c27b0 0%, #ffeb3b 100%);
+}
+
+.trait-bar-fill.movement {
+  background: linear-gradient(90deg, #607d8b 0%, #ff9800 100%);
+}
+
+.trait-value {
+  min-width: 50px;
+  text-align: right;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+
+.empty-state p {
+  margin: var(--spacing-sm) 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .stats-grid {
+    gap: var(--spacing-xs);
+  }
+  
+  .trait-label {
+    min-width: 70px;
+    font-size: var(--font-size-xs);
+  }
+  
+  .history-table {
+    font-size: var(--font-size-xs);
+  }
+  
+  .history-table th,
+  .history-table td {
+    padding: var(--spacing-xs);
+  }
+}
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const existingStyle = document.getElementById('statistics-panel-styles');
+  if (!existingStyle) {
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'statistics-panel-styles';
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
+  }
 }

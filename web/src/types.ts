@@ -1,29 +1,35 @@
 // ========================================
-// エージェントとシミュレーション関連
+// Type Definitions for 2D Prisoner's Dilemma
+// ========================================
+
+// ========================================
+// Agent and Simulation Types
 // ========================================
 
 export interface AgentData {
+  id: number;
   x: number;
   y: number;
-  cooperation_rate: number;
-  movement_rate: number;
+  cooperation_tendency: number;
+  aggression_level: number;
+  learning_ability: number;
+  movement_tendency: number;
   score: number;
+  energy: number;
+  age: number;
+  battles_fought: number;
+  fitness: number;
+  is_alive: boolean;
 }
 
 export interface Statistics {
   generation: number;
   population: number;
-  avg_cooperation: number;
-  avg_movement: number;
-  avg_score: number;
-  min_cooperation: number;
-  max_cooperation: number;
-  std_cooperation: number;
-}
-
-export interface GridSize {
-  height: number;
-  width: number;
+  average_score: number;
+  max_score: number;
+  min_score: number;
+  average_cooperation: number;
+  total_battles: number;
 }
 
 export interface GridDimensions {
@@ -32,133 +38,173 @@ export interface GridDimensions {
 }
 
 // ========================================
-// シミュレーション設定
+// Simulation Configuration
 // ========================================
 
 export interface SimulationConfig {
-  battle_radius: number;
-  selection_method: string;
-  selection_param: number;
-  crossover_method: string;
-  crossover_param: number;
+  world_width: number;
+  world_height: number;
+  initial_population: number;
+  max_generations: number;
+  battles_per_generation: number;
+  neighbor_radius: number;
   mutation_rate: number;
   mutation_strength: number;
+  elite_ratio: number;
+  selection_method: "Tournament" | "Roulette" | "Rank";
+  crossover_method: "Uniform" | "OnePoint" | "TwoPoint";
 }
 
-export type SelectionMethod = 'top_percent' | 'tournament' | 'roulette_wheel';
-export type CrossoverMethod = 'one_point' | 'two_point' | 'uniform';
+// ========================================
+// UI State Types
+// ========================================
+
+export type VisualizationMode = 'cooperation' | 'score' | 'movement';
+
+export interface UIConfig {
+  visualizationMode: VisualizationMode;
+  showGrid: boolean;
+  showCoordinates: boolean;
+  autoRun: boolean;
+  autoRunSpeed: number; // ms per generation
+}
 
 // ========================================
-// 利得マトリックス
+// Battle and Evolution Types
 // ========================================
+
+export interface BattleResult {
+  agent1_id: number;
+  agent2_id: number;
+  agent1_cooperated: boolean;
+  agent2_cooperated: boolean;
+  agent1_score: number;
+  agent2_score: number;
+  round: number;
+}
 
 export interface PayoffMatrix {
-  cooperate_cooperate: number;
-  cooperate_defect: number;
-  defect_cooperate: number;
-  defect_defect: number;
+  mutual_cooperation: number;
+  mutual_defection: number;
+  cooperation_exploited: number;
+  defection_advantage: number;
 }
 
 // ========================================
-// エラーハンドリング
+// Preset Configurations
 // ========================================
 
-export interface SimulationError {
-  code: string;
-  message: string;
-}
+export type PresetType = 'small' | 'medium' | 'large' | 'custom';
 
-// ========================================
-// プリセット管理
-// ========================================
-
-export interface PresetData {
+export interface PresetConfig {
   name: string;
-  description?: string;
+  description: string;
   config: SimulationConfig;
-  gridSize: GridSize;
-  agentDensity: number;
-  payoffMatrix?: PayoffMatrix;
-  createdAt: Date;
 }
 
 // ========================================
-// チャート・グラフ関連
+// Error and Loading States
 // ========================================
+
+export interface ErrorState {
+  message: string;
+  timestamp: number;
+  recoverable: boolean;
+}
+
+export interface LoadingState {
+  isLoading: boolean;
+  operation?: string;
+  progress?: number;
+}
+
+// ========================================
+// Component Props Types
+// ========================================
+
+export interface GridComponentProps {
+  width?: number;
+  height?: number;
+  cellSize?: number;
+  showGrid?: boolean;
+  showCoordinates?: boolean;
+  colorMode?: VisualizationMode;
+  className?: string;
+  'data-testid'?: string;
+  onAgentClick?: (agent: AgentData) => void;
+  onCellClick?: (x: number, y: number) => void;
+}
+
+export interface ControlPanelProps {
+  className?: string;
+  'data-testid'?: string;
+}
+
+export interface StatisticsPanelProps {
+  className?: string;
+  'data-testid'?: string;
+  showHistory?: boolean;
+}
+
+// ========================================
+// Chart and History Types
+// ========================================
+
+export interface GenerationData {
+  generation: number;
+  statistics: Statistics;
+  timestamp: number;
+}
 
 export interface ChartDataPoint {
-  generation: number;
-  value: number;
+  x: number;
+  y: number;
   label?: string;
 }
 
-export interface HistoryData {
-  statistics: Statistics[];
-  totalGenerations: number;
-  startTime: Date;
-  endTime?: Date;
+export interface ChartSeries {
+  name: string;
+  data: ChartDataPoint[];
+  color?: string;
 }
 
 // ========================================
-// UI状態管理
+// Export and Import Types
 // ========================================
 
-export interface UIState {
-  isRunning: boolean;
-  isPaused: boolean;
-  showGraph: boolean;
-  selectedMetric: keyof Statistics;
-  animationSpeed: number;
-  gridZoom: number;
+export interface ExportData {
+  config: SimulationConfig;
+  history: GenerationData[];
+  finalAgents: AgentData[];
+  metadata: {
+    exportDate: string;
+    version: string;
+    totalGenerations: number;
+  };
+}
+
+export interface ImportResult {
+  success: boolean;
+  data?: ExportData;
+  error?: string;
 }
 
 // ========================================
-// パフォーマンス監視
+// Theme and Styling Types
 // ========================================
 
-export interface PerformanceMetrics {
-  averageGenerationTime: number;
-  totalSimulationTime: number;
-  memoryUsage?: number;
-  frameRate?: number;
-}
-
-// ========================================
-// イベントタイプ
-// ========================================
-
-export type SimulationEvent =
-  | { type: 'SIMULATION_STARTED'; payload: { config: SimulationConfig } }
-  | { type: 'GENERATION_COMPLETED'; payload: { generation: number; statistics: Statistics } }
-  | { type: 'EVOLUTION_COMPLETED'; payload: { generation: number; populationSize: number } }
-  | { type: 'SIMULATION_PAUSED'; payload: { generation: number } }
-  | { type: 'SIMULATION_RESET'; payload: {} }
-  | { type: 'ERROR_OCCURRED'; payload: { error: SimulationError } };
-
-// ========================================
-// 型ガード
-// ========================================
-
-export function isValidGridSize(size: any): size is GridSize {
-  return (
-    typeof size === 'object' &&
-    typeof size.width === 'number' &&
-    typeof size.height === 'number' &&
-    size.width > 0 &&
-    size.height > 0 &&
-    size.width <= 2000 &&
-    size.height <= 2000
-  );
-}
-
-export function isValidDensity(density: any): density is number {
-  return typeof density === 'number' && density >= 0 && density <= 1;
-}
-
-export function isValidSelectionMethod(method: any): method is SelectionMethod {
-  return ['top_percent', 'tournament', 'roulette_wheel'].includes(method);
-}
-
-export function isValidCrossoverMethod(method: any): method is CrossoverMethod {
-  return ['one_point', 'two_point', 'uniform'].includes(method);
+export interface Theme {
+  mode: 'light' | 'dark';
+  colors: {
+    primary: string;
+    secondary: string;
+    background: string;
+    surface: string;
+    text: string;
+    textSecondary: string;
+    border: string;
+    success: string;
+    warning: string;
+    error: string;
+  };
 }

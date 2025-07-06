@@ -1,228 +1,232 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { SimulationEngine } from '../../pkg/prisoners_dilemma_2d';
-import ControlPanel from './components/ControlPanel';
-import GraphPopup from './components/GraphPopup';
-import GridVisualization from './components/GridVisualization';
-import StatisticsPanel from './components/StatisticsPanel';
-import type { AgentData, GridSize, Statistics } from './types';
-import './App.css';
+// ========================================
+// Main Application Component
+// ========================================
 
-export default function App() {
-  // シミュレーション状態
-  const [engine, setEngine] = useState<SimulationEngine | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const animationIdRef = useRef<number | null>(null);
+import { useEffect } from 'react';
+import { useAtomValue } from 'jotai';
+import { SimulationGrid } from './components/organisms/SimulationGrid';
+import { ControlPanel } from './components/organisms/ControlPanel';
+import { StatisticsPanel } from './components/organisms/StatisticsPanel';
+import { ErrorDisplay } from './components/molecules/ErrorDisplay';
+import { LoadingSpinner } from './components/atoms/LoadingSpinner';
+import { useWasmSimulation } from './hooks/useWasmSimulation';
+import { 
+  isWasmInitializedAtom, 
+  isLoadingAtom, 
+  errorAtom 
+} from './store/atoms';
 
-  // シミュレーションパラメータ
-  const [gridSize, setGridSize] = useState<GridSize>({ height: 100, width: 100 });
-  const [agentDensity, setAgentDensity] = useState(0.3);
-  const [battleRadius, setBattleRadius] = useState(2);
-  const [speed, setSpeed] = useState(100); // ms per generation
+export function App() {
+  const isInitialized = useAtomValue(isWasmInitializedAtom);
+  const isLoading = useAtomValue(isLoadingAtom);
+  const error = useAtomValue(errorAtom);
+  
+  const { initializeWasm } = useWasmSimulation();
 
-  // 遺伝的アルゴリズムパラメータ
-  const [selectionMethod, setSelectionMethod] = useState('top_percent');
-  const [selectionParam, setSelectionParam] = useState(0.5);
-  const [crossoverMethod, setCrossoverMethod] = useState('one_point');
-  const [crossoverParam, setCrossoverParam] = useState(0.5);
-  const [mutationRate, setMutationRate] = useState(0.1);
-  const [mutationStrength, setMutationStrength] = useState(0.05);
-
-  // 統計データ
-  const [agentData, setAgentData] = useState<AgentData[]>([]);
-  const [statistics, setStatistics] = useState<Statistics>({
-    avg_cooperation: 0,
-    avg_movement: 0,
-    avg_score: 0,
-    generation: 0,
-    population: 0,
-  });
-  const [historyData, setHistoryData] = useState<Statistics[]>([]);
-  const [showGraph, setShowGraph] = useState(false);
-
-  // データ更新関数
-  const updateData = useCallback((engine: SimulationEngine) => {
-    try {
-      const agents = engine.get_agent_data();
-      setAgentData(Array.from(agents));
-      const newStats = engine.get_statistics() as Statistics;
-      setStatistics(newStats);
-
-      // 履歴データに追加（10世代ごと、または最初の統計）
-      if (newStats.generation === 0 || newStats.generation % 10 === 0) {
-        setHistoryData((prev) => {
-          // 同じ世代のデータが既にある場合は更新、ない場合は追加
-          const existingIndex = prev.findIndex((stat) => stat.generation === newStats.generation);
-          if (existingIndex >= 0) {
-            const updated = [...prev];
-            updated[existingIndex] = newStats;
-            return updated;
-          } else {
-            return [...prev, newStats];
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error updating data:', error);
-      return;
-    }
-  }, []);
-
-  // シミュレーションエンジンを初期化（グリッドサイズまたは密度変更時のみ）
+  // Initialize WASM on app start
   useEffect(() => {
-    if (isRunning) return; // 実行中は再初期化しない
-
-    try {
-      const newEngine = new SimulationEngine(gridSize.width, gridSize.height);
-      newEngine.populate_agents(agentDensity);
-      setEngine(newEngine);
-      updateData(newEngine);
-    } catch (error) {
-      console.error('Error initializing simulation engine:', error);
+    if (!isInitialized && !isLoading) {
+      initializeWasm();
     }
-  }, [gridSize, agentDensity, isRunning, updateData]);
+  }, [isInitialized, isLoading, initializeWasm]);
 
-  // シミュレーションループ
-  const runSimulation = useCallback(() => {
-    if (!engine || !isRunning) return;
-
-    try {
-      // 1世代実行
-      engine.run_generation(battleRadius);
-
-      // 進化処理（10世代ごと）
-      const generation = engine.get_generation();
-      if (generation % 10 === 0) {
-        engine.evolve_population(
-          selectionMethod,
-          selectionParam,
-          crossoverMethod,
-          crossoverParam,
-          mutationRate,
-          mutationStrength
-        );
-      }
-
-      updateData(engine);
-
-      // 次のフレームをスケジュール
-      const id = window.setTimeout(() => {
-        window.requestAnimationFrame(runSimulation);
-      }, speed);
-      animationIdRef.current = id as unknown as number;
-    } catch (error) {
-      console.error('Error in simulation loop:', error);
-      setIsRunning(false);
-      if (animationIdRef.current !== null) {
-        window.clearTimeout(animationIdRef.current);
-        animationIdRef.current = null;
-      }
-    }
-  }, [
-    engine,
-    isRunning,
-    battleRadius,
-    selectionMethod,
-    selectionParam,
-    crossoverMethod,
-    crossoverParam,
-    mutationRate,
-    mutationStrength,
-    speed,
-    updateData,
-  ]);
-
-  // シミュレーション開始/停止
-  const toggleSimulation = useCallback(() => {
-    if (isRunning) {
-      setIsRunning(false);
-      if (animationIdRef.current !== null) {
-        window.clearTimeout(animationIdRef.current);
-        animationIdRef.current = null;
-      }
-    } else {
-      setIsRunning(true);
-    }
-  }, [isRunning]);
-
-  // リセット
-  const resetSimulation = useCallback(() => {
-    setIsRunning(false);
-    if (animationIdRef.current !== null) {
-      window.clearTimeout(animationIdRef.current);
-      animationIdRef.current = null;
-    }
-
-    if (engine) {
-      engine.reset();
-      engine.populate_agents(agentDensity);
-      updateData(engine);
-    }
-
-    // 履歴データもリセット
-    setHistoryData([]);
-  }, [engine, agentDensity, updateData]);
-
-  // シミュレーション開始時の処理
-  useEffect(() => {
-    if (isRunning) {
-      runSimulation();
-    }
-  }, [isRunning, runSimulation]);
-
-  // クリーンアップ
-  useEffect(() => {
-    return () => {
-      if (animationIdRef.current !== null) {
-        clearTimeout(animationIdRef.current);
-      }
-    };
-  }, []);
-
-  return (
-    <div className="app">
-      <div className="main-content">
-        <GridVisualization agents={agentData} gridSize={gridSize} />
-        <div className="side-panel">
-          <ControlPanel
-            agentDensity={agentDensity}
-            agents={agentData}
-            battleRadius={battleRadius}
-            crossoverMethod={crossoverMethod}
-            crossoverParam={crossoverParam}
-            gridSize={gridSize}
-            historyData={historyData}
-            isRunning={isRunning}
-            mutationRate={mutationRate}
-            mutationStrength={mutationStrength}
-            onReset={resetSimulation}
-            onToggle={toggleSimulation}
-            selectionMethod={selectionMethod}
-            selectionParam={selectionParam}
-            setAgentDensity={setAgentDensity}
-            setBattleRadius={setBattleRadius}
-            setCrossoverMethod={setCrossoverMethod}
-            setCrossoverParam={setCrossoverParam}
-            setGridSize={setGridSize}
-            setMutationRate={setMutationRate}
-            setMutationStrength={setMutationStrength}
-            setSelectionMethod={setSelectionMethod}
-            setSelectionParam={setSelectionParam}
-            setSpeed={setSpeed}
-            speed={speed}
-            statistics={statistics}
-          />
-          <StatisticsPanel
-            agents={agentData}
-            onShowGraph={() => setShowGraph(true)}
-            statistics={statistics}
-          />
-        </div>
+  // Show loading state
+  if (isLoading && !isInitialized) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <LoadingSpinner message="WASMモジュールを初期化中..." />
       </div>
-      <GraphPopup
-        historyData={historyData}
-        isOpen={showGraph}
-        onClose={() => setShowGraph(false)}
-      />
+    );
+  }
+
+  // Show error state
+  if (error && !isInitialized) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <ErrorDisplay 
+          error={error} 
+          onRetry={initializeWasm}
+          title="初期化エラー"
+        />
+      </div>
+    );
+  }
+
+  // Show main application
+  if (isInitialized) {
+    return (
+      <div className="app-layout">
+        <header className="app-header">
+          <div className="container">
+            <h1 className="app-title">2D Prisoner's Dilemma Simulation</h1>
+            <p className="app-subtitle">
+              二次元空間での囚人のジレンマと進化シミュレーション
+            </p>
+          </div>
+        </header>
+
+        <main className="app-main">
+          <div className="container">
+            <div className="simulation-layout">
+              {/* Left Panel - Controls */}
+              <aside className="control-panel-container">
+                <ControlPanel />
+              </aside>
+
+              {/* Center - Grid Visualization */}
+              <section className="grid-container">
+                <SimulationGrid />
+              </section>
+
+              {/* Right Panel - Statistics */}
+              <aside className="statistics-panel-container">
+                <StatisticsPanel />
+              </aside>
+            </div>
+          </div>
+        </main>
+
+        {/* Global Error Display */}
+        {error && (
+          <div className="error-overlay">
+            <ErrorDisplay 
+              error={error} 
+              onRetry={() => window.location.reload()}
+              dismissible
+            />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback loading state
+  return (
+    <div className="flex items-center justify-center h-full">
+      <LoadingSpinner message="アプリケーションを読み込み中..." />
     </div>
   );
+}
+
+// Inline styles for layout (can be moved to separate CSS file later)
+const styles = `
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  color: white;
+  padding: var(--spacing-lg) 0;
+  box-shadow: var(--shadow-md);
+}
+
+.app-title {
+  margin: 0;
+  font-size: var(--font-size-xxl);
+  font-weight: 600;
+}
+
+.app-subtitle {
+  margin: var(--spacing-sm) 0 0 0;
+  font-size: var(--font-size-md);
+  opacity: 0.9;
+}
+
+.app-main {
+  flex: 1;
+  padding: var(--spacing-lg) 0;
+}
+
+.simulation-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr 300px;
+  gap: var(--spacing-lg);
+  min-height: 600px;
+}
+
+.control-panel-container,
+.statistics-panel-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-surface);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-md);
+}
+
+.error-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .simulation-layout {
+    grid-template-columns: 280px 1fr 280px;
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 992px) {
+  .simulation-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--spacing-md);
+  }
+  
+  .control-panel-container {
+    order: 1;
+  }
+  
+  .grid-container {
+    order: 2;
+    min-height: 400px;
+  }
+  
+  .statistics-panel-container {
+    order: 3;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    padding: var(--spacing-md) 0;
+  }
+  
+  .app-title {
+    font-size: var(--font-size-xl);
+  }
+  
+  .app-subtitle {
+    font-size: var(--font-size-sm);
+  }
+  
+  .simulation-layout {
+    gap: var(--spacing-sm);
+  }
+}
+`;
+
+// Inject styles (in a real app, this would be in a separate CSS file)
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
 }

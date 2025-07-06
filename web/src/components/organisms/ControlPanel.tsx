@@ -1,369 +1,659 @@
 // ========================================
-// ControlPanel Organism Component
+// Control Panel Organism Component
 // ========================================
 
 import React, { useState } from 'react';
-import { useTheme } from '../../contexts/ApplicationContext';
-import { useSimulationController } from '../../hooks/useSimulationController';
-import type { GridDimensions, SimulationConfig } from '../../types';
-import { ControlButton } from '../molecules/ControlButton';
-import { FormField } from '../molecules/FormField';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { Button } from '../atoms/Button';
+import { LoadingSpinner } from '../atoms/LoadingSpinner';
+import {
+  simulationConfigAtom,
+  updateConfigAtom,
+  loadPresetConfigAtom,
+  visualizationModeAtom,
+  showGridAtom,
+  showCoordinatesAtom,
+  autoRunAtom,
+  autoRunSpeedAtom,
+  isSimulationRunningAtom,
+  isLoadingAtom,
+  currentGenerationAtom,
+  simulationProgressAtom,
+  isSimulationFinishedAtom,
+} from '../../store/atoms';
+import { useWasmSimulation } from '../../hooks/useWasmSimulation';
+import type { ControlPanelProps, PresetType, SimulationConfig, VisualizationMode } from '../../types';
 
-export interface ControlPanelProps {
-  className?: string;
-  'data-testid'?: string;
-}
+export function ControlPanel({
+  className = '',
+  'data-testid': testId,
+}: ControlPanelProps) {
+  // Jotai state
+  const [config] = useAtom(simulationConfigAtom);
+  const [visualizationMode, setVisualizationMode] = useAtom(visualizationModeAtom);
+  const [showGrid, setShowGrid] = useAtom(showGridAtom);
+  const [showCoordinates, setShowCoordinates] = useAtom(showCoordinatesAtom);
+  const [autoRun, setAutoRun] = useAtom(autoRunAtom);
+  const [autoRunSpeed, setAutoRunSpeed] = useAtom(autoRunSpeedAtom);
+  
+  const isRunning = useAtomValue(isSimulationRunningAtom);
+  const isLoading = useAtomValue(isLoadingAtom);
+  const currentGeneration = useAtomValue(currentGenerationAtom);
+  const progress = useAtomValue(simulationProgressAtom);
+  const isFinished = useAtomValue(isSimulationFinishedAtom);
+  
+  const updateConfig = useSetAtom(updateConfigAtom);
+  const loadPreset = useSetAtom(loadPresetConfigAtom);
 
-export function ControlPanel({ className = '', 'data-testid': testId }: ControlPanelProps) {
-  const controller = useSimulationController();
-  const { theme } = useTheme();
+  // WASM simulation hook
+  const {
+    startSimulation,
+    stopSimulation,
+    resetSimulation,
+    runStep,
+    runGeneration,
+    runMultipleGenerations,
+  } = useWasmSimulation();
 
-  const [config, setConfig] = useState<SimulationConfig>({
-    crossover_rate: 0.8,
-    elitism_rate: 0.1,
-    min_population_size: 10,
-    mutation_rate: 0.1,
-    population_size: 100,
-    selection_pressure: 2.0,
-  });
+  // Local state for advanced settings
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [multiGenCount, setMultiGenCount] = useState(10);
 
-  const [gridDimensions, setGridDimensions] = useState<GridDimensions>({
-    height: 50,
-    width: 50,
-  });
-
-  const [autoRunInterval, setAutoRunInterval] = useState<number>(1000);
-
-  const panelStyle = {
-    backgroundColor: theme.backgroundColor,
-    border: `1px solid ${theme.mode === 'dark' ? '#444' : '#e0e0e0'}`,
-    borderRadius: '8px',
-    boxShadow:
-      theme.mode === 'dark' ? '0 2px 4px rgba(0, 0, 0, 0.3)' : '0 2px 4px rgba(0, 0, 0, 0.1)',
-    padding: '1.5rem',
+  // Handle configuration changes
+  const handleConfigChange = (key: keyof SimulationConfig, value: any) => {
+    updateConfig({ [key]: value });
   };
 
-  const sectionStyle = {
-    borderBottom: `1px solid ${theme.mode === 'dark' ? '#333' : '#f0f0f0'}`,
-    marginBottom: '2rem',
-    paddingBottom: '1.5rem',
+  // Handle preset selection
+  const handlePresetChange = (preset: PresetType) => {
+    loadPreset(preset);
   };
 
-  const sectionTitleStyle = {
-    alignItems: 'center',
-    color: theme.textColor,
-    display: 'flex',
-    fontSize: '1.125rem',
-    fontWeight: '600',
-    gap: '0.5rem',
-    marginBottom: '1rem',
-  };
+  // Auto-run functionality
+  React.useEffect(() => {
+    if (!autoRun || !isRunning || isFinished) return;
 
-  const buttonGroupStyle = {
-    display: 'grid',
-    gap: '0.75rem',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-    marginBottom: '1rem',
-  };
+    const interval = setInterval(() => {
+      if (!isLoading) {
+        runGeneration();
+      }
+    }, autoRunSpeed);
 
-  const handleConfigChange = (field: keyof SimulationConfig, value: number) => {
-    setConfig((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleGridChange = (field: keyof GridDimensions, value: number) => {
-    setGridDimensions((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleCreateNew = async () => {
-    try {
-      await controller.createNew(config, gridDimensions);
-    } catch (error) {
-      console.error('Failed to create simulation:', error);
-    }
-  };
-
-  const handleUpdateConfig = async () => {
-    try {
-      await controller.updateConfiguration(config);
-    } catch (error) {
-      console.error('Failed to update configuration:', error);
-    }
-  };
-
-  const handleAutoRunIntervalChange = (value: number) => {
-    setAutoRunInterval(value);
-    if (controller.isAutoRunning) {
-      controller.setAutoRunInterval(value);
-    }
-  };
+    return () => clearInterval(interval);
+  }, [autoRun, isRunning, isFinished, isLoading, autoRunSpeed, runGeneration]);
 
   return (
-    <div className={className} data-testid={testId} style={panelStyle}>
-      {/* シミュレーション制御 */}
-      <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>
-          <span>🎮</span>
-          シミュレーション制御
-        </h3>
-
-        <div style={buttonGroupStyle}>
-          <ControlButton
-            disabled={controller.isRunning}
-            icon="▶️"
-            keyboard="Space"
-            loading={controller.isRunning && !controller.isPaused}
-            onClick={controller.start}
-            tooltip="シミュレーションを開始"
-            variant="success"
-          >
-            開始
-          </ControlButton>
-
-          <ControlButton
-            disabled={!controller.isRunning || controller.isPaused}
-            icon="⏸️"
-            keyboard="P"
-            onClick={controller.pause}
-            tooltip="シミュレーションを一時停止"
-            variant="warning"
-          >
-            一時停止
-          </ControlButton>
-
-          <ControlButton
-            disabled={!controller.isPaused}
-            icon="▶️"
-            keyboard="R"
-            onClick={controller.resume}
-            tooltip="シミュレーションを再開"
-            variant="primary"
-          >
-            再開
-          </ControlButton>
-
-          <ControlButton
-            disabled={!controller.isRunning}
-            icon="⏹️"
-            keyboard="S"
-            onClick={controller.stop}
-            tooltip="シミュレーションを停止"
-            variant="danger"
-          >
-            停止
-          </ControlButton>
+    <div className={`control-panel ${className}`} data-testid={testId}>
+      <div className="control-section">
+        <h3 className="section-title">Simulation Control</h3>
+        
+        {/* Progress Display */}
+        <div className="progress-display">
+          <div className="progress-info">
+            <span>Generation: {currentGeneration} / {config.max_generations}</span>
+            <span>{progress.toFixed(1)}%</span>
+          </div>
+          <div className="progress-bar">
+            <div 
+              className="progress-fill" 
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
         </div>
 
-        <div style={buttonGroupStyle}>
-          <ControlButton
-            disabled={controller.isRunning}
-            icon="⏭️"
-            keyboard="→"
-            onClick={controller.step}
-            tooltip="1世代だけ進める"
-            variant="outline"
+        {/* Main Control Buttons */}
+        <div className="control-buttons">
+          {!isRunning ? (
+            <Button 
+              onClick={startSimulation}
+              disabled={isLoading}
+              variant="success"
+              className="w-full"
+            >
+              {isLoading ? <LoadingSpinner size="sm" /> : null}
+              Start Simulation
+            </Button>
+          ) : (
+            <Button 
+              onClick={stopSimulation}
+              variant="warning"
+              className="w-full"
+            >
+              Stop Simulation
+            </Button>
+          )}
+          
+          <Button 
+            onClick={resetSimulation}
+            disabled={isLoading}
+            variant="secondary"
+            className="w-full"
           >
-            ステップ
-          </ControlButton>
+            Reset
+          </Button>
+        </div>
 
-          <ControlButton
-            disabled={controller.isRunning}
-            icon="🔄"
-            onClick={controller.reset}
-            tooltip="シミュレーションをリセット"
+        {/* Step Controls */}
+        <div className="step-controls">
+          <Button 
+            onClick={runStep}
+            disabled={isLoading || isRunning || isFinished}
+            size="sm"
+          >
+            Step
+          </Button>
+          
+          <Button 
+            onClick={runGeneration}
+            disabled={isLoading || isRunning || isFinished}
+            size="sm"
+          >
+            1 Generation
+          </Button>
+          
+          <div className="multi-gen-control">
+            <input
+              type="number"
+              value={multiGenCount}
+              onChange={(e) => setMultiGenCount(Number(e.target.value))}
+              min="1"
+              max="100"
+              className="input"
+              style={{ width: '60px', fontSize: 'var(--font-size-sm)' }}
+            />
+            <Button 
+              onClick={() => runMultipleGenerations(multiGenCount)}
+              disabled={isLoading || isRunning || isFinished}
+              size="sm"
+            >
+              Run
+            </Button>
+          </div>
+        </div>
+
+        {/* Auto Run Control */}
+        <div className="auto-run-control">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={autoRun}
+              onChange={(e) => setAutoRun(e.target.checked)}
+              disabled={!isRunning}
+            />
+            Auto Run
+          </label>
+          
+          {autoRun && (
+            <div className="speed-control">
+              <label className="label">Speed (ms/gen):</label>
+              <input
+                type="range"
+                min="50"
+                max="2000"
+                step="50"
+                value={autoRunSpeed}
+                onChange={(e) => setAutoRunSpeed(Number(e.target.value))}
+                className="slider"
+              />
+              <span className="speed-value">{autoRunSpeed}ms</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Visualization Settings */}
+      <div className="control-section">
+        <h3 className="section-title">Visualization</h3>
+        
+        <div className="control-group">
+          <label className="label">Color Mode:</label>
+          <select
+            value={visualizationMode}
+            onChange={(e) => setVisualizationMode(e.target.value as VisualizationMode)}
+            className="input select"
+          >
+            <option value="cooperation">Cooperation</option>
+            <option value="score">Score</option>
+            <option value="movement">Movement</option>
+          </select>
+        </div>
+
+        <div className="checkbox-group">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={showGrid}
+              onChange={(e) => setShowGrid(e.target.checked)}
+            />
+            Show Grid Lines
+          </label>
+          
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={showCoordinates}
+              onChange={(e) => setShowCoordinates(e.target.checked)}
+            />
+            Show Coordinates
+          </label>
+        </div>
+      </div>
+
+      {/* Preset Configuration */}
+      <div className="control-section">
+        <h3 className="section-title">Presets</h3>
+        
+        <div className="preset-buttons">
+          <Button 
+            onClick={() => handlePresetChange('small')}
+            disabled={isRunning}
+            size="sm"
             variant="secondary"
           >
-            リセット
-          </ControlButton>
-
-          <ControlButton
-            badge={controller.isAutoRunning ? 'ON' : 'OFF'}
-            badgeVariant={controller.isAutoRunning ? 'success' : 'secondary'}
-            icon={controller.isAutoRunning ? '⏹️' : '🔄'}
-            onClick={() =>
-              controller.isAutoRunning
-                ? controller.stopAutoRun()
-                : controller.startAutoRun(autoRunInterval)
-            }
-            tooltip="自動実行の切り替え"
-            variant={controller.isAutoRunning ? 'danger' : 'primary'}
+            Small (30×30)
+          </Button>
+          <Button 
+            onClick={() => handlePresetChange('medium')}
+            disabled={isRunning}
+            size="sm"
+            variant="secondary"
           >
-            自動実行
-          </ControlButton>
+            Medium (50×50)
+          </Button>
+          <Button 
+            onClick={() => handlePresetChange('large')}
+            disabled={isRunning}
+            size="sm"
+            variant="secondary"
+          >
+            Large (100×100)
+          </Button>
         </div>
+      </div>
 
-        {/* 実行状況 */}
-        <div
-          style={{
-            backgroundColor: theme.mode === 'dark' ? '#222' : '#f8f9fa',
-            borderRadius: '4px',
-            display: 'grid',
-            fontSize: '0.875rem',
-            gap: '1rem',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            padding: '1rem',
-          }}
+      {/* Basic Configuration */}
+      <div className="control-section">
+        <h3 className="section-title">Configuration</h3>
+        
+        <div className="config-grid">
+          <div className="control-group">
+            <label className="label">World Width:</label>
+            <input
+              type="number"
+              value={config.world_width}
+              onChange={(e) => handleConfigChange('world_width', Number(e.target.value))}
+              min="10"
+              max="200"
+              disabled={isRunning}
+              className="input"
+            />
+          </div>
+          
+          <div className="control-group">
+            <label className="label">World Height:</label>
+            <input
+              type="number"
+              value={config.world_height}
+              onChange={(e) => handleConfigChange('world_height', Number(e.target.value))}
+              min="10"
+              max="200"
+              disabled={isRunning}
+              className="input"
+            />
+          </div>
+          
+          <div className="control-group">
+            <label className="label">Population:</label>
+            <input
+              type="number"
+              value={config.initial_population}
+              onChange={(e) => handleConfigChange('initial_population', Number(e.target.value))}
+              min="10"
+              max="10000"
+              disabled={isRunning}
+              className="input"
+            />
+          </div>
+          
+          <div className="control-group">
+            <label className="label">Max Generations:</label>
+            <input
+              type="number"
+              value={config.max_generations}
+              onChange={(e) => handleConfigChange('max_generations', Number(e.target.value))}
+              min="1"
+              max="10000"
+              disabled={isRunning}
+              className="input"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Advanced Configuration */}
+      <div className="control-section">
+        <button 
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="section-toggle"
         >
-          <div>
-            <strong>世代:</strong> {controller.generation}
+          <h3 className="section-title">
+            Advanced Settings 
+            <span className={`toggle-icon ${showAdvanced ? 'expanded' : ''}`}>▼</span>
+          </h3>
+        </button>
+        
+        {showAdvanced && (
+          <div className="advanced-config">
+            <div className="config-grid">
+              <div className="control-group">
+                <label className="label">Battles/Gen:</label>
+                <input
+                  type="number"
+                  value={config.battles_per_generation}
+                  onChange={(e) => handleConfigChange('battles_per_generation', Number(e.target.value))}
+                  min="1"
+                  max="1000"
+                  disabled={isRunning}
+                  className="input"
+                />
+              </div>
+              
+              <div className="control-group">
+                <label className="label">Neighbor Radius:</label>
+                <input
+                  type="number"
+                  value={config.neighbor_radius}
+                  onChange={(e) => handleConfigChange('neighbor_radius', Number(e.target.value))}
+                  min="1"
+                  max="10"
+                  disabled={isRunning}
+                  className="input"
+                />
+              </div>
+              
+              <div className="control-group">
+                <label className="label">Mutation Rate:</label>
+                <input
+                  type="number"
+                  value={config.mutation_rate}
+                  onChange={(e) => handleConfigChange('mutation_rate', Number(e.target.value))}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  disabled={isRunning}
+                  className="input"
+                />
+              </div>
+              
+              <div className="control-group">
+                <label className="label">Mutation Strength:</label>
+                <input
+                  type="number"
+                  value={config.mutation_strength}
+                  onChange={(e) => handleConfigChange('mutation_strength', Number(e.target.value))}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  disabled={isRunning}
+                  className="input"
+                />
+              </div>
+              
+              <div className="control-group">
+                <label className="label">Elite Ratio:</label>
+                <input
+                  type="number"
+                  value={config.elite_ratio}
+                  onChange={(e) => handleConfigChange('elite_ratio', Number(e.target.value))}
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  disabled={isRunning}
+                  className="input"
+                />
+              </div>
+              
+              <div className="control-group">
+                <label className="label">Selection Method:</label>
+                <select
+                  value={config.selection_method}
+                  onChange={(e) => handleConfigChange('selection_method', e.target.value)}
+                  disabled={isRunning}
+                  className="input select"
+                >
+                  <option value="Tournament">Tournament</option>
+                  <option value="Roulette">Roulette</option>
+                  <option value="Rank">Rank</option>
+                </select>
+              </div>
+              
+              <div className="control-group">
+                <label className="label">Crossover Method:</label>
+                <select
+                  value={config.crossover_method}
+                  onChange={(e) => handleConfigChange('crossover_method', e.target.value)}
+                  disabled={isRunning}
+                  className="input select"
+                >
+                  <option value="Uniform">Uniform</option>
+                  <option value="OnePoint">One Point</option>
+                  <option value="TwoPoint">Two Point</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div>
-            <strong>FPS:</strong> {controller.fps.toFixed(1)}
-          </div>
-          <div>
-            <strong>前回実行時間:</strong> {controller.lastGenerationTime.toFixed(1)}ms
-          </div>
-          <div>
-            <strong>状態:</strong>{' '}
-            {controller.isRunning ? (controller.isPaused ? '一時停止' : '実行中') : '停止'}
-          </div>
-        </div>
-      </div>
-
-      {/* 自動実行設定 */}
-      <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>
-          <span>⚡</span>
-          自動実行設定
-        </h3>
-
-        <FormField
-          helperText="自動実行時の世代間隔（ミリ秒）"
-          id="auto-run-interval"
-          label="実行間隔 (ms)"
-          max={10000}
-          min={100}
-          onChange={(value) => handleAutoRunIntervalChange(Number(value))}
-          step={100}
-          type="number"
-          value={autoRunInterval}
-        />
-      </div>
-
-      {/* グリッド設定 */}
-      <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>
-          <span>🔧</span>
-          グリッド設定
-        </h3>
-
-        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr' }}>
-          <FormField
-            id="grid-width"
-            label="幅"
-            max={200}
-            min={10}
-            onChange={(value) => handleGridChange('width', Number(value))}
-            type="number"
-            value={gridDimensions.width}
-          />
-
-          <FormField
-            id="grid-height"
-            label="高さ"
-            max={200}
-            min={10}
-            onChange={(value) => handleGridChange('height', Number(value))}
-            type="number"
-            value={gridDimensions.height}
-          />
-        </div>
-      </div>
-
-      {/* 進化パラメータ */}
-      <div style={sectionStyle}>
-        <h3 style={sectionTitleStyle}>
-          <span>🧬</span>
-          進化パラメータ
-        </h3>
-
-        <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: '1fr 1fr' }}>
-          <FormField
-            id="population-size"
-            label="人口サイズ"
-            max={1000}
-            min={10}
-            onChange={(value) => handleConfigChange('population_size', Number(value))}
-            type="number"
-            value={config.population_size}
-          />
-
-          <FormField
-            id="mutation-rate"
-            label="突然変異率"
-            max={0.5}
-            min={0.01}
-            onChange={(value) => handleConfigChange('mutation_rate', Number(value))}
-            step={0.01}
-            type="number"
-            value={config.mutation_rate}
-          />
-
-          <FormField
-            id="crossover-rate"
-            label="交叉率"
-            max={1.0}
-            min={0.1}
-            onChange={(value) => handleConfigChange('crossover_rate', Number(value))}
-            step={0.1}
-            type="number"
-            value={config.crossover_rate}
-          />
-
-          <FormField
-            id="selection-pressure"
-            label="選択圧"
-            max={5.0}
-            min={1.0}
-            onChange={(value) => handleConfigChange('selection_pressure', Number(value))}
-            step={0.1}
-            type="number"
-            value={config.selection_pressure}
-          />
-
-          <FormField
-            id="elitism-rate"
-            label="エリート率"
-            max={0.5}
-            min={0.0}
-            onChange={(value) => handleConfigChange('elitism_rate', Number(value))}
-            step={0.05}
-            type="number"
-            value={config.elitism_rate}
-          />
-
-          <FormField
-            id="min-population"
-            label="最小人口"
-            max={100}
-            min={5}
-            onChange={(value) => handleConfigChange('min_population_size', Number(value))}
-            type="number"
-            value={config.min_population_size}
-          />
-        </div>
-
-        <div style={buttonGroupStyle}>
-          <ControlButton
-            disabled={controller.isRunning}
-            icon="🆕"
-            onClick={handleCreateNew}
-            tooltip="新しいシミュレーションを作成"
-            variant="success"
-          >
-            新規作成
-          </ControlButton>
-
-          <ControlButton
-            disabled={controller.isRunning}
-            icon="🔄"
-            onClick={handleUpdateConfig}
-            tooltip="現在の設定を更新"
-            variant="primary"
-          >
-            設定更新
-          </ControlButton>
-        </div>
+        )}
       </div>
     </div>
   );
+}
+
+// Component styles
+const styles = `
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.control-section {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+}
+
+.section-title {
+  margin: 0 0 var(--spacing-md) 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.section-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.toggle-icon {
+  transition: transform var(--transition-fast);
+  float: right;
+  font-size: var(--font-size-sm);
+}
+
+.toggle-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.progress-display {
+  margin-bottom: var(--spacing-md);
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  transition: width var(--transition-normal);
+}
+
+.control-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.step-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.multi-gen-control {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.auto-run-control {
+  padding: var(--spacing-sm);
+  background-color: var(--color-background);
+  border-radius: var(--border-radius-sm);
+}
+
+.speed-control {
+  margin-top: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.slider {
+  flex: 1;
+  height: 4px;
+  background: var(--color-border);
+  border-radius: 2px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--color-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+
+.speed-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  min-width: 50px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+.preset-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.preset-buttons button:last-child {
+  grid-column: 1 / -1;
+}
+
+.config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.advanced-config {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .config-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .step-controls {
+    flex-direction: column;
+  }
+  
+  .preset-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const existingStyle = document.getElementById('control-panel-styles');
+  if (!existingStyle) {
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'control-panel-styles';
+    styleSheet.textContent = styles;
+    document.head.appendChild(styleSheet);
+  }
 }
