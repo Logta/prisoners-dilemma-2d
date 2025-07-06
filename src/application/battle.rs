@@ -98,12 +98,12 @@ impl BattleUseCase {
         // 基本的な協力判定のみを行い、相互作用記録は省略
         let agent1_cooperates = {
             let mut agent1_clone = agent1.clone();
-            agent1_clone.decides_to_cooperate_with(command.agent2_id)
+            agent1_clone.decides_to_cooperate_with(command.agent2_id).unwrap_or(false)
         };
         
         let agent2_cooperates = {
             let mut agent2_clone = agent2.clone();
-            agent2_clone.decides_to_cooperate_with(command.agent1_id)
+            agent2_clone.decides_to_cooperate_with(command.agent1_id).unwrap_or(false)
         };
         
         let outcome = self.battle_service.payoff_matrix().calculate_outcome(agent1_cooperates, agent2_cooperates);

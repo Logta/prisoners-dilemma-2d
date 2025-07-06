@@ -179,6 +179,31 @@ pub struct WasmSimulationManager {
     simulation_use_case: SimulationUseCase,
 }
 
+/// カスタムエラー用のWasmエラー
+#[wasm_bindgen]
+pub struct WasmError {
+    message: String,
+    error_type: String,
+}
+
+#[wasm_bindgen]
+impl WasmError {
+    #[wasm_bindgen(constructor)]
+    pub fn new(message: String, error_type: String) -> Self {
+        Self { message, error_type }
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn message(&self) -> String {
+        self.message.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn error_type(&self) -> String {
+        self.error_type.clone()
+    }
+}
+
 #[wasm_bindgen]
 impl WasmSimulationManager {
     #[wasm_bindgen(constructor)]
@@ -221,6 +246,13 @@ impl WasmSimulationManager {
     /// 1ステップ実行
     #[wasm_bindgen]
     pub fn step(&mut self) -> Result<JsValue, JsValue> {
+        // ステップ実行前にシミュレーションが終了していないかチェック
+        if let Ok(is_finished) = handle_result(self.simulation_use_case.is_finished()) {
+            if is_finished {
+                return Err(JsValue::from_str("Simulation has finished"));
+            }
+        }
+        
         let result = handle_result(self.simulation_use_case.step())?;
         
         let json_result = serde_json::to_string(&result)
@@ -231,6 +263,13 @@ impl WasmSimulationManager {
     /// 1世代実行
     #[wasm_bindgen]
     pub fn run_generation(&mut self) -> Result<JsValue, JsValue> {
+        // 世代実行前にシミュレーションが終了していないかチェック
+        if let Ok(is_finished) = handle_result(self.simulation_use_case.is_finished()) {
+            if is_finished {
+                return Err(JsValue::from_str("Simulation has finished"));
+            }
+        }
+        
         let result = handle_result(self.simulation_use_case.run_generation())?;
         
         let json_result = serde_json::to_string(&result)
@@ -252,6 +291,14 @@ impl WasmSimulationManager {
     #[wasm_bindgen]
     pub fn get_current_agents(&self) -> Result<JsValue, JsValue> {
         let agents_map = handle_result(self.simulation_use_case.get_current_agents())?;
+        
+        // エージェントが0の場合は空の配列を返す
+        if agents_map.is_empty() {
+            let empty_vec: Vec<crate::infrastructure::serialization::AgentCsvData> = Vec::new();
+            let json_result = serde_json::to_string(&empty_vec)
+                .map_err(|e| JsValue::from_str(&format!("JSON serialization error: {}", e)))?;
+            return Ok(JsValue::from_str(&json_result));
+        }
         
         // HashMapをVecに変換してフロントエンドで使いやすくする
         // AgentCsvDataに変換してフラットな構造にする
@@ -373,6 +420,40 @@ impl WasmBattleManager {
     #[wasm_bindgen]
     pub fn clear_history(&mut self) {
         self.battle_use_case.clear_history();
+    }
+}
+
+/// エージェントの協力決定をテストする関数
+#[wasm_bindgen]
+pub fn test_agent_cooperation_decision(agent_json: &str, opponent_id: u64) -> Result<bool, JsValue> {
+    let mut agent: Agent = serde_json::from_str(agent_json)
+        .map_err(|e| JsValue::from_str(&format!("JSON parse error: {}", e)))?;
+    
+    let opponent_agent_id = AgentId::new(opponent_id);
+    
+    match agent.decides_to_cooperate_with(opponent_agent_id) {
+        Ok(cooperation_decision) => Ok(cooperation_decision),
+        Err(err_msg) => {
+            // カスタムエラーメッセージとタイプを含むJavaScriptエラーを投げる
+            let error_obj = js_sys::Object::new();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("message"),
+                &JsValue::from_str(&err_msg),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("type"),
+                &JsValue::from_str("AgentCooperationError"),
+            ).unwrap();
+            js_sys::Reflect::set(
+                &error_obj,
+                &JsValue::from_str("agentId"),
+                &JsValue::from_f64(agent.id().value() as f64),
+            ).unwrap();
+            
+            Err(error_obj.into())
+        }
     }
 }
 

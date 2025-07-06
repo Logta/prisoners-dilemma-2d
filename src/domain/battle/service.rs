@@ -27,10 +27,10 @@ impl BattleService {
         &self,
         agent1: &mut Agent,
         agent2: &mut Agent,
-    ) -> BattleOutcome {
+    ) -> Result<BattleOutcome, String> {
         // 新しい戦略システムを使用して協力判定
-        let agent1_cooperates = agent1.decides_to_cooperate_with(agent2.id());
-        let agent2_cooperates = agent2.decides_to_cooperate_with(agent1.id());
+        let agent1_cooperates = agent1.decides_to_cooperate_with(agent2.id())?;
+        let agent2_cooperates = agent2.decides_to_cooperate_with(agent1.id())?;
 
         let outcome = self.payoff_matrix.calculate_outcome(agent1_cooperates, agent2_cooperates);
 
@@ -38,7 +38,7 @@ impl BattleService {
         agent1.record_interaction(agent2.id(), agent1_cooperates, agent2_cooperates, outcome.agent1_score);
         agent2.record_interaction(agent1.id(), agent2_cooperates, agent1_cooperates, outcome.agent2_score);
 
-        outcome
+        Ok(outcome)
     }
 
     /// 利得マトリクスを取得
@@ -73,7 +73,7 @@ mod tests {
         let mut agent1 = create_test_agent(1, 0.8, 0.1); // Always Cooperate
         let mut agent2 = create_test_agent(2, 0.3, 0.2); // Always Defect
         
-        let outcome = service.execute_battle(&mut agent1, &mut agent2);
+        let outcome = service.execute_battle(&mut agent1, &mut agent2).unwrap();
         
         // 結果が有効な範囲内であることを確認
         assert!(outcome.agent1_score >= 0.0);
@@ -90,7 +90,7 @@ mod tests {
         
         // 複数回戦闘を実行して戦略の動作を確認
         for _ in 0..5 {
-            let _outcome = service.execute_battle(&mut agent1, &mut agent2);
+            let _outcome = service.execute_battle(&mut agent1, &mut agent2).unwrap();
         }
         
         // エージェントが相互作用履歴を持っていることを確認

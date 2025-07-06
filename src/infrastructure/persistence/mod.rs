@@ -21,7 +21,7 @@ pub use file_utils::FileUtilsService;
 mod tests {
     use super::*;
     use crate::domain::{Agent, AgentId, AgentTraits, Position, SimulationConfig, WorldSize, EvolutionConfig, SelectionMethod, CrossoverMethod};
-    use crate::application::{SimulationResult, GenerationHistory, BattleHistoryResult};
+    use crate::application::SimulationResult;
     use std::collections::HashMap;
 
     fn create_test_agent() -> Agent {
@@ -50,12 +50,12 @@ mod tests {
     }
 
     fn create_test_simulation_result() -> SimulationResult {
+        use crate::domain::SimulationStats;
+        
         SimulationResult {
-            final_generation: Vec::new(),
-            generation_history: Vec::new(),
-            final_statistics: crate::application::SimulationStatistics {
+            final_stats: SimulationStats {
                 generation: 0,
-                population_size: 0,
+                population: 0,
                 avg_cooperation_rate: 0.0,
                 avg_movement_rate: 0.0,
                 avg_aggression_level: 0.0,
@@ -64,7 +64,8 @@ mod tests {
                 diversity_index: 0.0,
                 total_battles: 0,
             },
-            total_time: std::time::Duration::from_secs(1),
+            generation_history: Vec::new(),
+            final_agents: Vec::new(),
         }
     }
 

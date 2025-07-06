@@ -159,8 +159,9 @@ impl SimulationService {
                 let neighbors = self.grid.get_neighbors(agent_pos, self.config.neighbor_radius);
                 
                 if !neighbors.is_empty() {
-                    let opponent = neighbors.choose(&mut rng).unwrap();
-                    self.execute_battle(agent_id, opponent.id());
+                    if let Some(opponent) = neighbors.choose(&mut rng) {
+                        self.execute_battle(agent_id, opponent.id());
+                    }
                 }
             }
         }
@@ -176,7 +177,7 @@ impl SimulationService {
             // 戦略の決定と相互作用記録のため、別のアプローチを使用
             let agent1_cooperates = {
                 if let Some(agent1_mut) = self.grid.get_agent_mut(agent1_id) {
-                    agent1_mut.decides_to_cooperate_with(agent2_id)
+                    agent1_mut.decides_to_cooperate_with(agent2_id).unwrap_or(false)
                 } else {
                     false
                 }
@@ -184,7 +185,7 @@ impl SimulationService {
             
             let agent2_cooperates = {
                 if let Some(agent2_mut) = self.grid.get_agent_mut(agent2_id) {
-                    agent2_mut.decides_to_cooperate_with(agent1_id)
+                    agent2_mut.decides_to_cooperate_with(agent1_id).unwrap_or(false)
                 } else {
                     false
                 }
@@ -242,8 +243,17 @@ impl SimulationService {
                     continue;
                 }
                 
-                let new_x = (position.x as i32 + dx).max(0) as u32;
-                let new_y = (position.y as i32 + dy).max(0) as u32;
+                // 座標計算の安全性を確保
+                let new_x = position.x as i32 + dx;
+                let new_y = position.y as i32 + dy;
+                
+                // 負の値をチェック
+                if new_x < 0 || new_y < 0 {
+                    continue;
+                }
+                
+                let new_x = new_x as u32;
+                let new_y = new_y as u32;
                 let new_pos = Position::new(new_x, new_y);
                 
                 if new_x < self.config.world_size.width 
@@ -278,12 +288,35 @@ impl SimulationService {
         let current_agents = self.grid.agents().clone();
         let target_population = self.config.initial_population;
         
+        // 現在のエージェントが空の場合は進化をスキップ
+        if current_agents.is_empty() {
+            eprintln!("Warning: No agents available for evolution, skipping generation");
+            return;
+        }
+        
         let next_generation = self.evolution_service.evolve_generation(&current_agents, target_population);
         
+        // 次世代が空の場合は進化をスキップして現在の世代を保持
+        if next_generation.is_empty() {
+            eprintln!("Warning: Evolution produced no agents, keeping current generation");
+            return;
+        }
+        
         // 新しい世代でグリッドをリセット
-        self.grid = Grid::new(self.config.world_size).unwrap();
+        match Grid::new(self.config.world_size) {
+            Ok(new_grid) => {
+                self.grid = new_grid;
+            }
+            Err(e) => {
+                eprintln!("Failed to create new grid during evolution: {}", e);
+                return; // 進化に失敗した場合は現在のグリッドを保持
+            }
+        }
         
         // 新しいエージェントを配置
+        let mut placed_count = 0;
+        let total_agents = next_generation.len();
+        
         for agent in next_generation {
             let empty_positions = self.grid.get_empty_positions();
             if let Some(position) = {
@@ -298,9 +331,31 @@ impl SimulationService {
                 if let Ok(placed_id) = self.grid.add_agent_at(position) {
                     if let Some(placed_agent) = self.grid.get_agent_mut(placed_id) {
                         *placed_agent = evolved_agent;
+                        placed_count += 1;
                     }
                 }
             }
+        }
+        
+        if placed_count == 0 {
+            eprintln!("Critical: No agents were placed during evolution! Total agents: {}", total_agents);
+            eprintln!("Attempting to add random agents to prevent extinction...");
+            
+            // 絶滅を防ぐため、最小限のランダムエージェントを追加
+            let min_population = 10; // 最小10個のエージェント
+            for _ in 0..min_population {
+                if let Ok(_) = self.grid.add_random_agent() {
+                    placed_count += 1;
+                }
+            }
+            
+            if placed_count > 0 {
+                eprintln!("Added {} random agents to prevent extinction", placed_count);
+            } else {
+                eprintln!("Failed to add any agents - simulation may have issues");
+            }
+        } else if placed_count < total_agents {
+            eprintln!("Warning: Only {} out of {} agents were placed during evolution", placed_count, total_agents);
         }
     }
 

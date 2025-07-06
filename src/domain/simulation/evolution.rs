@@ -86,24 +86,39 @@ impl EvolutionService {
         target_population: usize,
     ) -> Vec<Agent> {
         if agents.is_empty() {
+            eprintln!("Warning: evolve_generation called with empty agent list");
             return Vec::new();
         }
 
         let mut sorted_agents: Vec<&Agent> = agents.values().collect();
-        sorted_agents.sort_by(|a, b| b.fitness().partial_cmp(&a.fitness()).unwrap());
+        sorted_agents.sort_by(|a, b| b.fitness().partial_cmp(&a.fitness()).unwrap_or(std::cmp::Ordering::Equal));
+
+        // エージェントが少ない場合の安全チェック
+        if sorted_agents.is_empty() {
+            eprintln!("Warning: No agents available for evolution");
+            return Vec::new();
+        }
 
         let elite_count = (target_population as f64 * self.config.elite_ratio) as usize;
         let mut next_generation = Vec::new();
 
         // エリートを保持
         for i in 0..elite_count.min(sorted_agents.len()) {
-            next_generation.push(sorted_agents[i].clone());
+            if let Some(agent) = sorted_agents.get(i) {
+                next_generation.push((*agent).clone());
+            }
         }
 
         // 残りを交叉と突然変異で生成
         let mut next_id = agents.len() as u64 + 1;
         let mut attempts = 0;
         while next_generation.len() < target_population && attempts < target_population * 10 {
+            // エージェントリストが空でないことを確認
+            if sorted_agents.is_empty() {
+                eprintln!("Warning: Agent list became empty during evolution");
+                break;
+            }
+
             let parent1 = self.select_parent(&sorted_agents);
             let parent2 = self.select_parent(&sorted_agents);
 
@@ -150,6 +165,7 @@ impl EvolutionService {
         tournament
             .iter()
             .max_by(|a, b| a.fitness().partial_cmp(&b.fitness()).unwrap_or(std::cmp::Ordering::Equal))
+            .copied()
             .unwrap_or(&agents[0])
     }
 
@@ -165,7 +181,7 @@ impl EvolutionService {
         let total_fitness: f64 = agents.iter().map(|a| a.fitness().max(0.0)).sum();
         
         if total_fitness <= 0.0 {
-            return agents[0];
+            return &agents[0];
         }
         
         let mut target = rng.gen_range(0.0..total_fitness);
@@ -177,7 +193,7 @@ impl EvolutionService {
             }
         }
         
-        agents[0] // フォールバック
+        &agents[0] // フォールバック
     }
 
     /// ランク選択
@@ -201,7 +217,7 @@ impl EvolutionService {
             }
         }
         
-        sorted_agents[0] // フォールバック
+        &sorted_agents[0] // フォールバック
     }
 
     /// 設定を取得

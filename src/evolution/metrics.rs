@@ -247,8 +247,8 @@ impl EvolutionTracker {
             return 0.0;
         }
 
-        let first_fitness = self.history[0].fitness_stats.mean;
-        let last_fitness = self.history.back().unwrap().fitness_stats.mean;
+        let first_fitness = self.history.front().map(|r| r.fitness_stats.mean).unwrap_or(0.0);
+        let last_fitness = self.history.back().map(|r| r.fitness_stats.mean).unwrap_or(0.0);
         let fitness_improvement = last_fitness - first_fitness;
 
         let total_time_s = self
@@ -363,8 +363,8 @@ impl MetricsCalculator {
             / fitness_values.len() as f64;
         let std_dev = variance.sqrt();
 
-        let min = sorted_values[0];
-        let max = sorted_values[sorted_values.len() - 1];
+        let min = sorted_values.first().copied().unwrap_or(0.0);
+        let max = sorted_values.last().copied().unwrap_or(0.0);
         let median = Self::percentile(&sorted_values, 0.5);
         let quartile_25 = Self::percentile(&sorted_values, 0.25);
         let quartile_75 = Self::percentile(&sorted_values, 0.75);

@@ -49,7 +49,10 @@ impl Grid {
 
         use rand::seq::SliceRandom;
         let mut rng = rand::thread_rng();
-        let position = *empty_positions.choose(&mut rng).unwrap();
+        let position = empty_positions
+            .choose(&mut rng)
+            .copied()
+            .ok_or(GridError::PositionOccupied)?;
 
         self.add_agent_at(position)
     }
@@ -128,10 +131,16 @@ impl Grid {
                     continue;
                 }
 
-                let neighbor_pos = Position::new(
-                    (position.x as i32 + dx).max(0) as u32,
-                    (position.y as i32 + dy).max(0) as u32,
-                );
+                // 座標計算の安全性を確保
+                let new_x = position.x as i32 + dx;
+                let new_y = position.y as i32 + dy;
+                
+                // 負の値や境界外の値をチェック
+                if new_x < 0 || new_y < 0 {
+                    continue;
+                }
+                
+                let neighbor_pos = Position::new(new_x as u32, new_y as u32);
 
                 if self.is_position_valid(neighbor_pos) {
                     if let Some(agent) = self.get_agent_at(neighbor_pos) {

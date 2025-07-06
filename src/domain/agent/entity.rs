@@ -91,8 +91,22 @@ impl Agent {
     }
 
     /// 特定の相手に対する協力決定（戦略ベース）
-    pub fn decides_to_cooperate_with(&mut self, opponent_id: AgentId) -> bool {
+    pub fn decides_to_cooperate_with(&mut self, opponent_id: AgentId) -> Result<bool, String> {
         let mut cooperation_rate = self.traits.cooperation_tendency();
+        
+        // バリデーション: 協力率が無効な値でないかチェック
+        if cooperation_rate < 0.0 || cooperation_rate > 1.0 {
+            return Err(format!(
+                "Invalid cooperation tendency: {} for agent {}. Must be between 0.0 and 1.0", 
+                cooperation_rate, 
+                self.id.value()
+            ));
+        }
+        
+        // エージェントが生存しているかチェック
+        if !self.is_alive() {
+            return Err(format!("Agent {} is not alive and cannot make cooperation decisions", self.id.value()));
+        }
         
         // 環境要因による調整
         if self.state.energy() < 30.0 {
@@ -106,11 +120,11 @@ impl Agent {
         cooperation_rate = cooperation_rate.min(1.0);
         
         // 戦略に基づく協力決定
-        self.strategy.decide_cooperation(opponent_id, cooperation_rate)
+        Ok(self.strategy.decide_cooperation(opponent_id, cooperation_rate))
     }
 
     /// 協力するかどうかの決定（一般版 - ダミー相手IDを使用）
-    pub fn decides_to_cooperate(&mut self) -> bool {
+    pub fn decides_to_cooperate(&mut self) -> Result<bool, String> {
         // ダミーのAgentIdを使用して戦略ベース判定を行う
         let dummy_opponent = AgentId::new(0);
         self.decides_to_cooperate_with(dummy_opponent)
@@ -231,7 +245,7 @@ mod tests {
         // 確率的なので複数回テスト
         let mut cooperation_count = 0;
         for _ in 0..100 {
-            if agent.decides_to_cooperate() {
+            if agent.decides_to_cooperate().unwrap_or(false) {
                 cooperation_count += 1;
             }
         }
@@ -321,7 +335,7 @@ mod tests {
         // 低エネルギーでは協力率が下がる
         let mut cooperation_count = 0;
         for _ in 0..100 {
-            if agent.decides_to_cooperate() {
+            if agent.decides_to_cooperate().unwrap_or(false) {
                 cooperation_count += 1;
             }
         }

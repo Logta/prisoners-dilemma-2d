@@ -4,7 +4,7 @@
 
 use super::types::{ExportData, ExportFormat, ExportType, PersistenceError, SavedSimulationResult};
 use crate::domain::{Agent, AgentId};
-use crate::application::{SimulationResult, BattleHistoryResult};
+use crate::application::SimulationResult;
 use crate::infrastructure::SerializationService;
 use std::collections::HashMap;
 

@@ -118,7 +118,8 @@ impl EvolutionStrategy for MultiObjectiveEvolution {
         result.new_generation.sort_by_key(|agent| {
             let objectives = self.evaluate_objectives(agent);
             // 単純化: 最初の目的関数の負の値でソート
-            -(objectives[0] * 1000.0) as i64
+            let first_objective = objectives.first().copied().unwrap_or(0.0);
+            -(first_objective * 1000.0) as i64
         });
 
         self.generations_run += 1;

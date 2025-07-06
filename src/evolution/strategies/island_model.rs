@@ -60,11 +60,12 @@ impl IslandModelEvolution {
     }
 
     fn migrate_agents(&mut self, populations: &mut [Vec<Agent>]) {
-        if populations.len() < 2 {
+        if populations.len() < 2 || populations.is_empty() {
             return;
         }
 
-        let migration_count = (populations[0].len() as f64 * self.migration_rate) as usize;
+        let first_pop_len = populations.first().map(|p| p.len()).unwrap_or(0);
+        let migration_count = (first_pop_len as f64 * self.migration_rate) as usize;
         if migration_count == 0 {
             return;
         }
@@ -160,7 +161,9 @@ impl EvolutionStrategy for IslandModelEvolution {
     }
 
     fn get_config(&self) -> &EvolutionConfig {
-        &self.islands[0].config
+        self.islands.first().map(|i| &i.config).unwrap_or_else(|| {
+            panic!("Island model must have at least one island")
+        })
     }
 
     fn update_config(&mut self, config: EvolutionConfig) {
