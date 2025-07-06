@@ -8,7 +8,6 @@ import {
 } from '../../store/atoms/wasm';
 import {
   isSimulationRunningAtom,
-  currentGenerationAtom,
 } from '../../store/atoms/simulation';
 import { updateSimulationDataAtom, setErrorWithSideEffectsAtom } from '../../store/atoms/actions';
 import type { AgentData, Statistics } from '../../types';

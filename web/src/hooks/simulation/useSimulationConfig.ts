@@ -6,7 +6,7 @@ import {
   isWasmInitializedAtom,
   isLoadingAtom,
 } from '../../store/atoms/wasm';
-import { isSimulationRunningAtom } from '../../store/atoms/simulation';
+// import { isSimulationRunningAtom } from '../../store/atoms/simulation'; // Removed - not used
 import { simulationConfigAtom } from '../../store/atoms/config';
 import { resetSimulationAtom, setErrorWithSideEffectsAtom } from '../../store/atoms/actions';
 
@@ -20,7 +20,7 @@ export function useSimulationConfig() {
   const [wasmConfig, setWasmConfig] = useAtom(wasmConfigAtom);
   const setWasmManager = useSetAtom(wasmManagerAtom);
   const isInitialized = useAtomValue(isWasmInitializedAtom);
-  const isRunning = useAtomValue(isSimulationRunningAtom);
+  // const isRunning = useAtomValue(isSimulationRunningAtom); // Removed - not used
   const [isLoading, setIsLoading] = useAtom(isLoadingAtom);
   const simulationConfig = useAtomValue(simulationConfigAtom);
   const resetSimulation = useSetAtom(resetSimulationAtom);
