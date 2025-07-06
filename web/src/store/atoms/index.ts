@@ -8,6 +8,9 @@ export * from './wasm';
 // Simulation atoms
 export * from './simulation';
 
+// Error atoms
+export * from './error';
+
 // Configuration atoms
 export * from './config';
 
