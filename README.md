@@ -117,6 +117,11 @@ bun run biome:check
 - React フロントエンドのWASM API統合
 - UI コンポーネントの更新
 
+## 詳細ドキュメント
+
+- [WASM API仕様書](doc/WASM_API_DOCUMENTATION.md) - WebAssembly APIの詳細な使用方法
+- [プロジェクト仕様書](doc/specification_doc.md) - アーキテクチャとドメインモデルの詳細
+
 ## ライセンス
 
 MIT License
