@@ -269,21 +269,26 @@ export function useWasmSimulation() {
 
     try {
       // Get current agents
-      const agentsResult = wasmManager.get_current_agents();
       let agents: AgentData[] = [];
-      
-      if (typeof agentsResult === 'string') {
-        try {
-          agents = JSON.parse(agentsResult);
-        } catch {
-          console.warn('Failed to parse agents result');
+      try {
+        const agentsResult = wasmManager.get_current_agents();
+        
+        if (typeof agentsResult === 'string') {
+          try {
+            agents = JSON.parse(agentsResult);
+          } catch {
+            console.warn('Failed to parse agents result');
+          }
+        } else if (agentsResult) {
+          agents = agentsResult;
         }
-      } else if (agentsResult) {
-        agents = agentsResult;
+      } catch (error) {
+        // Handle case where simulation is initialized but has no agents yet
+        console.warn('No agents available yet:', error);
+        agents = [];
       }
 
       // Get current statistics
-      const statsResult = wasmManager.get_current_stats();
       let stats: Statistics = {
         generation: currentGeneration,
         population: agents.length,
@@ -294,14 +299,19 @@ export function useWasmSimulation() {
         total_battles: 0,
       };
       
-      if (typeof statsResult === 'string') {
-        try {
-          stats = JSON.parse(statsResult);
-        } catch {
-          console.warn('Failed to parse stats result');
+      try {
+        const statsResult = wasmManager.get_current_stats();
+        if (typeof statsResult === 'string') {
+          try {
+            stats = JSON.parse(statsResult);
+          } catch {
+            console.warn('Failed to parse stats result');
+          }
+        } else if (statsResult) {
+          stats = statsResult;
         }
-      } else if (statsResult) {
-        stats = statsResult;
+      } catch (error) {
+        console.warn('Failed to get stats:', error);
       }
 
       console.log('Refreshed data:', { agents: agents.length, stats });
@@ -371,16 +381,24 @@ export function useWasmSimulation() {
         simulationConfig.crossover_method
       );
 
-      // Re-initialize with new config
-      wasmManager.reset();
-      wasmManager.initialize(newConfig);
+      // Free old manager and create new one to avoid aliasing issues
+      if (managerRef.current && typeof managerRef.current.free === 'function') {
+        managerRef.current.free();
+      }
+      
+      const newManager = new wasmModule.WasmSimulationManager();
+      newManager.initialize(newConfig);
 
+      // Update all references
+      managerRef.current = newManager;
       configRef.current = newConfig;
+      setWasmManager(newManager);
       setWasmConfig(newConfig);
 
       resetSimulation();
-      await refreshSimulationData();
-
+      // Don't refresh data immediately as there are no agents yet
+      // The data will be populated when the simulation actually starts
+      
       console.log('Configuration updated successfully');
     } catch (error) {
       console.error('Failed to update configuration:', error);
@@ -388,7 +406,7 @@ export function useWasmSimulation() {
     } finally {
       setIsLoading(false);
     }
-  }, [wasmManager, isInitialized, simulationConfig, setWasmConfig, resetSimulation, refreshSimulationData, setIsLoading, setError]);
+  }, [wasmManager, isInitialized, simulationConfig, setWasmManager, setWasmConfig, resetSimulation, refreshSimulationData, setIsLoading, setError]);
 
   // ========================================
   // Effects
@@ -406,7 +424,7 @@ export function useWasmSimulation() {
     if (isInitialized && !isRunning) {
       updateConfiguration();
     }
-  }, [simulationConfig, isInitialized, isRunning, updateConfiguration]);
+  }, [simulationConfig, isInitialized, isRunning]); // Remove updateConfiguration from dependencies
 
   // Cleanup on unmount
   useEffect(() => {
