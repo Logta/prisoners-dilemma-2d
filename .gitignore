@@ -58,6 +58,7 @@ jspm_packages/
 
 # Build outputs
 dist
+/web/src/assets
 /build/
 /web/dist/
 

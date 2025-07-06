@@ -5,7 +5,8 @@
   "description": "2D Prisoner's Dilemma Simulation - Web Frontend",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npm run copy-wasm && tsc && vite build",
+    "copy-wasm": "cp -r ../pkg/* src/assets/wasm/",
     "preview": "vite preview",
     "biome:check": "biome check .",
     "biome:fix": "biome check --write .",

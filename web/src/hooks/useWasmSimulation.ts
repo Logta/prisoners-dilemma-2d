@@ -55,8 +55,8 @@ export function useWasmSimulation() {
       clearError();
 
       console.log('Initializing WASM module...');
-      // Dynamic import of WASM module
-      const wasmModule = await import('../../pkg/prisoners_dilemma_2d.js');
+      // Dynamic import of WASM module from assets directory
+      const wasmModule = await import('../assets/wasm/prisoners_dilemma_2d.js');
       await wasmModule.default(); // Initialize WASM
       
       console.log('Creating simulation manager...');
@@ -359,7 +359,7 @@ export function useWasmSimulation() {
       setIsLoading(true);
       
       // Import WASM module again for new config
-      const wasmModule = await import('../../pkg/prisoners_dilemma_2d.js');
+      const wasmModule = await import('../assets/wasm/prisoners_dilemma_2d.js');
       
       // Free old config
       if (configRef.current && typeof configRef.current.free === 'function') {

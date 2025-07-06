@@ -6,6 +6,9 @@ import { resolve } from 'path';
 export default defineConfig({
   plugins: [react()],
   
+  // Include WASM files as assets
+  assetsInclude: ['**/*.wasm'],
+  
   // Resolve configuration
   resolve: {
     alias: {
@@ -26,6 +29,10 @@ export default defineConfig({
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
+    fs: {
+      // Allow serving files from one level up to the project root
+      allow: ['..'],
     },
   },
 
