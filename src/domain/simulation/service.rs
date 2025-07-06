@@ -7,6 +7,7 @@ use crate::domain::battle::{BattleService, BattleHistory};
 use crate::domain::shared::{AgentId, Position, WorldSize};
 use super::{Grid, EvolutionService, EvolutionConfig, GridError};
 use serde::{Deserialize, Serialize};
+use rand::seq::SliceRandom;
 
 /// シミュレーション設定
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -265,13 +266,16 @@ impl SimulationService {
         // 新しいエージェントを配置
         for agent in next_generation {
             let empty_positions = self.grid.get_empty_positions();
-            if let Some(position) = empty_positions.first() {
+            if let Some(position) = {
+                let mut rng = rand::thread_rng();
+                empty_positions.choose(&mut rng).copied()
+            } {
                 let agent_score = agent.state().score();
                 let new_id = AgentId::new((self.grid.agent_count() + 1) as u64);
-                let mut evolved_agent = Agent::new(new_id, *position, *agent.traits());
+                let mut evolved_agent = Agent::new(new_id, position, *agent.traits());
                 evolved_agent.state_mut().add_score(agent_score);
                 
-                if let Ok(placed_id) = self.grid.add_agent_at(*position) {
+                if let Ok(placed_id) = self.grid.add_agent_at(position) {
                     if let Some(placed_agent) = self.grid.get_agent_mut(placed_id) {
                         *placed_agent = evolved_agent;
                     }
