@@ -32,20 +32,23 @@
 
 ### Clean Architecture 構成
 
-プロジェクトは Clean Architecture の原則に従って、以下の3層で構成されています：
+プロジェクトは Clean Architecture の原則に従って、以下の 3 層で構成されています：
 
 #### Domain Layer (ドメイン層)
+
 - **Entity**: Agent, World, Grid 等の主要エンティティ
 - **Value Object**: AgentId, Position, AgentTraits 等の値オブジェクト
 - **Service**: BattleService, EvolutionService 等のドメインサービス
 - **Repository Trait**: データ永続化の抽象化
 
-#### Application Layer (アプリケーション層)  
+#### Application Layer (アプリケーション層)
+
 - **Use Case**: SimulationUseCase, BattleUseCase, EvolutionUseCase
 - **Command/Query**: 操作要求とデータ取得の定義
 - **Result**: ユースケース実行結果の型定義
 
 #### Infrastructure Layer (インフラストラクチャ層)
+
 - **WASM Bindings**: JavaScript との連携機能
 - **Serialization**: JSON/CSV/バイナリ形式での入出力
 - **Persistence**: プリセット管理・データエクスポート
@@ -70,9 +73,9 @@
 ### シミュレーション機能
 
 - 50x50〜1000x1000 の可変グリッドサイズ
-- エージェントの4つの形質（協力傾向、攻撃性、学習能力、移動性）の進化
+- エージェントの 4 つの形質（協力傾向、攻撃性、学習能力、移動性）の進化
 - 戦略パターン（Random、TitForTat、Pavlov）による囚人のジレンマ対戦
-- 遺伝的アルゴリズムによる世代交代（3種類の選択・交叉アルゴリズム）
+- 遺伝的アルゴリズムによる世代交代（3 種類の選択・交叉アルゴリズム）
 
 ### 可視化機能
 
@@ -110,26 +113,16 @@
 
 ### Phase 4: WASM 統合
 
-- [x] wasm-bindgen 設定
-- [x] TypeScript 型定義
-- [x] React との統合
+- [ ] wasm-bindgen 設定
+- [ ] TypeScript 型定義
+- [ ] React との統合
 
 ### Phase 5: UI 実装 (React)
 
-- [x] グリッド表示コンポーネント
-- [x] コントロールパネル
-- [x] 統計情報表示
-- [x] グラフ表示機能
-
-### Phase 6: Clean Architecture 移行
-
-- [x] Domain Layer の実装（エンティティ、値オブジェクト、サービス）
-- [x] Application Layer の実装（ユースケース、コマンド、結果型）
-- [x] Infrastructure Layer の実装（WASM、シリアライゼーション、永続化）
-- [x] 戦略パターンの実装（Random、TitForTat、Pavlov）
-- [x] プリセット機能とCSVエクスポート機能
-- [x] 158のテストケースによる品質保証
-- [ ] パフォーマンス最適化
+- [ ] グリッド表示コンポーネント
+- [ ] コントロールパネル
+- [ ] 統計情報表示
+- [ ] グラフ表示機能
 
 ## テスト戦略
 
