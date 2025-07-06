@@ -24,7 +24,7 @@ export function HomePage() {
 
   if (isLoading && !isInitialized) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center min-h-[400px]">
         <LoadingSpinner message="WASMモジュールを初期化中..." />
       </div>
     );
@@ -32,7 +32,7 @@ export function HomePage() {
 
   if (error && !isInitialized) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center min-h-[400px]">
         <ErrorDisplay 
           error={error} 
           onRetry={initializeWasm}
@@ -71,7 +71,7 @@ export function HomePage() {
   }
 
   return (
-    <div className="flex items-center justify-center h-full">
+    <div className="flex items-center justify-center min-h-[400px]">
       <LoadingSpinner message="アプリケーションを読み込み中..." />
     </div>
   );

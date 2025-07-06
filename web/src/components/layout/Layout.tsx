@@ -9,7 +9,7 @@ export function Layout() {
   return (
     <div className="app-layout">
       <header className="app-header">
-        <div className="container">
+        <div className="max-w-7xl mx-auto px-4">
           <h1 className="app-title">
             <Link to="/" className="app-title-link">
               2D Prisoner's Dilemma Simulation
@@ -22,7 +22,7 @@ export function Layout() {
       </header>
 
       <main className="app-main">
-        <div className="container">
+        <div className="max-w-7xl mx-auto px-4">
           <Outlet />
         </div>
       </main>

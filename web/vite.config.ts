@@ -72,11 +72,6 @@ export default defineConfig({
   // CSS configuration
   css: {
     devSourcemap: true,
-    preprocessorOptions: {
-      scss: {
-        additionalData: `@import "@styles/variables.scss";`,
-      },
-    },
   },
 
   // Preview configuration
