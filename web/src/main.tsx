@@ -5,7 +5,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
-import { JotaiProvider } from './components/providers/JotaiProvider';
 import './styles/global.css';
 
 // エラー境界コンポーネント
@@ -52,9 +51,7 @@ class ErrorBoundary extends React.Component<
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <JotaiProvider>
-        <App />
-      </JotaiProvider>
+      <App />
     </ErrorBoundary>
   </React.StrictMode>
 );

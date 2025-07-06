@@ -2,6 +2,8 @@
    Global Styles - 2D Prisoner's Dilemma
    ======================================== */
 
+@import './layout.css';
+
 /* CSS Reset */
 *,
 *::before,

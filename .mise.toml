@@ -18,7 +18,7 @@ RUST_LOG = "debug"
 description = "🚀 開発開始"
 run = [
   "wasm-pack build --target web --out-dir pkg",
-  "mkdir -p web/assets/pkg && cp -r pkg/* web/assets/pkg/",
+  "mkdir -p web/src/assets/pkg && cp -r pkg/* web/src/assets/pkg/",
   "cd web && bun run dev"
 ]
 
@@ -54,8 +54,8 @@ run = "wasm-pack build --target web --out-dir pkg"
 [tasks.copy]
 description = "📂 ファイルコピー"
 run = [
-  "mkdir -p web/assets/pkg",
-  "cp -r pkg/* web/assets/pkg/"
+  "mkdir -p web/src/assets/pkg",
+  "cp -r pkg/* web/src/assets/pkg/"
 ]
 depends = ["wasm"]
 
@@ -105,7 +105,7 @@ run = "bun install"
 [tasks.clean]
 description = "🧹 クリーンアップ"
 run = [
-  "rm -rf pkg/ web/public/pkg/ web/build/ target/",
+  "rm -rf pkg/ web/src/assets/pkg/ web/build/ target/",
   "echo 'クリーンアップ完了'"
 ]
 
