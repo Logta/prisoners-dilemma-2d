@@ -17,30 +17,30 @@ RUST_LOG = "debug"
 [tasks.dev]
 description = "🚀 開発開始"
 run = [
-  "wasm-pack build --target web --out-dir pkg",
-  "mkdir -p web/public/pkg && cp -r pkg/* web/public/pkg/",
+  "cd wasm && wasm-pack build --target web --out-dir pkg",
+  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
   "cd web && bun run dev"
 ]
 
 [tasks.test]
 description = "🧪 テスト実行"
 run = [
-  "cargo test",
-  "bun test"
+  "cd wasm && cargo test",
+  "cd web && bun test"
 ]
 
 [tasks.check]
 description = "✅ 品質チェック"
 run = [
-  "cargo clippy",
-  "bun run biome:check"
+  "cd wasm && cargo clippy",
+  "cd web && bun run biome:check"
 ]
 
 [tasks.fmt]
 description = "🎨 コード整形"
 run = [
-  "cargo fmt",
-  "bun run biome:fix"
+  "cd wasm && cargo fmt",
+  "cd web && bun run biome:fix"
 ]
 
 # =============================================================================
@@ -49,13 +49,13 @@ run = [
 
 [tasks.wasm]
 description = "🦀 WASMビルド"
-run = "wasm-pack build --target web --out-dir pkg"
+run = "cd wasm && wasm-pack build --target web --out-dir pkg"
 
 [tasks.copy]
 description = "📂 ファイルコピー"
 run = [
-  "mkdir -p web/public/pkg",
-  "cp -r pkg/* web/public/pkg/"
+  "mkdir -p web/src/assets/pkg",
+  "cp -r wasm/pkg/* web/src/assets/pkg/"
 ]
 depends = ["wasm"]
 
@@ -80,11 +80,11 @@ run = [
 
 [tasks.watch]
 description = "👀 テスト監視"
-run = "cargo watch -x test"
+run = "cd wasm && cargo watch -x test"
 
 [tasks.watch-wasm]
 description = "🔄 WASM監視"
-run = "cargo watch -s 'mise run wasm && mise run copy'"
+run = "cd wasm && cargo watch -s 'mise run wasm && mise run copy'"
 
 # =============================================================================
 # 🛠️ SETUP COMMANDS - セットアップ
@@ -95,17 +95,17 @@ description = "🛠️ 初期セットアップ"
 run = [
   "cargo install wasm-pack",
   "cargo install cargo-watch",
-  "bun install"
+  "cd web && bun install"
 ]
 
 [tasks.install]
 description = "📦 依存関係インストール"
-run = "bun install"
+run = "cd web && bun install"
 
 [tasks.clean]
 description = "🧹 クリーンアップ"
 run = [
-  "rm -rf pkg/ web/public/pkg/ web/build/ target/",
+  "rm -rf pkg/ web/src/assets/pkg/ web/build/ target/",
   "echo 'クリーンアップ完了'"
 ]
 
@@ -121,15 +121,15 @@ run = "cargo doc --no-deps --open"
 description = "📊 サイズ確認"
 run = [
   "mise run build",
-  "ls -lh pkg/*.wasm",
+  "ls -lh wasm/pkg/*.wasm",
   "ls -lh web/build/assets/*.js"
 ]
 
 [tasks.lint]
 description = "🔍 詳細リント"
 run = [
-  "cargo clippy -- -D warnings",
-  "bun run biome:check"
+  "cd wasm && cargo clippy -- -D warnings",
+  "cd web && bun run biome:check"
 ]
 
 # =============================================================================

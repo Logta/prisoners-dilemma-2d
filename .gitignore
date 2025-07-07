@@ -1,10 +1,11 @@
 # Rust
 /target/
+/wasm/target/
 **/*.rs.bk
-Cargo.lock
 
 # WebAssembly
 /pkg/
+/wasm/pkg/
 wasm-pack.log
 
 # Node.js
@@ -57,8 +58,10 @@ jspm_packages/
 .parcel-cache
 
 # Build outputs
-/dist/
-/build/
+dist/
+build/
+/web/dist/
+/web/src/assets/pkg/
 
 # IDE
 .vscode/
@@ -86,5 +89,5 @@ vite.config.js.timestamp-*
 *.tmp
 *.temp
 
-/web/build/
-/web/public/
+# mise
+.mise.local.toml
