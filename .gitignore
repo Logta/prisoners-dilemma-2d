@@ -2,10 +2,10 @@
 /target/
 /wasm/target/
 **/*.rs.bk
-Cargo.lock
 
 # WebAssembly
 /pkg/
+/wasm/pkg/
 wasm-pack.log
 
 # Node.js
