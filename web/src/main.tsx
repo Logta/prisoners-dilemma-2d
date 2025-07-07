@@ -5,7 +5,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
-import './styles/global.css';
+import './index.css';
 
 // エラー境界コンポーネント
 class ErrorBoundary extends React.Component<
