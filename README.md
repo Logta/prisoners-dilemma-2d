@@ -1,73 +1,94 @@
 # 2D Prisoner's Dilemma
 
-二次元空間で囚人のジレンマゲームを実行し、遺伝的アルゴリズムによってエージェントの形質を進化させるシミュレーションアプリケーションです。
+二次元グリッド上で囚人のジレンマゲームのシミュレーションを行い、エージェントの戦略進化を観察するWebアプリケーションです。
 
 ## 概要
 
-このプロジェクトは、エージェント間の協力と競争の進化をシミュレートします。各エージェントは遺伝的特性を持ち、囚人のジレンマゲームを通じて相互作用し、世代を重ねて進化していきます。
+100×100のグリッド上でエージェントが隣接する相手と囚人のジレンマゲームを行い、遺伝的アルゴリズムによって戦略と移動性が進化していく様子を可視化します。
 
 ## 技術スタック
 
-- **Rust**: コアロジック（WebAssembly）
-- **React**: フロントエンド
-- **Vite**: ビルドツール
-- **Biome**: リンター/フォーマッター
-- **Vitest**: テストフレームワーク
+- **Rust + WebAssembly**: シミュレーションエンジン
+- **React + TypeScript**: フロントエンド
+- **Vite**: 開発環境
+- **Tailwind CSS**: スタイリング
+- **mise**: 開発ツール管理
 
-## セットアップ
+## クイックスタート
 
 ### 前提条件
+- [mise](https://mise.jdx.dev/) またはNode.js 24+ + Rust + bun
 
-- Node.js 18+
-- Rust
-- wasm-pack
-
-### インストール
+### 実行方法
 
 ```bash
-# 依存関係のインストール
-bun install
-
-# WASMビルド
-wasm-pack build --target web --out-dir pkg
+# 依存関係のインストール（初回のみ）
+mise run setup
 
 # 開発サーバー起動
-bun run dev
+mise run dev
 ```
 
-## 主な機能
+http://localhost:3000 でアプリケーションが開きます。
 
-- エージェントの4つの形質（協力傾向、攻撃性、学習能力、移動性）のシミュレーション
-- 3つの戦略パターン（Random, TitForTat, Pavlov）
-- 遺伝的アルゴリズムによる世代交代
-- リアルタイムな統計情報表示
-- WASM による高速な計算処理
+## 実装済み機能
 
-## アーキテクチャ
+### エージェント
+- **4つの戦略**: Always Cooperate, Always Defect, Tit for Tat, Pavlov
+- **移動性向**: 0.0〜1.0の値で移動確率を制御
+- **戦績による移動**: 成績が悪いと移動しやすくなる
 
-Clean Architecture の3層構造で実装されています：
+### 遺伝的アルゴリズム
+- **ルーレット選択**: スコアに比例した親選択
+- **交叉**: 戦略は片親から、移動性向は平均値
+- **突然変異**: 5%の確率で発生
 
-- **Domain Layer**: エージェント、ワールド、戦闘、進化のコアロジック
-- **Application Layer**: シミュレーション、戦闘、進化のユースケース
-- **Infrastructure Layer**: WASM バインディング、シリアライゼーション、永続化
+### UI機能
+- **リアルタイム可視化**: Canvas による高速描画
+- **統計情報**: 世代、戦略分布、平均値の表示
+- **シミュレーション制御**: 開始/停止/リセット/ステップ実行
+- **速度調整**: 50ms〜2000msの範囲で調整可能
 
-## 開発
+## プロジェクト構成
+
+```
+├── wasm/           # Rust + WASM シミュレーションエンジン
+│   ├── src/
+│   │   ├── domain/         # ドメインロジック
+│   │   ├── application/    # ユースケース
+│   │   └── infrastructure/ # WASM バインディング
+│   └── Cargo.toml
+├── web/            # React フロントエンド
+│   ├── src/
+│   │   ├── components/     # UI コンポーネント
+│   │   ├── hooks/          # カスタムフック
+│   │   └── types/          # 型定義
+│   └── package.json
+└── .mise.toml      # 開発環境設定
+```
+
+## その他のコマンド
 
 ```bash
-# WASM ビルド
-wasm-pack build --target web --out-dir pkg
+# WASM ビルドのみ
+mise run wasm
 
-# 開発サーバー
-bun run dev
+# 型チェック
+mise run check
 
-# リンター
-bun run biome:check
+# コード整形
+mise run fmt
+
+# テスト実行
+mise run test
+
+# プロダクションビルド
+mise run build
 ```
 
-## 詳細ドキュメント
+## 仕様詳細
 
-- [WASM API仕様書](doc/WASM_API_DOCUMENTATION.md) - WebAssembly APIの詳細な使用方法
-- [プロジェクト仕様書](doc/specification_doc.md) - アーキテクチャとドメインモデルの詳細
+詳細な仕様については [doc/specification_doc.md](doc/specification_doc.md) をご参照ください。
 
 ## ライセンス
 

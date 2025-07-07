@@ -58,10 +58,10 @@ jspm_packages/
 .parcel-cache
 
 # Build outputs
-dist
-/web/src/assets
-/build/
+dist/
+build/
 /web/dist/
+/web/src/assets/pkg/
 
 # IDE
 .vscode/
@@ -89,5 +89,5 @@ vite.config.js.timestamp-*
 *.tmp
 *.temp
 
-/web/build/
-/web/public/
+# mise
+.mise.local.toml
