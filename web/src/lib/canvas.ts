@@ -6,7 +6,7 @@ export class SimulationCanvas {
   private ctx: CanvasRenderingContext2D;
   private gridWidth: number;
   private gridHeight: number;
-  private cellSize: number = 1;
+  private cellSize = 1;
 
   constructor(canvas: HTMLCanvasElement, gridWidth: number, gridHeight: number) {
     this.canvas = canvas;
@@ -90,9 +90,9 @@ export class SimulationCanvas {
 
   private blendWithCooperationRate(baseColor: string, cooperationRate: number): string {
     // Convert hex to RGB
-    const r = parseInt(baseColor.slice(1, 3), 16);
-    const g = parseInt(baseColor.slice(3, 5), 16);
-    const b = parseInt(baseColor.slice(5, 7), 16);
+    const r = Number.parseInt(baseColor.slice(1, 3), 16);
+    const g = Number.parseInt(baseColor.slice(3, 5), 16);
+    const b = Number.parseInt(baseColor.slice(5, 7), 16);
 
     // Blend with cooperation rate
     // High cooperation -> brighter, Low cooperation -> darker

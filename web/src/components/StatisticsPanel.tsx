@@ -1,6 +1,11 @@
 import type React from 'react';
 import type { WasmStatistics } from '../types/wasm';
-import { STRATEGY_COLORS, STRATEGY_NAMES, MOVEMENT_STRATEGY_COLORS, MOVEMENT_STRATEGY_NAMES } from '../types/wasm';
+import {
+  MOVEMENT_STRATEGY_COLORS,
+  MOVEMENT_STRATEGY_NAMES,
+  STRATEGY_COLORS,
+  STRATEGY_NAMES,
+} from '../types/wasm';
 
 interface StatisticsPanelProps {
   statistics: WasmStatistics | null;
@@ -16,9 +21,9 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <h2 className="text-xl font-semibold mb-4 text-gray-900">Statistics</h2>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
+          <div className="h-4 bg-gray-200 rounded w-2/3" />
         </div>
       </div>
     );
@@ -115,10 +120,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 
               return (
                 <div className="flex items-center gap-3" key={strategy.type}>
-                  <div
-                    className="w-4 h-4 rounded"
-                    style={{ backgroundColor: strategy.color }}
-                  ></div>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: strategy.color }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700 truncate">
@@ -135,7 +137,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
                           backgroundColor: strategy.color,
                           width: `${percentage}%`,
                         }}
-                      ></div>
+                      />
                     </div>
                   </div>
                 </div>
@@ -154,10 +156,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 
               return (
                 <div className="flex items-center gap-3" key={strategy.type}>
-                  <div
-                    className="w-4 h-4 rounded"
-                    style={{ backgroundColor: strategy.color }}
-                  ></div>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: strategy.color }} />
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700 truncate">
@@ -174,7 +173,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
                           backgroundColor: strategy.color,
                           width: `${percentage}%`,
                         }}
-                      ></div>
+                      />
                     </div>
                   </div>
                 </div>

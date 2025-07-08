@@ -3,52 +3,79 @@ export interface WasmAgent {
   readonly x: number;
   readonly y: number;
   readonly strategy: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly movement_strategy: number;
   readonly mobility: number;
   readonly score: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly cooperation_rate: number;
 }
 
 export interface WasmStatistics {
   readonly generation: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly total_agents: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly all_cooperate_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly all_defect_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly tit_for_tat_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly pavlov_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly explorer_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly settler_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly adaptive_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly opportunist_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly social_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly antisocial_count: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly average_cooperation_rate: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly average_mobility: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   readonly average_score: number;
 }
 
 export interface WasmSimulation {
   step(): WasmStatistics;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   get_agents(): WasmAgent[];
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   get_statistics(): WasmStatistics;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   get_grid_width(): number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   get_grid_height(): number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   get_generation(): number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   get_turn(): number;
-  reset(agent_count: number): void;
+  reset(agentCount: number): void;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   set_strategy_complexity_penalty(enabled: boolean): void;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   set_strategy_complexity_penalty_rate(rate: number): void;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   set_torus_field(enabled: boolean): void;
   free(): void;
 }
 
 export interface WasmSimulationConstructor {
-  new (width: number, height: number, agent_count: number): WasmSimulation;
+  new (width: number, height: number, agentCount: number): WasmSimulation;
 }
 
 export interface WasmModule {
   WasmSimulation: WasmSimulationConstructor;
-  movement_strategy_name(strategy_id: number): string;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  movement_strategy_name(strategyId: number): string;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   set_panic_hook(): void;
   greet(name: string): void;
 }
@@ -77,12 +104,12 @@ export const STRATEGY_COLORS = {
 } as const;
 
 export const MovementStrategyType = {
-  Explorer: 0,
-  Settler: 1,
   Adaptive: 2,
-  Opportunist: 3,
-  Social: 4,
   Antisocial: 5,
+  Explorer: 0,
+  Opportunist: 3,
+  Settler: 1,
+  Social: 4,
 } as const;
 
 export type MovementStrategyType = (typeof MovementStrategyType)[keyof typeof MovementStrategyType];

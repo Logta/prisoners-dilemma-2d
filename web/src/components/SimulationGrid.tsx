@@ -49,19 +49,19 @@ export const SimulationGrid: React.FC<SimulationGridProps> = ({
       <div className="absolute top-2 right-2 bg-white bg-opacity-90 rounded p-2 text-xs">
         <div className="grid grid-cols-2 gap-1 text-center">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
+            <div className="w-3 h-3 bg-green-500 rounded" />
             <span>Always Cooperate</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-500 rounded"></div>
+            <div className="w-3 h-3 bg-red-500 rounded" />
             <span>Always Defect</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+            <div className="w-3 h-3 bg-blue-500 rounded" />
             <span>Tit for Tat</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-amber-500 rounded"></div>
+            <div className="w-3 h-3 bg-amber-500 rounded" />
             <span>Pavlov</span>
           </div>
         </div>

@@ -43,15 +43,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       <div className="space-y-4">
         {/* Play/Pause Controls */}
         <div className="flex gap-2">
-          {!isRunning ? (
-            <Button className="flex items-center gap-2" disabled={disabled} onClick={onStart}>
-              <Play size={16} />
-              Start
-            </Button>
-          ) : (
+          {isRunning ? (
             <Button className="flex items-center gap-2" onClick={onPause} variant="secondary">
               <Pause size={16} />
               Pause
+            </Button>
+          ) : (
+            <Button className="flex items-center gap-2" disabled={disabled} onClick={onStart}>
+              <Play size={16} />
+              Start
             </Button>
           )}
 

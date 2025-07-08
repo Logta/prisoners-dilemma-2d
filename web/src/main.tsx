@@ -3,7 +3,7 @@
 // ========================================
 
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDom from 'react-dom/client';
 import { App } from './App';
 import './index.css';
 
@@ -45,7 +45,7 @@ class ErrorBoundary extends React.Component<
 }
 
 // React 18の並行機能を有効にする
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+ReactDom.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
       <App />
