@@ -18,12 +18,12 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 }) => {
   if (loading || !statistics) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900">Statistics</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 font-semibold text-gray-900 text-xl">Statistics</h2>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-2" />
-          <div className="h-4 bg-gray-200 rounded w-2/3" />
+          <div className="mb-2 h-4 w-3/4 rounded bg-gray-200" />
+          <div className="mb-2 h-4 w-1/2 rounded bg-gray-200" />
+          <div className="h-4 w-2/3 rounded bg-gray-200" />
         </div>
       </div>
     );
@@ -94,25 +94,25 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
   const formatNumber = (value: number) => value.toFixed(2);
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h2 className="text-xl font-semibold mb-4 text-gray-900">Statistics</h2>
+    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+      <h2 className="mb-4 font-semibold text-gray-900 text-xl">Statistics</h2>
 
       <div className="space-y-4">
         {/* Generation Info */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="text-sm text-blue-600 font-medium">Generation</div>
-            <div className="text-2xl font-bold text-blue-900">{statistics.generation}</div>
+          <div className="rounded-lg bg-blue-50 p-3">
+            <div className="font-medium text-blue-600 text-sm">Generation</div>
+            <div className="font-bold text-2xl text-blue-900">{statistics.generation}</div>
           </div>
-          <div className="bg-green-50 p-3 rounded-lg">
-            <div className="text-sm text-green-600 font-medium">Total Agents</div>
-            <div className="text-2xl font-bold text-green-900">{statistics.total_agents}</div>
+          <div className="rounded-lg bg-green-50 p-3">
+            <div className="font-medium text-green-600 text-sm">Total Agents</div>
+            <div className="font-bold text-2xl text-green-900">{statistics.total_agents}</div>
           </div>
         </div>
 
         {/* Strategy Distribution */}
         <div>
-          <h3 className="text-lg font-medium mb-3 text-gray-900">Strategy Distribution</h3>
+          <h3 className="mb-3 font-medium text-gray-900 text-lg">Strategy Distribution</h3>
           <div className="space-y-2">
             {strategyData.map((strategy) => {
               const percentage =
@@ -120,17 +120,17 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 
               return (
                 <div className="flex items-center gap-3" key={strategy.type}>
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: strategy.color }} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700 truncate">
+                  <div className="h-4 w-4 rounded" style={{ backgroundColor: strategy.color }} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate font-medium text-gray-700 text-sm">
                         {strategy.name}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-gray-500 text-sm">
                         {strategy.count} ({percentage.toFixed(1)}%)
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="h-2 w-full rounded-full bg-gray-200">
                       <div
                         className="h-2 rounded-full transition-all duration-300"
                         style={{
@@ -148,7 +148,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 
         {/* Movement Strategy Distribution */}
         <div>
-          <h3 className="text-lg font-medium mb-3 text-gray-900">Movement Strategy Distribution</h3>
+          <h3 className="mb-3 font-medium text-gray-900 text-lg">Movement Strategy Distribution</h3>
           <div className="space-y-2">
             {movementStrategyData.map((strategy) => {
               const percentage =
@@ -156,17 +156,17 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 
               return (
                 <div className="flex items-center gap-3" key={strategy.type}>
-                  <div className="w-4 h-4 rounded" style={{ backgroundColor: strategy.color }} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700 truncate">
+                  <div className="h-4 w-4 rounded" style={{ backgroundColor: strategy.color }} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate font-medium text-gray-700 text-sm">
                         {strategy.name}
                       </span>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-gray-500 text-sm">
                         {strategy.count} ({percentage.toFixed(1)}%)
                       </span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="h-2 w-full rounded-full bg-gray-200">
                       <div
                         className="h-2 rounded-full transition-all duration-300"
                         style={{
@@ -184,23 +184,23 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 
         {/* Averages */}
         <div>
-          <h3 className="text-lg font-medium mb-3 text-gray-900">Population Averages</h3>
+          <h3 className="mb-3 font-medium text-gray-900 text-lg">Population Averages</h3>
           <div className="grid grid-cols-1 gap-3">
-            <div className="bg-amber-50 p-3 rounded-lg">
-              <div className="text-sm text-amber-600 font-medium">Cooperation Rate</div>
-              <div className="text-xl font-bold text-amber-900">
+            <div className="rounded-lg bg-amber-50 p-3">
+              <div className="font-medium text-amber-600 text-sm">Cooperation Rate</div>
+              <div className="font-bold text-amber-900 text-xl">
                 {formatPercentage(statistics.average_cooperation_rate)}%
               </div>
             </div>
-            <div className="bg-purple-50 p-3 rounded-lg">
-              <div className="text-sm text-purple-600 font-medium">Mobility</div>
-              <div className="text-xl font-bold text-purple-900">
+            <div className="rounded-lg bg-purple-50 p-3">
+              <div className="font-medium text-purple-600 text-sm">Mobility</div>
+              <div className="font-bold text-purple-900 text-xl">
                 {formatNumber(statistics.average_mobility)}
               </div>
             </div>
-            <div className="bg-indigo-50 p-3 rounded-lg">
-              <div className="text-sm text-indigo-600 font-medium">Average Score</div>
-              <div className="text-xl font-bold text-indigo-900">
+            <div className="rounded-lg bg-indigo-50 p-3">
+              <div className="font-medium text-indigo-600 text-sm">Average Score</div>
+              <div className="font-bold text-indigo-900 text-xl">
                 {formatNumber(statistics.average_score)}
               </div>
             </div>

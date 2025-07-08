@@ -14,42 +14,42 @@ interface SimulationConfig {
 
 // Helper function to convert WASM agents to plain JavaScript objects
 const convertAgentsToPlainObjects = (wasmAgents: WasmAgent[]) => {
-  const result = wasmAgents.map(agent => {
+  const result = wasmAgents.map((agent) => {
     try {
       return {
+        cooperation_rate: agent.cooperation_rate,
         id: agent.id,
+        mobility: agent.mobility,
+        movement_strategy: agent.movement_strategy,
+        score: agent.score,
+        strategy: agent.strategy,
         x: agent.x,
         y: agent.y,
-        strategy: agent.strategy,
-        movement_strategy: agent.movement_strategy,
-        mobility: agent.mobility,
-        score: agent.score,
-        cooperation_rate: agent.cooperation_rate,
       };
     } catch (err) {
       console.warn('Failed to convert agent:', err);
       return {
+        cooperation_rate: 0,
         id: '',
+        mobility: 0,
+        movement_strategy: 0,
+        score: 0,
+        strategy: 0,
         x: 0,
         y: 0,
-        strategy: 0,
-        movement_strategy: 0,
-        mobility: 0,
-        score: 0,
-        cooperation_rate: 0,
       };
     }
   });
-  
+
   // 強制的にガベージコレクションを促す（開発環境のみ）
   if (typeof window !== 'undefined' && (window as any).gc) {
     try {
       (window as any).gc();
-    } catch (e) {
+    } catch (_e) {
       // gc() is not available in all environments
     }
   }
-  
+
   return result;
 };
 
@@ -57,51 +57,51 @@ const convertAgentsToPlainObjects = (wasmAgents: WasmAgent[]) => {
 const convertStatsToPlainObject = (wasmStats: WasmStatistics) => {
   try {
     const result = {
-      generation: wasmStats.generation,
-      total_agents: wasmStats.total_agents,
+      adaptive_count: wasmStats.adaptive_count,
       all_cooperate_count: wasmStats.all_cooperate_count,
       all_defect_count: wasmStats.all_defect_count,
-      tit_for_tat_count: wasmStats.tit_for_tat_count,
-      pavlov_count: wasmStats.pavlov_count,
-      explorer_count: wasmStats.explorer_count,
-      settler_count: wasmStats.settler_count,
-      adaptive_count: wasmStats.adaptive_count,
-      opportunist_count: wasmStats.opportunist_count,
-      social_count: wasmStats.social_count,
       antisocial_count: wasmStats.antisocial_count,
       average_cooperation_rate: wasmStats.average_cooperation_rate,
       average_mobility: wasmStats.average_mobility,
       average_score: wasmStats.average_score,
+      explorer_count: wasmStats.explorer_count,
+      generation: wasmStats.generation,
+      opportunist_count: wasmStats.opportunist_count,
+      pavlov_count: wasmStats.pavlov_count,
+      settler_count: wasmStats.settler_count,
+      social_count: wasmStats.social_count,
+      tit_for_tat_count: wasmStats.tit_for_tat_count,
+      total_agents: wasmStats.total_agents,
     };
-    
+
     // 強制的にガベージコレクションを促す（開発環境のみ）
     if (typeof window !== 'undefined' && (window as any).gc) {
       try {
         (window as any).gc();
-      } catch (e) {
+      } catch (_e) {
         // gc() is not available in all environments
       }
     }
-    
+
     return result;
   } catch (err) {
     console.warn('Failed to convert statistics:', err);
     return {
-      generation: 0,
-      total_agents: 0,
+      adaptive_count: 0,
       all_cooperate_count: 0,
       all_defect_count: 0,
-      tit_for_tat_count: 0,
-      pavlov_count: 0,
-      explorer_count: 0,
-      settler_count: 0,
-      adaptive_count: 0,
-      opportunist_count: 0,
-      social_count: 0,
       antisocial_count: 0,
       average_cooperation_rate: 0,
       average_mobility: 0,
       average_score: 0,
+      explorer_count: 0,
+      generation: 0,
+      opportunist_count: 0,
+      pavlov_count: 0,
+      settler_count: 0,
+      social_count: 0,
+      tit_for_tat_count: 0,
+      total_agents: 0,
     };
   }
 };
@@ -129,7 +129,7 @@ export const useSimulation = (config: SimulationConfig) => {
     setStatistics(null);
     setAgents([]);
     setSimulation(null);
-    
+
     if (simulationRef.current) {
       try {
         simulationRef.current.free();
@@ -146,21 +146,23 @@ export const useSimulation = (config: SimulationConfig) => {
 
   // エラー時に完全に新しいシミュレーションを作成する関数
   const recreateSimulation = useCallback(() => {
-    if (!wasmModule || isProcessingRef.current) return;
-    
-    console.log('Recreating simulation due to error...');
-    
+    if (!wasmModule || isProcessingRef.current) {
+      return;
+    }
+
     // 完全なクリーンアップ
     forceCleanup();
-    
+
     // フラグを設定して、useEffectで処理する
     setShouldRecreateSimulation(true);
   }, [wasmModule, forceCleanup]);
 
   // シミュレーション再作成のuseEffect
   useEffect(() => {
-    if (!shouldRecreateSimulation || !wasmModule) return;
-    
+    if (!(shouldRecreateSimulation && wasmModule)) {
+      return;
+    }
+
     const timeoutId = setTimeout(() => {
       try {
         const newSimulation = new wasmModule.WasmSimulation(
@@ -204,12 +206,13 @@ export const useSimulation = (config: SimulationConfig) => {
         }
 
         setError(null);
-        console.log('Simulation recreated successfully');
       } catch (err) {
         console.error('Failed to recreate simulation:', err);
-        setError('シミュレーションの復旧に失敗しました。ページを再読み込みするか、Resetボタンをお試しください。');
+        setError(
+          'シミュレーションの復旧に失敗しました。ページを再読み込みするか、Resetボタンをお試しください。'
+        );
       }
-      
+
       setShouldRecreateSimulation(false);
     }, 100);
 
@@ -218,13 +221,17 @@ export const useSimulation = (config: SimulationConfig) => {
 
   // Initialize simulation when WASM module is loaded
   useEffect(() => {
-    if (!wasmModule || wasmLoading) return;
+    if (!wasmModule || wasmLoading) {
+      return;
+    }
 
     const initializeSimulation = () => {
-      if (isProcessingRef.current) return;
-      
+      if (isProcessingRef.current) {
+        return;
+      }
+
       isProcessingRef.current = true;
-      
+
       try {
         // Clean up existing simulation before creating new one
         if (simulationRef.current) {
@@ -275,21 +282,21 @@ export const useSimulation = (config: SimulationConfig) => {
         } catch (err) {
           console.warn('Failed to get initial statistics, using fallback:', err);
           setStatistics({
-            generation: 0,
-            total_agents: config.agentCount,
+            adaptive_count: 0,
             all_cooperate_count: 0,
             all_defect_count: 0,
-            tit_for_tat_count: 0,
-            pavlov_count: 0,
-            explorer_count: 0,
-            settler_count: 0,
-            adaptive_count: 0,
-            opportunist_count: 0,
-            social_count: 0,
             antisocial_count: 0,
             average_cooperation_rate: 0,
             average_mobility: 0,
             average_score: 0,
+            explorer_count: 0,
+            generation: 0,
+            opportunist_count: 0,
+            pavlov_count: 0,
+            settler_count: 0,
+            social_count: 0,
+            tit_for_tat_count: 0,
+            total_agents: config.agentCount,
           });
         }
 
@@ -334,7 +341,9 @@ export const useSimulation = (config: SimulationConfig) => {
   }, [forceCleanup]);
 
   const step = useCallback(() => {
-    if (!simulation || !simulationRef.current || isProcessingRef.current) return;
+    if (!(simulation && simulationRef.current) || isProcessingRef.current) {
+      return;
+    }
 
     // ステップ実行前にもエージェントの存在をチェック
     if (!agents || agents.length === 0) {
@@ -391,7 +400,7 @@ export const useSimulation = (config: SimulationConfig) => {
       console.error('Simulation step failed:', err);
       setError(err instanceof Error ? err.message : 'Simulation step failed');
       setIsRunning(false);
-      
+
       // 重大なエラーの場合はシミュレーションを再作成
       if (err instanceof Error && err.message.includes('index out of bounds')) {
         console.warn('Critical WASM error detected, recreating simulation');
@@ -400,10 +409,12 @@ export const useSimulation = (config: SimulationConfig) => {
     } finally {
       isProcessingRef.current = false;
     }
-  }, [simulation, agents, statistics, forceCleanup, recreateSimulation]);
+  }, [simulation, agents, statistics, recreateSimulation]);
 
   const start = useCallback(() => {
-    if (!simulation || isRunning || isProcessingRef.current) return;
+    if (!simulation || isRunning || isProcessingRef.current) {
+      return;
+    }
 
     // エージェントが存在しない場合は開始できない
     if (!agents || agents.length === 0) {
@@ -428,7 +439,7 @@ export const useSimulation = (config: SimulationConfig) => {
         }
         return;
       }
-      
+
       // シミュレーションの健全性をチェック
       try {
         // 基本的なアクセステストとしてエージェント数をチェック
@@ -462,7 +473,9 @@ export const useSimulation = (config: SimulationConfig) => {
   }, []);
 
   const reset = useCallback(() => {
-    if (!simulation || !simulationRef.current || isProcessingRef.current) return;
+    if (!(simulation && simulationRef.current) || isProcessingRef.current) {
+      return;
+    }
 
     pause();
 
@@ -484,13 +497,13 @@ export const useSimulation = (config: SimulationConfig) => {
       if (config.torusField !== undefined) {
         simulation.set_torus_field(config.torusField);
       }
-      
+
       // 統計情報の取得と即座の変換・破棄
       const stats = simulation.get_statistics();
       const plainStats = convertStatsToPlainObject(stats);
       // WASMオブジェクトの参照を即座に破棄
       // stats = null;
-      
+
       // エージェント情報の取得と即座の変換・破棄
       const agents = simulation.get_agents();
       const plainAgents = convertAgentsToPlainObjects(agents);
@@ -503,7 +516,7 @@ export const useSimulation = (config: SimulationConfig) => {
     } catch (err) {
       console.error('Reset failed:', err);
       setError(err instanceof Error ? err.message : 'Reset failed');
-      
+
       // 重大なエラーの場合はシミュレーションを再作成
       if (err instanceof Error && err.message.includes('index out of bounds')) {
         console.warn('Critical WASM error detected during reset, recreating simulation');
@@ -519,20 +532,21 @@ export const useSimulation = (config: SimulationConfig) => {
     config.strategyComplexityPenaltyRate,
     config.torusField,
     pause,
-    forceCleanup,
     recreateSimulation,
   ]);
 
   const setStrategyComplexityPenalty = useCallback(
     (enabled: boolean) => {
-      if (!simulation || isProcessingRef.current) return;
+      if (!simulation || isProcessingRef.current) {
+        return;
+      }
 
       try {
         simulation.set_strategy_complexity_penalty(enabled);
       } catch (err) {
         console.error('Failed to set strategy complexity penalty:', err);
         setError(err instanceof Error ? err.message : 'Failed to set strategy complexity penalty');
-        
+
         // 重大なエラーの場合はシミュレーションを再作成
         if (err instanceof Error && err.message.includes('index out of bounds')) {
           console.warn('Critical WASM error detected, recreating simulation');
@@ -540,12 +554,14 @@ export const useSimulation = (config: SimulationConfig) => {
         }
       }
     },
-    [simulation, forceCleanup, recreateSimulation]
+    [simulation, recreateSimulation]
   );
 
   const setStrategyComplexityPenaltyRate = useCallback(
     (rate: number) => {
-      if (!simulation || isProcessingRef.current) return;
+      if (!simulation || isProcessingRef.current) {
+        return;
+      }
 
       try {
         simulation.set_strategy_complexity_penalty_rate(rate);
@@ -554,7 +570,7 @@ export const useSimulation = (config: SimulationConfig) => {
         setError(
           err instanceof Error ? err.message : 'Failed to set strategy complexity penalty rate'
         );
-        
+
         // 重大なエラーの場合はシミュレーションを再作成
         if (err instanceof Error && err.message.includes('index out of bounds')) {
           console.warn('Critical WASM error detected, recreating simulation');
@@ -562,19 +578,21 @@ export const useSimulation = (config: SimulationConfig) => {
         }
       }
     },
-    [simulation, forceCleanup, recreateSimulation]
+    [simulation, recreateSimulation]
   );
 
   const setTorusField = useCallback(
     (enabled: boolean) => {
-      if (!simulation || isProcessingRef.current) return;
+      if (!simulation || isProcessingRef.current) {
+        return;
+      }
 
       try {
         simulation.set_torus_field(enabled);
       } catch (err) {
         console.error('Failed to set torus field:', err);
         setError(err instanceof Error ? err.message : 'Failed to set torus field');
-        
+
         // 重大なエラーの場合はシミュレーションを再作成
         if (err instanceof Error && err.message.includes('index out of bounds')) {
           console.warn('Critical WASM error detected, recreating simulation');
@@ -582,7 +600,7 @@ export const useSimulation = (config: SimulationConfig) => {
         }
       }
     },
-    [simulation, forceCleanup, recreateSimulation]
+    [simulation, recreateSimulation]
   );
 
   // Update interval when speed changes

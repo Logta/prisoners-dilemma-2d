@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "biome:check": "biome check .",
     "biome:fix": "biome check --write .",
+    "biome:ffix": "biome check --write --unsafe .",
     "biome:init": "biome init",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"

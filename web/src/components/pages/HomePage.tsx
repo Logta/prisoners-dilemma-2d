@@ -39,12 +39,12 @@ export const HomePage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <h2 className="text-lg font-semibold text-red-800 mb-2">Error</h2>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-6">
+          <h2 className="mb-2 font-semibold text-lg text-red-800">Error</h2>
           <p className="text-red-700">{error}</p>
           <button
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="mt-4 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
             onClick={() => window.location.reload()}
             type="button"
           >
@@ -57,9 +57,9 @@ export const HomePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-blue-600 border-b-2" />
           <p className="text-gray-600">Loading simulation...</p>
         </div>
       </div>
@@ -69,20 +69,20 @@ export const HomePage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">2D Prisoner's Dilemma</h1>
-        <p className="text-lg text-gray-600">Evolutionary simulation of cooperation strategies</p>
+      <div className="mb-8 text-center">
+        <h1 className="mb-2 font-bold text-4xl text-gray-900">2D Prisoner's Dilemma</h1>
+        <p className="text-gray-600 text-lg">Evolutionary simulation of cooperation strategies</p>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         {/* Simulation Grid - Takes up more space */}
         <div className="lg:col-span-3">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900">
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 font-semibold text-gray-900 text-xl">
               Simulation Grid
               {statistics && (
-                <span className="text-sm font-normal text-gray-500 ml-2">
+                <span className="ml-2 font-normal text-gray-500 text-sm">
                   Generation {statistics.generation || 0} | {statistics.total_agents || 0} agents
                 </span>
               )}
@@ -98,7 +98,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Control Panel and Statistics */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="space-y-6 lg:col-span-1">
           <ControlPanel
             agentCount={agentCount}
             currentAgentCount={statistics?.total_agents || 0}
@@ -133,7 +133,7 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="mt-8 text-center text-sm text-gray-500">
+      <div className="mt-8 text-center text-gray-500 text-sm">
         <p>Built with React, TypeScript, and WebAssembly (Rust)</p>
       </div>
     </div>
