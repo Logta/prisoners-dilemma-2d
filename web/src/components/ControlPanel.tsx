@@ -6,6 +6,7 @@ import { Slider } from './ui/Slider';
 interface ControlPanelProps {
   isRunning: boolean;
   speed: number;
+  agentCount: number;
   strategyComplexityPenalty: boolean;
   strategyComplexityPenaltyRate: number;
   torusField?: boolean;
@@ -14,6 +15,7 @@ interface ControlPanelProps {
   onReset: () => void;
   onStep: () => void;
   onSpeedChange: (speed: number) => void;
+  onAgentCountChange: (count: number) => void;
   onStrategyComplexityPenaltyChange: (enabled: boolean) => void;
   onStrategyComplexityPenaltyRateChange: (rate: number) => void;
   onTorusFieldChange?: (enabled: boolean) => void;
@@ -23,6 +25,7 @@ interface ControlPanelProps {
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   isRunning,
   speed,
+  agentCount,
   strategyComplexityPenalty,
   strategyComplexityPenaltyRate,
   torusField = false,
@@ -31,6 +34,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onReset,
   onStep,
   onSpeedChange,
+  onAgentCountChange,
   onStrategyComplexityPenaltyChange,
   onStrategyComplexityPenaltyRateChange,
   onTorusFieldChange,
@@ -88,6 +92,22 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             value={speed}
           />
           <div className="text-xs text-gray-500 mt-1">Lower values = faster simulation</div>
+        </div>
+
+        {/* Agent Count Control */}
+        <div>
+          <Slider
+            className="w-full"
+            label={`Population Size (${agentCount} agents)`}
+            max={1000}
+            min={10}
+            onChange={onAgentCountChange}
+            step={10}
+            value={agentCount}
+          />
+          <div className="text-xs text-gray-500 mt-1">
+            Number of agents in the simulation (reset required to apply changes)
+          </div>
         </div>
 
         {/* Strategy Complexity Penalty Mode */}

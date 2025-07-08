@@ -7,12 +7,13 @@ import { StatisticsPanel } from '../StatisticsPanel';
 
 export const HomePage: React.FC = () => {
   const [speed, setSpeed] = useState(500);
+  const [agentCount, setAgentCount] = useState(200);
   const [strategyComplexityPenalty, setStrategyComplexityPenalty] = useState(false);
   const [strategyComplexityPenaltyRate, setStrategyComplexityPenaltyRate] = useState(15); // percentage 0-100
   const [torusField, setTorusField] = useState(false);
 
   const config = {
-    agentCount: 1000,
+    agentCount,
     gridHeight: 100,
     gridWidth: 100,
     speed,
@@ -99,8 +100,10 @@ export const HomePage: React.FC = () => {
         {/* Control Panel and Statistics */}
         <div className="lg:col-span-1 space-y-6">
           <ControlPanel
+            agentCount={agentCount}
             disabled={loading}
             isRunning={isRunning}
+            onAgentCountChange={setAgentCount}
             onPause={pause}
             onReset={reset}
             onSpeedChange={setSpeed}
