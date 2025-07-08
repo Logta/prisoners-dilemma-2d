@@ -72,6 +72,7 @@ export interface WasmSimulationConstructor {
 }
 
 export interface WasmModule {
+  // biome-ignore lint/style/useNamingConvention: WASM binding class name from Rust
   WasmSimulation: WasmSimulationConstructor;
   // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
   movement_strategy_name(strategyId: number): string;
@@ -81,9 +82,13 @@ export interface WasmModule {
 }
 
 export const StrategyType = {
+  // biome-ignore lint/style/useNamingConvention: Strategy names match Rust enum variants
   AllCooperate: 0,
+  // biome-ignore lint/style/useNamingConvention: Strategy names match Rust enum variants
   AllDefect: 1,
+  // biome-ignore lint/style/useNamingConvention: Strategy names match Rust enum variants
   Pavlov: 3,
+  // biome-ignore lint/style/useNamingConvention: Strategy names match Rust enum variants
   TitForTat: 2,
 } as const;
 
@@ -104,11 +109,17 @@ export const STRATEGY_COLORS = {
 } as const;
 
 export const MovementStrategyType = {
+  // biome-ignore lint/style/useNamingConvention: Movement strategy names match Rust enum variants
   Adaptive: 2,
+  // biome-ignore lint/style/useNamingConvention: Movement strategy names match Rust enum variants
   Antisocial: 5,
+  // biome-ignore lint/style/useNamingConvention: Movement strategy names match Rust enum variants
   Explorer: 0,
+  // biome-ignore lint/style/useNamingConvention: Movement strategy names match Rust enum variants
   Opportunist: 3,
+  // biome-ignore lint/style/useNamingConvention: Movement strategy names match Rust enum variants
   Settler: 1,
+  // biome-ignore lint/style/useNamingConvention: Movement strategy names match Rust enum variants
   Social: 4,
 } as const;
 
