@@ -1,17 +1,22 @@
-import React, { useState } from 'react';
-import { SimulationGrid } from '../SimulationGrid';
-import { ControlPanel } from '../ControlPanel';
-import { StatisticsPanel } from '../StatisticsPanel';
+import type React from 'react';
+import { useState } from 'react';
 import { useSimulation } from '../../hooks/useSimulation';
+import { ControlPanel } from '../ControlPanel';
+import { SimulationGrid } from '../SimulationGrid';
+import { StatisticsPanel } from '../StatisticsPanel';
 
 export const HomePage: React.FC = () => {
   const [speed, setSpeed] = useState(500);
-  
+  const [strategyComplexityPenalty, setStrategyComplexityPenalty] = useState(false);
+  const [strategyComplexityPenaltyRate, setStrategyComplexityPenaltyRate] = useState(15); // percentage 0-100
+
   const config = {
-    gridWidth: 100,
-    gridHeight: 100,
     agentCount: 1000,
+    gridHeight: 100,
+    gridWidth: 100,
     speed,
+    strategyComplexityPenalty,
+    strategyComplexityPenaltyRate: strategyComplexityPenaltyRate / 100, // convert to 0.0-1.0
   };
 
   const {
@@ -24,6 +29,8 @@ export const HomePage: React.FC = () => {
     pause,
     reset,
     step,
+    setStrategyComplexityPenalty: setSimulationPenalty,
+    setStrategyComplexityPenaltyRate: setSimulationPenaltyRate,
   } = useSimulation(config);
 
   if (error) {
@@ -33,8 +40,9 @@ export const HomePage: React.FC = () => {
           <h2 className="text-lg font-semibold text-red-800 mb-2">Error</h2>
           <p className="text-red-700">{error}</p>
           <button
-            onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            onClick={() => window.location.reload()}
+            type="button"
           >
             Reload Page
           </button>
@@ -58,12 +66,8 @@ export const HomePage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          2D Prisoner's Dilemma
-        </h1>
-        <p className="text-lg text-gray-600">
-          Evolutionary simulation of cooperation strategies
-        </p>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">2D Prisoner's Dilemma</h1>
+        <p className="text-lg text-gray-600">Evolutionary simulation of cooperation strategies</p>
       </div>
 
       {/* Main Content */}
@@ -75,15 +79,15 @@ export const HomePage: React.FC = () => {
               Simulation Grid
               {statistics && (
                 <span className="text-sm font-normal text-gray-500 ml-2">
-                  Generation {statistics.generation} | {statistics.total_agents} agents
+                  Generation {statistics.generation || 0} | {statistics.total_agents || 0} agents
                 </span>
               )}
             </h2>
             <div className="flex justify-center">
               <SimulationGrid
                 agents={agents}
-                gridWidth={config.gridWidth}
                 gridHeight={config.gridHeight}
+                gridWidth={config.gridWidth}
               />
             </div>
           </div>
@@ -92,28 +96,33 @@ export const HomePage: React.FC = () => {
         {/* Control Panel and Statistics */}
         <div className="lg:col-span-1 space-y-6">
           <ControlPanel
+            disabled={loading}
             isRunning={isRunning}
-            speed={speed}
-            onStart={start}
             onPause={pause}
             onReset={reset}
-            onStep={step}
             onSpeedChange={setSpeed}
-            disabled={loading}
+            onStart={start}
+            onStep={step}
+            onStrategyComplexityPenaltyChange={(enabled) => {
+              setStrategyComplexityPenalty(enabled);
+              setSimulationPenalty(enabled);
+            }}
+            onStrategyComplexityPenaltyRateChange={(rate) => {
+              setStrategyComplexityPenaltyRate(rate);
+              setSimulationPenaltyRate(rate / 100);
+            }}
+            speed={speed}
+            strategyComplexityPenalty={strategyComplexityPenalty}
+            strategyComplexityPenaltyRate={strategyComplexityPenaltyRate}
           />
-          
-          <StatisticsPanel
-            statistics={statistics}
-            loading={loading}
-          />
+
+          <StatisticsPanel loading={loading} statistics={statistics} />
         </div>
       </div>
 
       {/* Footer */}
       <div className="mt-8 text-center text-sm text-gray-500">
-        <p>
-          Built with React, TypeScript, and WebAssembly (Rust)
-        </p>
+        <p>Built with React, TypeScript, and WebAssembly (Rust)</p>
       </div>
     </div>
   );

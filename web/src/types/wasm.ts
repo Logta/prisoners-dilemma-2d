@@ -29,11 +29,13 @@ export interface WasmSimulation {
   get_generation(): number;
   get_turn(): number;
   reset(agent_count: number): void;
+  set_strategy_complexity_penalty(enabled: boolean): void;
+  set_strategy_complexity_penalty_rate(rate: number): void;
   free(): void;
 }
 
 export interface WasmSimulationConstructor {
-  new(width: number, height: number, agent_count: number): WasmSimulation;
+  new (width: number, height: number, agent_count: number): WasmSimulation;
 }
 
 export interface WasmModule {
@@ -42,23 +44,25 @@ export interface WasmModule {
   greet(name: string): void;
 }
 
-export enum StrategyType {
-  AllCooperate = 0,
-  AllDefect = 1,
-  TitForTat = 2,
-  Pavlov = 3,
-}
+export const StrategyType = {
+  AllCooperate: 0,
+  AllDefect: 1,
+  Pavlov: 3,
+  TitForTat: 2,
+} as const;
+
+export type StrategyType = (typeof StrategyType)[keyof typeof StrategyType];
 
 export const STRATEGY_NAMES = {
-  [StrategyType.AllCooperate]: "Always Cooperate",
-  [StrategyType.AllDefect]: "Always Defect", 
-  [StrategyType.TitForTat]: "Tit for Tat",
-  [StrategyType.Pavlov]: "Pavlov",
+  [StrategyType.AllCooperate]: 'Always Cooperate',
+  [StrategyType.AllDefect]: 'Always Defect',
+  [StrategyType.TitForTat]: 'Tit for Tat',
+  [StrategyType.Pavlov]: 'Pavlov',
 };
 
 export const STRATEGY_COLORS = {
-  [StrategyType.AllCooperate]: "#22c55e", // green
-  [StrategyType.AllDefect]: "#ef4444", // red
-  [StrategyType.TitForTat]: "#3b82f6", // blue
-  [StrategyType.Pavlov]: "#f59e0b", // amber
+  [StrategyType.AllCooperate]: '#22c55e', // green
+  [StrategyType.AllDefect]: '#ef4444', // red
+  [StrategyType.TitForTat]: '#3b82f6', // blue
+  [StrategyType.Pavlov]: '#f59e0b', // amber
 };

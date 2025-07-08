@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type { WasmAgent } from '../types/wasm';
 import { SimulationCanvas } from '../lib/canvas';
+import type { WasmAgent } from '../types/wasm';
 
 interface SimulationGridProps {
   agents: WasmAgent[];
@@ -45,10 +45,7 @@ export const SimulationGrid: React.FC<SimulationGridProps> = ({
 
   return (
     <div className={`relative ${className}`}>
-      <canvas
-        ref={canvasRef}
-        className="border border-gray-300 rounded-lg shadow-sm"
-      />
+      <canvas className="border border-gray-300 rounded-lg shadow-sm" ref={canvasRef} />
       <div className="absolute top-2 right-2 bg-white bg-opacity-90 rounded p-2 text-xs">
         <div className="grid grid-cols-2 gap-1 text-center">
           <div className="flex items-center gap-1">

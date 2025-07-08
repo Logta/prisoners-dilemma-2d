@@ -1,6 +1,6 @@
-import React from 'react';
+import type React from 'react';
 import type { WasmStatistics } from '../types/wasm';
-import { STRATEGY_NAMES, STRATEGY_COLORS } from '../types/wasm';
+import { STRATEGY_COLORS, STRATEGY_NAMES } from '../types/wasm';
 
 interface StatisticsPanelProps {
   statistics: WasmStatistics | null;
@@ -25,10 +25,25 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
   }
 
   const strategyData = [
-    { type: 0, name: STRATEGY_NAMES[0], count: statistics.all_cooperate_count, color: STRATEGY_COLORS[0] },
-    { type: 1, name: STRATEGY_NAMES[1], count: statistics.all_defect_count, color: STRATEGY_COLORS[1] },
-    { type: 2, name: STRATEGY_NAMES[2], count: statistics.tit_for_tat_count, color: STRATEGY_COLORS[2] },
-    { type: 3, name: STRATEGY_NAMES[3], count: statistics.pavlov_count, color: STRATEGY_COLORS[3] },
+    {
+      color: STRATEGY_COLORS[0],
+      count: statistics.all_cooperate_count,
+      name: STRATEGY_NAMES[0],
+      type: 0,
+    },
+    {
+      color: STRATEGY_COLORS[1],
+      count: statistics.all_defect_count,
+      name: STRATEGY_NAMES[1],
+      type: 1,
+    },
+    {
+      color: STRATEGY_COLORS[2],
+      count: statistics.tit_for_tat_count,
+      name: STRATEGY_NAMES[2],
+      type: 2,
+    },
+    { color: STRATEGY_COLORS[3], count: statistics.pavlov_count, name: STRATEGY_NAMES[3], type: 3 },
   ];
 
   const formatPercentage = (value: number) => (value * 100).toFixed(1);
@@ -37,7 +52,7 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <h2 className="text-xl font-semibold mb-4 text-gray-900">Statistics</h2>
-      
+
       <div className="space-y-4">
         {/* Generation Info */}
         <div className="grid grid-cols-2 gap-4">
@@ -56,14 +71,13 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
           <h3 className="text-lg font-medium mb-3 text-gray-900">Strategy Distribution</h3>
           <div className="space-y-2">
             {strategyData.map((strategy) => {
-              const percentage = statistics.total_agents > 0 
-                ? (strategy.count / statistics.total_agents) * 100 
-                : 0;
-              
+              const percentage =
+                statistics.total_agents > 0 ? (strategy.count / statistics.total_agents) * 100 : 0;
+
               return (
-                <div key={strategy.type} className="flex items-center gap-3">
-                  <div 
-                    className="w-4 h-4 rounded" 
+                <div className="flex items-center gap-3" key={strategy.type}>
+                  <div
+                    className="w-4 h-4 rounded"
                     style={{ backgroundColor: strategy.color }}
                   ></div>
                   <div className="flex-1 min-w-0">

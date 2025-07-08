@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { WasmSimulation, WasmStatistics, WasmAgent } from '../types/wasm';
+import type { WasmAgent, WasmSimulation, WasmStatistics } from '../types/wasm';
 import { useWasm } from './useWasm';
 
 interface SimulationConfig {
@@ -7,6 +7,8 @@ interface SimulationConfig {
   gridHeight: number;
   agentCount: number;
   speed: number; // milliseconds between steps
+  strategyComplexityPenalty?: boolean;
+  strategyComplexityPenaltyRate?: number; // 0.0 to 1.0
 }
 
 export const useSimulation = (config: SimulationConfig) => {
@@ -16,29 +18,69 @@ export const useSimulation = (config: SimulationConfig) => {
   const [statistics, setStatistics] = useState<WasmStatistics | null>(null);
   const [agents, setAgents] = useState<WasmAgent[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   const intervalRef = useRef<number | null>(null);
 
   // Initialize simulation when WASM module is loaded
   useEffect(() => {
     if (!wasmModule || wasmLoading) return;
 
-    try {
-      const newSimulation = new wasmModule.WasmSimulation(
-        config.gridWidth,
-        config.gridHeight,
-        config.agentCount
-      );
-      
-      setSimulation(newSimulation);
-      setStatistics(newSimulation.get_statistics());
-      setAgents(newSimulation.get_agents());
-      setError(null);
-    } catch (err) {
-      console.error('Failed to initialize simulation:', err);
-      setError(err instanceof Error ? err.message : 'Failed to initialize simulation');
-    }
-  }, [wasmModule, wasmLoading, config.gridWidth, config.gridHeight, config.agentCount]);
+    const initializeSimulation = () => {
+      try {
+        const newSimulation = new wasmModule.WasmSimulation(
+          config.gridWidth,
+          config.gridHeight,
+          config.agentCount
+        );
+
+        // Apply strategy complexity penalty if enabled
+        if (config.strategyComplexityPenalty) {
+          newSimulation.set_strategy_complexity_penalty(true);
+          if (config.strategyComplexityPenaltyRate !== undefined) {
+            newSimulation.set_strategy_complexity_penalty_rate(
+              config.strategyComplexityPenaltyRate
+            );
+          }
+        }
+
+        setSimulation(newSimulation);
+
+        // Safe statistics retrieval with delay
+        setTimeout(() => {
+          try {
+            const stats = newSimulation.get_statistics();
+            setStatistics(stats);
+          } catch (err) {
+            console.warn('Failed to get initial statistics:', err);
+            setStatistics(null);
+          }
+
+          try {
+            const initialAgents = newSimulation.get_agents();
+            setAgents(initialAgents);
+          } catch (err) {
+            console.warn('Failed to get initial agents:', err);
+            setAgents([]);
+          }
+        }, 10);
+
+        setError(null);
+      } catch (err) {
+        console.error('Failed to initialize simulation:', err);
+        setError(err instanceof Error ? err.message : 'Failed to initialize simulation');
+      }
+    };
+
+    initializeSimulation();
+  }, [
+    wasmModule,
+    wasmLoading,
+    config.gridWidth,
+    config.gridHeight,
+    config.agentCount,
+    config.strategyComplexityPenalty,
+    config.strategyComplexityPenaltyRate,
+  ]);
 
   // Clean up simulation on unmount
   useEffect(() => {
@@ -58,7 +100,7 @@ export const useSimulation = (config: SimulationConfig) => {
     try {
       const newStats = simulation.step();
       const newAgents = simulation.get_agents();
-      
+
       setStatistics(newStats);
       setAgents(newAgents);
     } catch (err) {
@@ -87,9 +129,19 @@ export const useSimulation = (config: SimulationConfig) => {
     if (!simulation) return;
 
     pause();
-    
+
     try {
       simulation.reset(config.agentCount);
+      // Reapply strategy complexity penalty setting after reset
+      if (config.strategyComplexityPenalty !== undefined) {
+        simulation.set_strategy_complexity_penalty(config.strategyComplexityPenalty);
+        if (
+          config.strategyComplexityPenalty &&
+          config.strategyComplexityPenaltyRate !== undefined
+        ) {
+          simulation.set_strategy_complexity_penalty_rate(config.strategyComplexityPenaltyRate);
+        }
+      }
       setStatistics(simulation.get_statistics());
       setAgents(simulation.get_agents());
       setError(null);
@@ -97,7 +149,43 @@ export const useSimulation = (config: SimulationConfig) => {
       console.error('Reset failed:', err);
       setError(err instanceof Error ? err.message : 'Reset failed');
     }
-  }, [simulation, config.agentCount, pause]);
+  }, [
+    simulation,
+    config.agentCount,
+    config.strategyComplexityPenalty,
+    config.strategyComplexityPenaltyRate,
+    pause,
+  ]);
+
+  const setStrategyComplexityPenalty = useCallback(
+    (enabled: boolean) => {
+      if (!simulation) return;
+
+      try {
+        simulation.set_strategy_complexity_penalty(enabled);
+      } catch (err) {
+        console.error('Failed to set strategy complexity penalty:', err);
+        setError(err instanceof Error ? err.message : 'Failed to set strategy complexity penalty');
+      }
+    },
+    [simulation]
+  );
+
+  const setStrategyComplexityPenaltyRate = useCallback(
+    (rate: number) => {
+      if (!simulation) return;
+
+      try {
+        simulation.set_strategy_complexity_penalty_rate(rate);
+      } catch (err) {
+        console.error('Failed to set strategy complexity penalty rate:', err);
+        setError(
+          err instanceof Error ? err.message : 'Failed to set strategy complexity penalty rate'
+        );
+      }
+    },
+    [simulation]
+  );
 
   // Update interval when speed changes
   useEffect(() => {
@@ -108,15 +196,17 @@ export const useSimulation = (config: SimulationConfig) => {
   }, [config.speed, isRunning, step]);
 
   return {
-    simulation,
-    isRunning,
-    statistics,
     agents,
-    loading: wasmLoading || !simulation,
     error: wasmError || error,
-    start,
+    isRunning,
+    loading: wasmLoading || !simulation,
     pause,
     reset,
+    setStrategyComplexityPenalty,
+    setStrategyComplexityPenaltyRate,
+    simulation,
+    start,
+    statistics,
     step,
   };
 };

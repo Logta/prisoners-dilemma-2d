@@ -64,4 +64,14 @@ impl WasmSimulation {
             .reset(agent_count)
             .map_err(|e| JsValue::from_str(&e))
     }
+
+    #[wasm_bindgen]
+    pub fn set_strategy_complexity_penalty(&mut self, enabled: bool) {
+        self.service.set_strategy_complexity_penalty(enabled);
+    }
+
+    #[wasm_bindgen]
+    pub fn set_strategy_complexity_penalty_rate(&mut self, rate: f32) {
+        self.service.set_strategy_complexity_penalty_rate(rate);
+    }
 }

@@ -12,23 +12,23 @@ export class SimulationCanvas {
     this.canvas = canvas;
     this.gridWidth = gridWidth;
     this.gridHeight = gridHeight;
-    
+
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Failed to get 2D context from canvas');
     }
     this.ctx = ctx;
-    
+
     this.setupCanvas();
   }
 
   private setupCanvas() {
     const maxSize = Math.min(800, 600); // Max canvas size
     this.cellSize = Math.floor(maxSize / Math.max(this.gridWidth, this.gridHeight));
-    
+
     this.canvas.width = this.gridWidth * this.cellSize;
     this.canvas.height = this.gridHeight * this.cellSize;
-    
+
     // Set CSS size for high DPI displays
     this.canvas.style.width = `${this.canvas.width}px`;
     this.canvas.style.height = `${this.canvas.height}px`;
@@ -42,7 +42,7 @@ export class SimulationCanvas {
   public drawGrid() {
     this.ctx.strokeStyle = '#e9ecef';
     this.ctx.lineWidth = 0.5;
-    
+
     // Draw vertical lines
     for (let x = 0; x <= this.gridWidth; x++) {
       const xPos = x * this.cellSize;
@@ -51,7 +51,7 @@ export class SimulationCanvas {
       this.ctx.lineTo(xPos, this.canvas.height);
       this.ctx.stroke();
     }
-    
+
     // Draw horizontal lines
     for (let y = 0; y <= this.gridHeight; y++) {
       const yPos = y * this.cellSize;
@@ -71,17 +71,17 @@ export class SimulationCanvas {
   private drawAgent(agent: WasmAgent) {
     const x = agent.x * this.cellSize;
     const y = agent.y * this.cellSize;
-    
+
     // Get base color from strategy
     const baseColor = STRATEGY_COLORS[agent.strategy as keyof typeof STRATEGY_COLORS] || '#6b7280';
-    
+
     // Modify color based on cooperation rate
     const cooperationRate = agent.cooperation_rate;
     const color = this.blendWithCooperationRate(baseColor, cooperationRate);
-    
+
     this.ctx.fillStyle = color;
     this.ctx.fillRect(x + 1, y + 1, this.cellSize - 2, this.cellSize - 2);
-    
+
     // Add border to show agent clearly
     this.ctx.strokeStyle = '#374151';
     this.ctx.lineWidth = 1;
@@ -93,15 +93,15 @@ export class SimulationCanvas {
     const r = parseInt(baseColor.slice(1, 3), 16);
     const g = parseInt(baseColor.slice(3, 5), 16);
     const b = parseInt(baseColor.slice(5, 7), 16);
-    
+
     // Blend with cooperation rate
     // High cooperation -> brighter, Low cooperation -> darker
-    const factor = 0.3 + (cooperationRate * 0.7); // Range from 0.3 to 1.0
-    
+    const factor = 0.3 + cooperationRate * 0.7; // Range from 0.3 to 1.0
+
     const newR = Math.round(r * factor);
     const newG = Math.round(g * factor);
     const newB = Math.round(b * factor);
-    
+
     return `rgb(${newR}, ${newG}, ${newB})`;
   }
 

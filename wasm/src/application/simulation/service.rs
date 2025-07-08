@@ -3,13 +3,14 @@ use crate::domain::{
     game::GameService,
     grid::{Grid, GridService},
 };
-use super::SimulationStatistics;
+use super::{SimulationStatistics, SimulationConfig};
 
 pub struct SimulationService {
     grid: Grid,
     generation: u32,
     turn: u32,
     turns_per_generation: u32,
+    config: SimulationConfig,
 }
 
 impl SimulationService {
@@ -22,7 +23,29 @@ impl SimulationService {
             generation: 0,
             turn: 0,
             turns_per_generation: 100,
+            config: SimulationConfig::default(),
         })
+    }
+
+    pub fn with_config(width: usize, height: usize, agent_count: usize, config: SimulationConfig) -> Result<Self, String> {
+        let mut grid = Grid::new(width, height);
+        GridService::initialize_random_agents(&mut grid, agent_count)?;
+        
+        Ok(Self {
+            grid,
+            generation: 0,
+            turn: 0,
+            turns_per_generation: 100,
+            config,
+        })
+    }
+
+    pub fn set_strategy_complexity_penalty(&mut self, enabled: bool) {
+        self.config.strategy_complexity_penalty_enabled = enabled;
+    }
+
+    pub fn set_strategy_complexity_penalty_rate(&mut self, rate: f32) {
+        self.config.strategy_complexity_penalty_rate = rate.clamp(0.0, 1.0);
     }
 
     pub fn step(&mut self) -> SimulationStatistics {
@@ -98,7 +121,7 @@ impl SimulationService {
 
     fn next_generation(&mut self) {
         let evolution_service = crate::application::evolution::EvolutionService::new();
-        let new_agents = evolution_service.evolve(self.grid.agents());
+        let new_agents = evolution_service.evolve_with_config(self.grid.agents(), &self.config);
         
         self.grid.clear();
         for agent in new_agents {

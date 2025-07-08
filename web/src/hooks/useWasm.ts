@@ -10,14 +10,14 @@ export const useWasm = () => {
     const loadWasm = async () => {
       try {
         setLoading(true);
-        
+
         // Dynamic import of the WASM module
         const wasmModule = await import('../assets/pkg/prisoners_dilemma_2d.js');
         await wasmModule.default();
-        
+
         // Set panic hook for better error messages
         wasmModule.set_panic_hook();
-        
+
         setWasmModule(wasmModule as WasmModule);
         setError(null);
       } catch (err) {
@@ -31,5 +31,5 @@ export const useWasm = () => {
     loadWasm();
   }, []);
 
-  return { wasmModule, loading, error };
+  return { error, loading, wasmModule };
 };

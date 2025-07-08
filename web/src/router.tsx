@@ -4,13 +4,13 @@ import { HomePage } from './components/pages/HomePage';
 
 export const router = createBrowserRouter([
   {
-    path: '/',
-    element: <Layout />,
     children: [
       {
-        index: true,
         element: <HomePage />,
+        index: true,
       },
     ],
+    element: <Layout />,
+    path: '/',
   },
 ]);

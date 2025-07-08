@@ -18,7 +18,7 @@ class ErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
+    return { error, hasError: true };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -33,10 +33,7 @@ class ErrorBoundary extends React.Component<
             <h2>アプリケーションエラーが発生しました</h2>
             <p>{this.state.error?.message || '不明なエラー'}</p>
           </div>
-          <button
-            className="retry-button"
-            onClick={() => window.location.reload()}
-          >
+          <button className="retry-button" onClick={() => window.location.reload()} type="button">
             再読み込み
           </button>
         </div>
@@ -48,7 +45,7 @@ class ErrorBoundary extends React.Component<
 }
 
 // React 18の並行機能を有効にする
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
       <App />
