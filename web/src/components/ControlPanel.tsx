@@ -7,6 +7,7 @@ interface ControlPanelProps {
   isRunning: boolean;
   speed: number;
   agentCount: number;
+  currentAgentCount?: number; // 現在のシミュレーション内のエージェント数
   strategyComplexityPenalty: boolean;
   strategyComplexityPenaltyRate: number;
   torusField?: boolean;
@@ -26,6 +27,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   isRunning,
   speed,
   agentCount,
+  currentAgentCount,
   strategyComplexityPenalty,
   strategyComplexityPenaltyRate,
   torusField = false,
@@ -40,11 +42,31 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onTorusFieldChange,
   disabled = false,
 }) => {
+  // エージェントが存在しない場合の警告
+  const hasNoAgents = currentAgentCount === 0 || currentAgentCount === undefined;
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <h2 className="text-xl font-semibold mb-4 text-gray-900">Simulation Controls</h2>
 
       <div className="space-y-4">
+        {/* エージェントがいない場合の警告 */}
+        {hasNoAgents && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-yellow-800">
+                  エージェントが配置されていません。「Reset」ボタンを押してエージェントを配置してください。
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Play/Pause Controls */}
         <div className="flex gap-2">
           {isRunning ? (
@@ -53,7 +75,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               Pause
             </Button>
           ) : (
-            <Button className="flex items-center gap-2" disabled={disabled} onClick={onStart}>
+            <Button 
+              className="flex items-center gap-2" 
+              disabled={disabled || hasNoAgents} 
+              onClick={onStart}
+              title={hasNoAgents ? "エージェントが配置されていません" : ""}
+            >
               <Play size={16} />
               Start
             </Button>
@@ -61,9 +88,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <Button
             className="flex items-center gap-2"
-            disabled={disabled || isRunning}
+            disabled={disabled || isRunning || hasNoAgents}
             onClick={onStep}
             variant="secondary"
+            title={hasNoAgents ? "エージェントが配置されていません" : ""}
           >
             <StepForward size={16} />
             Step

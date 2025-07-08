@@ -101,6 +101,7 @@ export const HomePage: React.FC = () => {
         <div className="lg:col-span-1 space-y-6">
           <ControlPanel
             agentCount={agentCount}
+            currentAgentCount={statistics?.total_agents || 0}
             disabled={loading}
             isRunning={isRunning}
             onAgentCountChange={setAgentCount}
