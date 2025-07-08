@@ -20,7 +20,12 @@ impl StrategyType {
         }
     }
 
-    pub fn decide_action(&self, last_opponent_action: Option<Action>, last_my_action: Option<Action>, last_payoff: Option<i32>) -> Action {
+    pub fn decide_action(
+        &self,
+        last_opponent_action: Option<Action>,
+        last_my_action: Option<Action>,
+        last_payoff: Option<i32>,
+    ) -> Action {
         match self {
             StrategyType::AllCooperate => Action::Cooperate,
             StrategyType::AllDefect => Action::Defect,
@@ -33,7 +38,8 @@ impl StrategyType {
             StrategyType::Pavlov => {
                 match (last_my_action, last_payoff) {
                     (Some(action), Some(payoff)) => {
-                        if payoff >= 3 { // 勝利または相互協力
+                        if payoff >= 3 {
+                            // 勝利または相互協力
                             action // 同じ行動を継続
                         } else {
                             action.opposite() // 逆の行動

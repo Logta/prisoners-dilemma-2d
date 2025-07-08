@@ -347,12 +347,14 @@ export const useSimulation = (config: SimulationConfig) => {
 
     // ステップ実行前にもエージェントの存在をチェック
     if (!agents || agents.length === 0) {
+      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('エージェントが配置されていません。リセットしてエージェントを配置してください。');
       return;
     }
 
     // 統計情報からエージェント数を再確認
     if (statistics && statistics.total_agents === 0) {
+      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('エージェントが配置されていません。リセットしてエージェントを配置してください。');
       return;
     }
@@ -418,12 +420,14 @@ export const useSimulation = (config: SimulationConfig) => {
 
     // エージェントが存在しない場合は開始できない
     if (!agents || agents.length === 0) {
+      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('エージェントが配置されていません。リセットしてエージェントを配置してください。');
       return;
     }
 
     // 統計情報からエージェント数を再確認
     if (statistics && statistics.total_agents === 0) {
+      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('エージェントが配置されていません。リセットしてエージェントを配置してください。');
       return;
     }

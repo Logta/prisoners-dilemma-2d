@@ -15,15 +15,20 @@ impl Position {
         self.neighbors_with_mode(grid_width, grid_height, false)
     }
 
-    pub fn neighbors_with_mode(&self, grid_width: usize, grid_height: usize, torus_mode: bool) -> Vec<Position> {
+    pub fn neighbors_with_mode(
+        &self,
+        grid_width: usize,
+        grid_height: usize,
+        torus_mode: bool,
+    ) -> Vec<Position> {
         let mut neighbors = Vec::new();
-        
+
         for dx in -1..=1 {
             for dy in -1..=1 {
                 if dx == 0 && dy == 0 {
                     continue; // 自分自身は除外
                 }
-                
+
                 if torus_mode {
                     // トーラス平面モード：端をループ
                     let new_x = ((self.x as i32 + dx).rem_euclid(grid_width as i32)) as usize;
@@ -33,14 +38,18 @@ impl Position {
                     // 通常モード：境界チェック
                     let new_x = self.x as i32 + dx;
                     let new_y = self.y as i32 + dy;
-                    
-                    if new_x >= 0 && new_x < grid_width as i32 && new_y >= 0 && new_y < grid_height as i32 {
+
+                    if new_x >= 0
+                        && new_x < grid_width as i32
+                        && new_y >= 0
+                        && new_y < grid_height as i32
+                    {
                         neighbors.push(Position::new(new_x as usize, new_y as usize));
                     }
                 }
             }
         }
-        
+
         neighbors
     }
 

@@ -1,5 +1,5 @@
-use crate::domain::agent::{Agent, StrategyType, MovementStrategy};
 use crate::application::simulation::SimulationStatistics;
+use crate::domain::agent::{Agent, MovementStrategy, StrategyType};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
@@ -111,16 +111,34 @@ impl From<&SimulationStatistics> for WasmStatistics {
         Self {
             generation: stats.generation,
             total_agents: stats.total_agents,
-            all_cooperate_count: *stats.strategy_counts.get(&StrategyType::AllCooperate).unwrap_or(&0),
-            all_defect_count: *stats.strategy_counts.get(&StrategyType::AllDefect).unwrap_or(&0),
-            tit_for_tat_count: *stats.strategy_counts.get(&StrategyType::TitForTat).unwrap_or(&0),
-            pavlov_count: *stats.strategy_counts.get(&StrategyType::Pavlov).unwrap_or(&0),
+            all_cooperate_count: *stats
+                .strategy_counts
+                .get(&StrategyType::AllCooperate)
+                .unwrap_or(&0),
+            all_defect_count: *stats
+                .strategy_counts
+                .get(&StrategyType::AllDefect)
+                .unwrap_or(&0),
+            tit_for_tat_count: *stats
+                .strategy_counts
+                .get(&StrategyType::TitForTat)
+                .unwrap_or(&0),
+            pavlov_count: *stats
+                .strategy_counts
+                .get(&StrategyType::Pavlov)
+                .unwrap_or(&0),
             explorer_count: *stats.movement_strategy_counts.get("Explorer").unwrap_or(&0),
             settler_count: *stats.movement_strategy_counts.get("Settler").unwrap_or(&0),
             adaptive_count: *stats.movement_strategy_counts.get("Adaptive").unwrap_or(&0),
-            opportunist_count: *stats.movement_strategy_counts.get("Opportunist").unwrap_or(&0),
+            opportunist_count: *stats
+                .movement_strategy_counts
+                .get("Opportunist")
+                .unwrap_or(&0),
             social_count: *stats.movement_strategy_counts.get("Social").unwrap_or(&0),
-            antisocial_count: *stats.movement_strategy_counts.get("Antisocial").unwrap_or(&0),
+            antisocial_count: *stats
+                .movement_strategy_counts
+                .get("Antisocial")
+                .unwrap_or(&0),
             average_cooperation_rate: stats.average_cooperation_rate,
             average_mobility: stats.average_mobility,
             average_score: stats.average_score,
