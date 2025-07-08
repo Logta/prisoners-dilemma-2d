@@ -17,9 +17,11 @@ const convertAgentsToPlainObjects = (wasmAgents: WasmAgent[]) => {
   const result = wasmAgents.map((agent) => {
     try {
       return {
+        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
         cooperation_rate: agent.cooperation_rate,
         id: agent.id,
         mobility: agent.mobility,
+        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
         movement_strategy: agent.movement_strategy,
         score: agent.score,
         strategy: agent.strategy,
@@ -29,9 +31,11 @@ const convertAgentsToPlainObjects = (wasmAgents: WasmAgent[]) => {
     } catch (err) {
       console.warn('Failed to convert agent:', err);
       return {
+        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
         cooperation_rate: 0,
         id: '',
         mobility: 0,
+        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
         movement_strategy: 0,
         score: 0,
         strategy: 0,
@@ -42,8 +46,10 @@ const convertAgentsToPlainObjects = (wasmAgents: WasmAgent[]) => {
   });
 
   // 強制的にガベージコレクションを促す（開発環境のみ）
+  // biome-ignore lint/suspicious/noExplicitAny: Window.gc is not in standard types
   if (typeof window !== 'undefined' && (window as any).gc) {
     try {
+      // biome-ignore lint/suspicious/noExplicitAny: Window.gc is not in standard types
       (window as any).gc();
     } catch (_e) {
       // gc() is not available in all environments
@@ -57,26 +63,42 @@ const convertAgentsToPlainObjects = (wasmAgents: WasmAgent[]) => {
 const convertStatsToPlainObject = (wasmStats: WasmStatistics) => {
   try {
     const result = {
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       adaptive_count: wasmStats.adaptive_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       all_cooperate_count: wasmStats.all_cooperate_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       all_defect_count: wasmStats.all_defect_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       antisocial_count: wasmStats.antisocial_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       average_cooperation_rate: wasmStats.average_cooperation_rate,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       average_mobility: wasmStats.average_mobility,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       average_score: wasmStats.average_score,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       explorer_count: wasmStats.explorer_count,
       generation: wasmStats.generation,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       opportunist_count: wasmStats.opportunist_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       pavlov_count: wasmStats.pavlov_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       settler_count: wasmStats.settler_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       social_count: wasmStats.social_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       tit_for_tat_count: wasmStats.tit_for_tat_count,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       total_agents: wasmStats.total_agents,
     };
 
     // 強制的にガベージコレクションを促す（開発環境のみ）
+    // biome-ignore lint/suspicious/noExplicitAny: Window.gc is not in standard types
     if (typeof window !== 'undefined' && (window as any).gc) {
       try {
+        // biome-ignore lint/suspicious/noExplicitAny: Window.gc is not in standard types
         (window as any).gc();
       } catch (_e) {
         // gc() is not available in all environments
@@ -87,20 +109,34 @@ const convertStatsToPlainObject = (wasmStats: WasmStatistics) => {
   } catch (err) {
     console.warn('Failed to convert statistics:', err);
     return {
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       adaptive_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       all_cooperate_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       all_defect_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       antisocial_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       average_cooperation_rate: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       average_mobility: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       average_score: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       explorer_count: 0,
       generation: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       opportunist_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       pavlov_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       settler_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       social_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       tit_for_tat_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
       total_agents: 0,
     };
   }
@@ -163,6 +199,7 @@ export const useSimulation = (config: SimulationConfig) => {
       return;
     }
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Complex error recovery logic required
     const timeoutId = setTimeout(() => {
       try {
         const newSimulation = new wasmModule.WasmSimulation(
@@ -209,6 +246,7 @@ export const useSimulation = (config: SimulationConfig) => {
       } catch (err) {
         console.error('Failed to recreate simulation:', err);
         setError(
+          // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
           'シミュレーションの復旧に失敗しました。ページを再読み込みするか、Resetボタンをお試しください。'
         );
       }
@@ -225,6 +263,7 @@ export const useSimulation = (config: SimulationConfig) => {
       return;
     }
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Initialization requires complex error handling
     const initializeSimulation = () => {
       if (isProcessingRef.current) {
         return;
@@ -282,20 +321,34 @@ export const useSimulation = (config: SimulationConfig) => {
         } catch (err) {
           console.warn('Failed to get initial statistics, using fallback:', err);
           setStatistics({
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             adaptive_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             all_cooperate_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             all_defect_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             antisocial_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             average_cooperation_rate: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             average_mobility: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             average_score: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             explorer_count: 0,
             generation: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             opportunist_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             pavlov_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             settler_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             social_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             tit_for_tat_count: 0,
+            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
             total_agents: config.agentCount,
           });
         }
@@ -340,6 +393,7 @@ export const useSimulation = (config: SimulationConfig) => {
     };
   }, [forceCleanup]);
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Step function requires complex validation and error handling
   const step = useCallback(() => {
     if (!(simulation && simulationRef.current) || isProcessingRef.current) {
       return;
@@ -363,7 +417,9 @@ export const useSimulation = (config: SimulationConfig) => {
 
     try {
       // WASMオブジェクトの参照を即座に処理して破棄
+      // biome-ignore lint/suspicious/noExplicitAny: Temporary variables for WASM conversion
       let plainStats: any = null;
+      // biome-ignore lint/suspicious/noExplicitAny: Temporary variables for WASM conversion
       let plainAgents: any = null;
 
       // 統計情報の取得と即座の変換・破棄
@@ -390,6 +446,7 @@ export const useSimulation = (config: SimulationConfig) => {
 
       // エージェントが存在しない場合はシミュレーションを停止
       if (!plainAgents || plainAgents.length === 0 || plainStats.total_agents === 0) {
+        // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
         setError('すべてのエージェントが消失しました。シミュレーションを停止します。');
         setIsRunning(false);
         return;
@@ -433,6 +490,7 @@ export const useSimulation = (config: SimulationConfig) => {
     }
 
     setIsRunning(true);
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Interval handler requires complex simulation health checks
     intervalRef.current = window.setInterval(() => {
       // intervalでのstep実行時にもシミュレーションの有効性をチェック
       if (!simulationRef.current) {
@@ -476,6 +534,7 @@ export const useSimulation = (config: SimulationConfig) => {
     setIsRunning(false);
   }, []);
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Reset function requires complex configuration reapplication
   const reset = useCallback(() => {
     if (!(simulation && simulationRef.current) || isProcessingRef.current) {
       return;
