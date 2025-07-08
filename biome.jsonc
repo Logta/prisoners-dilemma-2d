@@ -12,6 +12,12 @@
     "rules": {
       "recommended": true,
       "suspicious": {
+        "noConsole": {
+          "level": "error",
+          "options": {
+            "allow": ["error", "warn", "info"]
+          }
+        },
         "noExplicitAny": "error",
         "noApproximativeNumericConstant": "error",
         "noCatchAssign": "error",
@@ -31,6 +37,8 @@
         "useAdjacentOverloadSignatures": "error",
         "useDefaultSwitchClauseLast": "error",
         "useGoogleFontDisplay": "error",
+        "noWith": "error",
+        "noVar": "error",
         "useIsArray": "error"
       },
       "style": {
@@ -48,7 +56,29 @@
         "useConst": "error",
         "useLiteralEnumMembers": "error",
         "noEnum": "error",
-        "noNamespace": "error"
+        "noNamespace": "error",
+        "noDefaultExport": "error",
+        "noImplicitBoolean": "error",
+        "noInferrableTypes": "error",
+        "noNegationElse": "error",
+        "noParameterProperties": "error",
+        "noRestrictedGlobals": "error",
+        "noShoutyConstants": "error",
+        "noUnusedTemplateLiteral": "error",
+        "useAsConstAssertion": "error",
+        "useBlockStatements": "error",
+        "useCollapsedElseIf": "error",
+        "useConsistentBuiltinInstantiation": "error",
+        "useDefaultParameterLast": "error",
+        "useEnumInitializers": "error",
+        "useFragmentSyntax": "error",
+        "useNamingConvention": "error",
+        "useNumberNamespace": "error",
+        "useSelfClosingElements": "error",
+        "useShorthandAssign": "error",
+        "useSingleVarDeclarator": "error",
+        "useTemplate": "error",
+        "useThrowOnlyError": "error"
       },
       "correctness": {
         "noUnusedFunctionParameters": "error",
@@ -65,16 +95,73 @@
         "useNumericLiterals": "error",
         "useOptionalChain": "error",
         "useRegexLiterals": "error",
-        "useSimpleNumberKeys": "error"
+        "useSimpleNumberKeys": "error",
+        "noArguments": "error",
+        "useFlatMap": "error",
+        "noCommaOperator": "error",
+        "useSimplifiedLogicExpression": "error",
+        "noExcessiveCognitiveComplexity": "error",
+        "noExtraBooleanCast": "error",
+        "noForEach": "error",
+        "noUselessCatch": "error",
+        "noUselessConstructor": "error",
+        "noUselessEmptyExport": "error",
+        "noUselessFragments": "error",
+        "noUselessLabel": "error",
+        "noUselessLoneBlockStatements": "error",
+        "noUselessRename": "error",
+        "noUselessSwitchCase": "error",
+        "noUselessTernary": "error",
+        "noUselessTypeConstraint": "error",
+        "noVoid": "error",
+        "useLiteralKeys": "error"
       },
       "performance": {
         "noAccumulatingSpread": "error",
         "noDelete": "error",
+        "noNamespaceImport": "error",
         "noDynamicNamespaceImportAccess": "error"
       },
       "security": {
         "noDangerouslySetInnerHtml": "error",
         "noGlobalEval": "error"
+      },
+      "nursery": {
+        "useNumericSeparators": "error",
+        "noSecrets": "error",
+        "useSortedClasses": "error"
+      },
+      "a11y": {
+        "noAccessKey": "error",
+        "noAriaHiddenOnFocusable": "error",
+        "noAriaUnsupportedElements": "error",
+        "noAutofocus": "error",
+        "noDistractingElements": "error",
+        "noHeaderScope": "error",
+        "noInteractiveElementToNoninteractiveRole": "error",
+        "noNoninteractiveElementToInteractiveRole": "error",
+        "noNoninteractiveTabindex": "error",
+        "noPositiveTabindex": "error",
+        "noRedundantAlt": "error",
+        "noRedundantRoles": "error",
+        "noSvgWithoutTitle": "error",
+        "useAltText": "error",
+        "useAnchorContent": "error",
+        "useAriaActivedescendantWithTabindex": "error",
+        "useAriaPropsForRole": "error",
+        "useButtonType": "error",
+        "useHeadingContent": "error",
+        "useHtmlLang": "error",
+        "useIframeTitle": "error",
+        "useKeyWithClickEvents": "error",
+        "useKeyWithMouseEvents": "error",
+        "useMediaCaption": "error",
+        "useSemanticElements": "error",
+        "useValidAnchor": "error",
+        "useValidAriaProps": "error",
+        "useValidAriaRole": "error",
+        "useValidAriaValues": "error",
+        "useValidLang": "error"
       }
     }
   },

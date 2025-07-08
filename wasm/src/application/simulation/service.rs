@@ -55,7 +55,7 @@ impl SimulationService {
 
     pub fn step(&mut self) -> SimulationStatistics {
         self.process_games();
-        GridService::process_movements(&mut self.grid);
+        GridService::process_movements(&mut self.grid, self.config.torus_field_enabled);
         
         self.turn += 1;
         

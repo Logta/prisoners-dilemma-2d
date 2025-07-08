@@ -1,4 +1,4 @@
-use crate::domain::agent::{Agent, StrategyType};
+use crate::domain::agent::{Agent, StrategyType, MovementStrategy};
 use crate::application::simulation::SimulationStatistics;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -10,6 +10,7 @@ pub struct WasmAgent {
     x: usize,
     y: usize,
     strategy: u8,
+    movement_strategy: u8,
     mobility: f64,
     score: i32,
     cooperation_rate: f64,
@@ -26,6 +27,14 @@ impl From<&Agent> for WasmAgent {
                 StrategyType::AllDefect => 1,
                 StrategyType::TitForTat => 2,
                 StrategyType::Pavlov => 3,
+            },
+            movement_strategy: match agent.movement_strategy {
+                MovementStrategy::Explorer => 0,
+                MovementStrategy::Settler => 1,
+                MovementStrategy::Adaptive => 2,
+                MovementStrategy::Opportunist => 3,
+                MovementStrategy::Social => 4,
+                MovementStrategy::Antisocial => 5,
             },
             mobility: agent.mobility,
             score: agent.score,
@@ -57,6 +66,11 @@ impl WasmAgent {
     }
 
     #[wasm_bindgen(getter)]
+    pub fn movement_strategy(&self) -> u8 {
+        self.movement_strategy
+    }
+
+    #[wasm_bindgen(getter)]
     pub fn mobility(&self) -> f64 {
         self.mobility
     }
@@ -81,6 +95,12 @@ pub struct WasmStatistics {
     all_defect_count: usize,
     tit_for_tat_count: usize,
     pavlov_count: usize,
+    explorer_count: usize,
+    settler_count: usize,
+    adaptive_count: usize,
+    opportunist_count: usize,
+    social_count: usize,
+    antisocial_count: usize,
     average_cooperation_rate: f64,
     average_mobility: f64,
     average_score: f64,
@@ -95,6 +115,12 @@ impl From<&SimulationStatistics> for WasmStatistics {
             all_defect_count: *stats.strategy_counts.get(&StrategyType::AllDefect).unwrap_or(&0),
             tit_for_tat_count: *stats.strategy_counts.get(&StrategyType::TitForTat).unwrap_or(&0),
             pavlov_count: *stats.strategy_counts.get(&StrategyType::Pavlov).unwrap_or(&0),
+            explorer_count: *stats.movement_strategy_counts.get("Explorer").unwrap_or(&0),
+            settler_count: *stats.movement_strategy_counts.get("Settler").unwrap_or(&0),
+            adaptive_count: *stats.movement_strategy_counts.get("Adaptive").unwrap_or(&0),
+            opportunist_count: *stats.movement_strategy_counts.get("Opportunist").unwrap_or(&0),
+            social_count: *stats.movement_strategy_counts.get("Social").unwrap_or(&0),
+            antisocial_count: *stats.movement_strategy_counts.get("Antisocial").unwrap_or(&0),
             average_cooperation_rate: stats.average_cooperation_rate,
             average_mobility: stats.average_mobility,
             average_score: stats.average_score,
@@ -135,6 +161,36 @@ impl WasmStatistics {
     }
 
     #[wasm_bindgen(getter)]
+    pub fn explorer_count(&self) -> usize {
+        self.explorer_count
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn settler_count(&self) -> usize {
+        self.settler_count
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn adaptive_count(&self) -> usize {
+        self.adaptive_count
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn opportunist_count(&self) -> usize {
+        self.opportunist_count
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn social_count(&self) -> usize {
+        self.social_count
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn antisocial_count(&self) -> usize {
+        self.antisocial_count
+    }
+
+    #[wasm_bindgen(getter)]
     pub fn average_cooperation_rate(&self) -> f64 {
         self.average_cooperation_rate
     }
@@ -147,5 +203,18 @@ impl WasmStatistics {
     #[wasm_bindgen(getter)]
     pub fn average_score(&self) -> f64 {
         self.average_score
+    }
+}
+
+#[wasm_bindgen]
+pub fn movement_strategy_name(strategy_id: u8) -> String {
+    match strategy_id {
+        0 => "Explorer".to_string(),
+        1 => "Settler".to_string(),
+        2 => "Adaptive".to_string(),
+        3 => "Opportunist".to_string(),
+        4 => "Social".to_string(),
+        5 => "Antisocial".to_string(),
+        _ => "Unknown".to_string(),
     }
 }

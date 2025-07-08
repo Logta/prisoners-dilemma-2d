@@ -37,11 +37,23 @@ impl GridService {
         Ok(())
     }
 
-    pub fn process_movements(grid: &mut Grid) {
+    pub fn process_movements(grid: &mut Grid, torus_mode: bool) {
         let mut movements = Vec::new();
         
         for agent in grid.agents().values() {
-            if agent.should_move() {
+            // 隣接エージェントの情報を収集
+            let neighbor_positions = agent.position.neighbors_with_mode(grid.width(), grid.height(), torus_mode);
+            let mut neighbor_agents = Vec::new();
+            let mut neighbor_strategies = Vec::new();
+            
+            for neighbor_pos in neighbor_positions {
+                if let Some(neighbor_agent) = grid.get_agent_at_position(&neighbor_pos) {
+                    neighbor_agents.push(neighbor_agent);
+                    neighbor_strategies.push(neighbor_agent.strategy);
+                }
+            }
+            
+            if agent.should_move_with_neighbors(&neighbor_agents, &neighbor_strategies) {
                 let empty_neighbors = grid.get_empty_neighbors(&agent.position);
                 if !empty_neighbors.is_empty() {
                     let mut rng = rand::thread_rng();
