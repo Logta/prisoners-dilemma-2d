@@ -168,7 +168,10 @@ export const useSimulation = (config: SimulationConfig) => {
 
     if (simulationRef.current) {
       try {
-        simulationRef.current.free();
+        // Check if the simulation is still valid before freeing
+        if (typeof simulationRef.current.free === 'function') {
+          simulationRef.current.free();
+        }
       } catch (err) {
         console.warn('Cleanup warning during force cleanup:', err);
       } finally {
@@ -182,16 +185,19 @@ export const useSimulation = (config: SimulationConfig) => {
 
   // エラー時に完全に新しいシミュレーションを作成する関数
   const recreateSimulation = useCallback(() => {
-    if (!wasmModule || isProcessingRef.current) {
+    if (!wasmModule || isProcessingRef.current || shouldRecreateSimulation) {
       return;
     }
+
+    // biome-ignore lint/suspicious/noConsole: This is intentional debug logging for critical errors
+    console.log('Recreating simulation due to critical error');
 
     // 完全なクリーンアップ
     forceCleanup();
 
     // フラグを設定して、useEffectで処理する
     setShouldRecreateSimulation(true);
-  }, [wasmModule, forceCleanup]);
+  }, [wasmModule, forceCleanup, shouldRecreateSimulation]);
 
   // シミュレーション再作成のuseEffect
   useEffect(() => {
@@ -275,11 +281,15 @@ export const useSimulation = (config: SimulationConfig) => {
         // Clean up existing simulation before creating new one
         if (simulationRef.current) {
           try {
-            simulationRef.current.free();
+            // Check if the simulation is still valid before freeing
+            if (typeof simulationRef.current.free === 'function') {
+              simulationRef.current.free();
+            }
           } catch (err) {
             console.warn('Previous simulation cleanup warning:', err);
+          } finally {
+            simulationRef.current = null;
           }
-          simulationRef.current = null;
         }
 
         // Clear stale statistics and agents
@@ -416,33 +426,42 @@ export const useSimulation = (config: SimulationConfig) => {
     isProcessingRef.current = true;
 
     try {
-      // WASMオブジェクトの参照を即座に処理して破棄
-      // biome-ignore lint/suspicious/noExplicitAny: Temporary variables for WASM conversion
-      let plainStats: any = null;
-      // biome-ignore lint/suspicious/noExplicitAny: Temporary variables for WASM conversion
-      let plainAgents: any = null;
+      // シミュレーションの有効性を再確認
+      if (!(simulation && simulationRef.current) || simulation !== simulationRef.current) {
+        console.warn('Simulation object is invalid, stopping step execution');
+        setIsRunning(false);
+        return;
+      }
 
-      // 統計情報の取得と即座の変換・破棄
+      // step()を実行して統計情報を取得
+      let newStats: WasmStatistics;
       try {
-        const newStats = simulation.step();
-        plainStats = convertStatsToPlainObject(newStats);
-        // WASMオブジェクトの参照を即座に破棄
-        // newStats = null; // 明示的にnullを設定
+        newStats = simulation.step();
       } catch (stepErr) {
-        console.error('Failed to get simulation step:', stepErr);
+        console.error('Failed to execute step:', stepErr);
         throw stepErr;
       }
 
-      // エージェント情報の取得と即座の変換・破棄
+      // 統計情報の変換
+      const plainStats = convertStatsToPlainObject(newStats);
+
+      // エージェント情報の取得（step実行後にもう一度有効性をチェック）
+      if (!(simulation && simulationRef.current) || simulation !== simulationRef.current) {
+        console.warn('Simulation object became invalid after step, stopping');
+        setIsRunning(false);
+        return;
+      }
+
+      let newAgents: WasmAgent[];
       try {
-        const newAgents = simulation.get_agents();
-        plainAgents = convertAgentsToPlainObjects(newAgents);
-        // WASMオブジェクトの参照を即座に破棄
-        // newAgents = null; // 明示的にnullを設定
+        newAgents = simulation.get_agents();
       } catch (agentErr) {
         console.error('Failed to get agents:', agentErr);
         throw agentErr;
       }
+
+      // エージェント情報の変換
+      const plainAgents = convertAgentsToPlainObjects(newAgents);
 
       // エージェントが存在しない場合はシミュレーションを停止
       if (!plainAgents || plainAgents.length === 0 || plainStats.total_agents === 0) {
@@ -461,7 +480,10 @@ export const useSimulation = (config: SimulationConfig) => {
       setIsRunning(false);
 
       // 重大なエラーの場合はシミュレーションを再作成
-      if (err instanceof Error && err.message.includes('index out of bounds')) {
+      if (
+        err instanceof Error &&
+        (err.message.includes('index out of bounds') || err.message.includes('RuntimeError'))
+      ) {
         console.warn('Critical WASM error detected, recreating simulation');
         recreateSimulation();
       }
@@ -505,8 +527,16 @@ export const useSimulation = (config: SimulationConfig) => {
       // シミュレーションの健全性をチェック
       try {
         // 基本的なアクセステストとしてエージェント数をチェック
-        if (simulationRef.current && statistics && statistics.total_agents > 0) {
+        if (
+          simulationRef.current &&
+          statistics &&
+          statistics.total_agents > 0 &&
+          !isProcessingRef.current
+        ) {
           step();
+        } else if (isProcessingRef.current) {
+          // 処理中の場合はスキップ
+          return;
         } else {
           console.warn('Simulation appears to be in invalid state, stopping');
           setIsRunning(false);
