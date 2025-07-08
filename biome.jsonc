@@ -1,0 +1,113 @@
+// biome-ignore-all assist/source/useSortedKeys: 設定だから不要
+{
+  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
+  "files": {
+    "includes": [
+      "web/**/*.ts",
+      "web/**/*.tsx",
+      "web/**/*.js",
+      "web/**/*.jsx",
+      "!web/public/prisoners_dilemma_2d.js",
+      "!web/public/prisoners_dilemma_2d.d.ts",
+      "!web/public/prisoners_dilemma_2d_bg.wasm.d.ts",
+      "!web/public/pkg/**",
+      "!web/src/prisoners_dilemma_2d.js",
+      "!web/src/prisoners_dilemma_2d.d.ts",
+      "!web/src/prisoners_dilemma_2d_bg.wasm.d.ts",
+      "!**/pkg/**"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noApproximativeNumericConstant": "error",
+        "noCatchAssign": "error",
+        "noConfusingLabels": "error",
+        "noConfusingVoidType": "error",
+        "noConstEnum": "error",
+        "noDocumentCookie": "error",
+        "noExtraNonNullAssertion": "error",
+        "noGlobalIsFinite": "error",
+        "noGlobalIsNan": "error",
+        "noIrregularWhitespace": "error",
+        "noOctalEscape": "error",
+        "noPrototypeBuiltins": "error",
+        "noRedundantUseStrict": "error",
+        "noSuspiciousSemicolonInJsx": "error",
+        "noTemplateCurlyInString": "error",
+        "useAdjacentOverloadSignatures": "error",
+        "useDefaultSwitchClauseLast": "error",
+        "useGoogleFontDisplay": "error",
+        "useIsArray": "error"
+      },
+      "style": {
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
+        "noNonNullAssertion": "error",
+        "noParameterAssign": "error",
+        "useNodejsImportProtocol": "error",
+        "useExportType": "error",
+        "useImportType": "error",
+        "useConst": "error",
+        "useLiteralEnumMembers": "error",
+        "noEnum": "error",
+        "noNamespace": "error"
+      },
+      "correctness": {
+        "noUnusedFunctionParameters": "error",
+        "noUnusedImports": "error",
+        "noUnusedLabels": "error",
+        "noUnusedPrivateClassMembers": "error",
+        "noUnusedVariables": "error"
+      },
+      "complexity": {
+        "noStaticOnlyClass": "error",
+        "noThisInStatic": "error",
+        "useArrowFunction": "error",
+        "useDateNow": "error",
+        "useNumericLiterals": "error",
+        "useOptionalChain": "error",
+        "useRegexLiterals": "error",
+        "useSimpleNumberKeys": "error"
+      },
+      "performance": {
+        "noAccumulatingSpread": "error",
+        "noDelete": "error",
+        "noDynamicNamespaceImportAccess": "error"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "error",
+        "noGlobalEval": "error"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "trailingCommas": "es5"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on",
+        "useSortedKeys": "on",
+        "useSortedAttributes": "on"
+      }
+    }
+  }
+}
