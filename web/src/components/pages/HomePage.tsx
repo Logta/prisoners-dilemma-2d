@@ -9,6 +9,7 @@ export const HomePage: React.FC = () => {
   const [speed, setSpeed] = useState(500);
   const [strategyComplexityPenalty, setStrategyComplexityPenalty] = useState(false);
   const [strategyComplexityPenaltyRate, setStrategyComplexityPenaltyRate] = useState(15); // percentage 0-100
+  const [torusField, setTorusField] = useState(false);
 
   const config = {
     agentCount: 1000,
@@ -17,6 +18,7 @@ export const HomePage: React.FC = () => {
     speed,
     strategyComplexityPenalty,
     strategyComplexityPenaltyRate: strategyComplexityPenaltyRate / 100, // convert to 0.0-1.0
+    torusField,
   };
 
   const {
@@ -31,6 +33,7 @@ export const HomePage: React.FC = () => {
     step,
     setStrategyComplexityPenalty: setSimulationPenalty,
     setStrategyComplexityPenaltyRate: setSimulationPenaltyRate,
+    setTorusField: setSimulationTorusField,
   } = useSimulation(config);
 
   if (error) {
@@ -111,9 +114,14 @@ export const HomePage: React.FC = () => {
               setStrategyComplexityPenaltyRate(rate);
               setSimulationPenaltyRate(rate / 100);
             }}
+            onTorusFieldChange={(enabled) => {
+              setTorusField(enabled);
+              setSimulationTorusField(enabled);
+            }}
             speed={speed}
             strategyComplexityPenalty={strategyComplexityPenalty}
             strategyComplexityPenaltyRate={strategyComplexityPenaltyRate}
+            torusField={torusField}
           />
 
           <StatisticsPanel loading={loading} statistics={statistics} />

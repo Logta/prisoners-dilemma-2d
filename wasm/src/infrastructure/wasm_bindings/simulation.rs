@@ -74,4 +74,9 @@ impl WasmSimulation {
     pub fn set_strategy_complexity_penalty_rate(&mut self, rate: f32) {
         self.service.set_strategy_complexity_penalty_rate(rate);
     }
+
+    #[wasm_bindgen]
+    pub fn set_torus_field(&mut self, enabled: bool) {
+        self.service.set_torus_field(enabled);
+    }
 }

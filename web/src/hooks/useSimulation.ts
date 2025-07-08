@@ -9,6 +9,7 @@ interface SimulationConfig {
   speed: number; // milliseconds between steps
   strategyComplexityPenalty?: boolean;
   strategyComplexityPenaltyRate?: number; // 0.0 to 1.0
+  torusField?: boolean;
 }
 
 export const useSimulation = (config: SimulationConfig) => {
@@ -41,6 +42,11 @@ export const useSimulation = (config: SimulationConfig) => {
               config.strategyComplexityPenaltyRate
             );
           }
+        }
+
+        // Apply torus field setting if enabled
+        if (config.torusField !== undefined) {
+          newSimulation.set_torus_field(config.torusField);
         }
 
         setSimulation(newSimulation);
@@ -80,6 +86,7 @@ export const useSimulation = (config: SimulationConfig) => {
     config.agentCount,
     config.strategyComplexityPenalty,
     config.strategyComplexityPenaltyRate,
+    config.torusField,
   ]);
 
   // Clean up simulation on unmount
@@ -142,6 +149,10 @@ export const useSimulation = (config: SimulationConfig) => {
           simulation.set_strategy_complexity_penalty_rate(config.strategyComplexityPenaltyRate);
         }
       }
+      // Reapply torus field setting after reset
+      if (config.torusField !== undefined) {
+        simulation.set_torus_field(config.torusField);
+      }
       setStatistics(simulation.get_statistics());
       setAgents(simulation.get_agents());
       setError(null);
@@ -154,6 +165,7 @@ export const useSimulation = (config: SimulationConfig) => {
     config.agentCount,
     config.strategyComplexityPenalty,
     config.strategyComplexityPenaltyRate,
+    config.torusField,
     pause,
   ]);
 
@@ -187,6 +199,20 @@ export const useSimulation = (config: SimulationConfig) => {
     [simulation]
   );
 
+  const setTorusField = useCallback(
+    (enabled: boolean) => {
+      if (!simulation) return;
+
+      try {
+        simulation.set_torus_field(enabled);
+      } catch (err) {
+        console.error('Failed to set torus field:', err);
+        setError(err instanceof Error ? err.message : 'Failed to set torus field');
+      }
+    },
+    [simulation]
+  );
+
   // Update interval when speed changes
   useEffect(() => {
     if (isRunning && intervalRef.current) {
@@ -204,6 +230,7 @@ export const useSimulation = (config: SimulationConfig) => {
     reset,
     setStrategyComplexityPenalty,
     setStrategyComplexityPenaltyRate,
+    setTorusField,
     simulation,
     start,
     statistics,

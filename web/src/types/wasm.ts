@@ -31,6 +31,7 @@ export interface WasmSimulation {
   reset(agent_count: number): void;
   set_strategy_complexity_penalty(enabled: boolean): void;
   set_strategy_complexity_penalty_rate(rate: number): void;
+  set_torus_field(enabled: boolean): void;
   free(): void;
 }
 

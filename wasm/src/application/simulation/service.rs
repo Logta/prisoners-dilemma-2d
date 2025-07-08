@@ -28,7 +28,7 @@ impl SimulationService {
     }
 
     pub fn with_config(width: usize, height: usize, agent_count: usize, config: SimulationConfig) -> Result<Self, String> {
-        let mut grid = Grid::new(width, height);
+        let mut grid = Grid::new(width, height).with_torus_mode(config.torus_field_enabled);
         GridService::initialize_random_agents(&mut grid, agent_count)?;
         
         Ok(Self {
@@ -46,6 +46,11 @@ impl SimulationService {
 
     pub fn set_strategy_complexity_penalty_rate(&mut self, rate: f32) {
         self.config.strategy_complexity_penalty_rate = rate.clamp(0.0, 1.0);
+    }
+
+    pub fn set_torus_field(&mut self, enabled: bool) {
+        self.config.torus_field_enabled = enabled;
+        self.grid.set_torus_mode(enabled);
     }
 
     pub fn step(&mut self) -> SimulationStatistics {

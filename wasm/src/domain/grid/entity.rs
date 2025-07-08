@@ -7,6 +7,7 @@ pub struct Grid {
     height: usize,
     agents: HashMap<Uuid, Agent>,
     position_map: HashMap<Position, Uuid>,
+    torus_mode: bool,
 }
 
 impl Grid {
@@ -16,7 +17,17 @@ impl Grid {
             height,
             agents: HashMap::new(),
             position_map: HashMap::new(),
+            torus_mode: false,
         }
+    }
+
+    pub fn with_torus_mode(mut self, torus_mode: bool) -> Self {
+        self.torus_mode = torus_mode;
+        self
+    }
+
+    pub fn set_torus_mode(&mut self, torus_mode: bool) {
+        self.torus_mode = torus_mode;
     }
 
     pub fn width(&self) -> usize {
@@ -64,14 +75,14 @@ impl Grid {
     }
 
     pub fn get_neighbors(&self, position: &Position) -> Vec<&Agent> {
-        position.neighbors(self.width, self.height)
+        position.neighbors_with_mode(self.width, self.height, self.torus_mode)
             .iter()
             .filter_map(|pos| self.get_agent_at_position(pos))
             .collect()
     }
 
     pub fn get_neighbors_mut(&mut self, position: &Position) -> Vec<Uuid> {
-        position.neighbors(self.width, self.height)
+        position.neighbors_with_mode(self.width, self.height, self.torus_mode)
             .iter()
             .filter_map(|pos| self.position_map.get(pos))
             .copied()
@@ -101,7 +112,7 @@ impl Grid {
     }
 
     pub fn get_empty_neighbors(&self, position: &Position) -> Vec<Position> {
-        position.neighbors(self.width, self.height)
+        position.neighbors_with_mode(self.width, self.height, self.torus_mode)
             .into_iter()
             .filter(|pos| self.is_position_free(pos))
             .collect()

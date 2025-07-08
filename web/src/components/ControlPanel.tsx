@@ -8,6 +8,7 @@ interface ControlPanelProps {
   speed: number;
   strategyComplexityPenalty: boolean;
   strategyComplexityPenaltyRate: number;
+  torusField?: boolean;
   onStart: () => void;
   onPause: () => void;
   onReset: () => void;
@@ -15,6 +16,7 @@ interface ControlPanelProps {
   onSpeedChange: (speed: number) => void;
   onStrategyComplexityPenaltyChange: (enabled: boolean) => void;
   onStrategyComplexityPenaltyRateChange: (rate: number) => void;
+  onTorusFieldChange?: (enabled: boolean) => void;
   disabled?: boolean;
 }
 
@@ -23,6 +25,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   speed,
   strategyComplexityPenalty,
   strategyComplexityPenaltyRate,
+  torusField = false,
   onStart,
   onPause,
   onReset,
@@ -30,6 +33,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onSpeedChange,
   onStrategyComplexityPenaltyChange,
   onStrategyComplexityPenaltyRateChange,
+  onTorusFieldChange,
   disabled = false,
 }) => {
   return (
@@ -121,6 +125,25 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Torus Field Mode */}
+        <div className="border-t pt-4">
+          <label className="flex items-center justify-between cursor-pointer">
+            <div>
+              <span className="text-sm font-medium text-gray-700">Torus Field Mode</span>
+              <div className="text-xs text-gray-500 mt-1">
+                Allow agents to wrap around grid edges (grid becomes a torus)
+              </div>
+            </div>
+            <input
+              checked={torusField}
+              className="ml-4 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              disabled={disabled}
+              onChange={(e) => onTorusFieldChange?.(e.target.checked)}
+              type="checkbox"
+            />
+          </label>
         </div>
       </div>
     </div>
