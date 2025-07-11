@@ -9,7 +9,7 @@ impl Default for SimulationConfig {
         Self {
             strategy_complexity_penalty_enabled: false,
             strategy_complexity_penalty_rate: 0.15, // 15% penalty by default
-            torus_field_enabled: false, // Default to bounded field
+            torus_field_enabled: false,             // Default to bounded field
         }
     }
 }

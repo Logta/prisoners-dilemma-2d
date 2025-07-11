@@ -1,5 +1,6 @@
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -11,6 +12,20 @@ pub enum MovementStrategy {
     Opportunist, // 機会主義：隣接の協力率を見て移動
     Social,      // 社会的：同じ戦略の仲間に近づく
     Antisocial,  // 反社会的：異なる戦略から離れる
+}
+
+impl fmt::Display for MovementStrategy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            MovementStrategy::Explorer => "Explorer",
+            MovementStrategy::Settler => "Settler",
+            MovementStrategy::Adaptive => "Adaptive",
+            MovementStrategy::Opportunist => "Opportunist",
+            MovementStrategy::Social => "Social",
+            MovementStrategy::Antisocial => "Antisocial",
+        };
+        write!(f, "{s}")
+    }
 }
 
 impl MovementStrategy {
@@ -26,25 +41,14 @@ impl MovementStrategy {
         }
     }
 
-    pub fn to_string(&self) -> String {
-        match self {
-            MovementStrategy::Explorer => "Explorer".to_string(),
-            MovementStrategy::Settler => "Settler".to_string(),
-            MovementStrategy::Adaptive => "Adaptive".to_string(),
-            MovementStrategy::Opportunist => "Opportunist".to_string(),
-            MovementStrategy::Social => "Social".to_string(),
-            MovementStrategy::Antisocial => "Antisocial".to_string(),
-        }
-    }
-
     pub fn default_mobility(&self) -> f64 {
         match self {
-            MovementStrategy::Explorer => 0.8,     // 高い基本移動性
-            MovementStrategy::Settler => 0.2,      // 低い基本移動性
-            MovementStrategy::Adaptive => 0.5,     // 中程度の基本移動性
-            MovementStrategy::Opportunist => 0.4,  // やや低い基本移動性
-            MovementStrategy::Social => 0.6,       // やや高い基本移動性
-            MovementStrategy::Antisocial => 0.7,   // 高い基本移動性
+            MovementStrategy::Explorer => 0.8,    // 高い基本移動性
+            MovementStrategy::Settler => 0.2,     // 低い基本移動性
+            MovementStrategy::Adaptive => 0.5,    // 中程度の基本移動性
+            MovementStrategy::Opportunist => 0.4, // やや低い基本移動性
+            MovementStrategy::Social => 0.6,      // やや高い基本移動性
+            MovementStrategy::Antisocial => 0.7,  // 高い基本移動性
         }
     }
 }

@@ -19,5 +19,5 @@ pub fn set_panic_hook() {
 
 #[wasm_bindgen]
 pub fn greet(name: &str) {
-    log(&format!("Hello, {}!", name));
+    log(&format!("Hello, {name}!"));
 }

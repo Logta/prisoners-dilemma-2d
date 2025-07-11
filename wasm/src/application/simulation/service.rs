@@ -1,9 +1,9 @@
+use super::{SimulationConfig, SimulationStatistics};
 use crate::domain::{
     agent::Agent,
     game::GameService,
     grid::{Grid, GridService},
 };
-use super::{SimulationStatistics, SimulationConfig};
 
 pub struct SimulationService {
     grid: Grid,
@@ -17,7 +17,7 @@ impl SimulationService {
     pub fn new(width: usize, height: usize, agent_count: usize) -> Result<Self, String> {
         let mut grid = Grid::new(width, height);
         GridService::initialize_random_agents(&mut grid, agent_count)?;
-        
+
         Ok(Self {
             grid,
             generation: 0,
@@ -27,10 +27,15 @@ impl SimulationService {
         })
     }
 
-    pub fn with_config(width: usize, height: usize, agent_count: usize, config: SimulationConfig) -> Result<Self, String> {
+    pub fn with_config(
+        width: usize,
+        height: usize,
+        agent_count: usize,
+        config: SimulationConfig,
+    ) -> Result<Self, String> {
         let mut grid = Grid::new(width, height).with_torus_mode(config.torus_field_enabled);
         GridService::initialize_random_agents(&mut grid, agent_count)?;
-        
+
         Ok(Self {
             grid,
             generation: 0,
@@ -56,13 +61,13 @@ impl SimulationService {
     pub fn step(&mut self) -> SimulationStatistics {
         self.process_games();
         GridService::process_movements(&mut self.grid, self.config.torus_field_enabled);
-        
+
         self.turn += 1;
-        
+
         if self.turn >= self.turns_per_generation {
             self.next_generation();
         }
-        
+
         self.get_statistics()
     }
 
@@ -96,7 +101,7 @@ impl SimulationService {
 
     fn process_games(&mut self) {
         let mut games_to_play = Vec::new();
-        
+
         for agent in self.grid.agents().values() {
             let neighbors = self.grid.get_neighbors(&agent.position);
             for neighbor in neighbors {
@@ -109,12 +114,12 @@ impl SimulationService {
         for (id1, id2) in games_to_play {
             let agent1_clone = self.grid.get_agent(&id1).unwrap().clone();
             let agent2_clone = self.grid.get_agent(&id2).unwrap().clone();
-            
+
             let mut agent1 = agent1_clone;
             let mut agent2 = agent2_clone;
-            
+
             GameService::play_game(&mut agent1, &mut agent2);
-            
+
             if let Some(agent) = self.grid.get_agent_mut(&id1) {
                 *agent = agent1;
             }
@@ -127,12 +132,12 @@ impl SimulationService {
     fn next_generation(&mut self) {
         let evolution_service = crate::application::evolution::EvolutionService::new();
         let new_agents = evolution_service.evolve_with_config(self.grid.agents(), &self.config);
-        
+
         self.grid.clear();
         for agent in new_agents {
             let _ = self.grid.add_agent(agent);
         }
-        
+
         self.generation += 1;
         self.turn = 0;
     }

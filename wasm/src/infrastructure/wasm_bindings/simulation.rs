@@ -1,5 +1,5 @@
-use crate::application::simulation::SimulationService;
 use super::{WasmAgent, WasmStatistics};
+use crate::application::simulation::SimulationService;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -13,7 +13,7 @@ impl WasmSimulation {
     pub fn new(width: usize, height: usize, agent_count: usize) -> Result<WasmSimulation, JsValue> {
         let service = SimulationService::new(width, height, agent_count)
             .map_err(|e| JsValue::from_str(&e))?;
-        
+
         Ok(WasmSimulation { service })
     }
 

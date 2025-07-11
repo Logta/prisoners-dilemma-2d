@@ -45,10 +45,10 @@ impl Grid {
 
         let id = agent.id;
         let position = agent.position;
-        
+
         self.agents.insert(id, agent);
         self.position_map.insert(position, id);
-        
+
         Ok(())
     }
 
@@ -70,19 +70,22 @@ impl Grid {
     }
 
     pub fn get_agent_at_position(&self, position: &Position) -> Option<&Agent> {
-        self.position_map.get(position)
+        self.position_map
+            .get(position)
             .and_then(|id| self.agents.get(id))
     }
 
     pub fn get_neighbors(&self, position: &Position) -> Vec<&Agent> {
-        position.neighbors_with_mode(self.width, self.height, self.torus_mode)
+        position
+            .neighbors_with_mode(self.width, self.height, self.torus_mode)
             .iter()
             .filter_map(|pos| self.get_agent_at_position(pos))
             .collect()
     }
 
     pub fn get_neighbors_mut(&mut self, position: &Position) -> Vec<Uuid> {
-        position.neighbors_with_mode(self.width, self.height, self.torus_mode)
+        position
+            .neighbors_with_mode(self.width, self.height, self.torus_mode)
             .iter()
             .filter_map(|pos| self.position_map.get(pos))
             .copied()
@@ -101,10 +104,10 @@ impl Grid {
         if let Some(agent) = self.agents.get_mut(id) {
             let old_position = agent.position;
             agent.move_to(new_position);
-            
+
             self.position_map.remove(&old_position);
             self.position_map.insert(new_position, *id);
-            
+
             Ok(())
         } else {
             Err("Agent not found".to_string())
@@ -112,7 +115,8 @@ impl Grid {
     }
 
     pub fn get_empty_neighbors(&self, position: &Position) -> Vec<Position> {
-        position.neighbors_with_mode(self.width, self.height, self.torus_mode)
+        position
+            .neighbors_with_mode(self.width, self.height, self.torus_mode)
             .into_iter()
             .filter(|pos| self.is_position_free(pos))
             .collect()
