@@ -32,8 +32,7 @@ impl GridService {
 
         if placed_agents < agent_count {
             return Err(format!(
-                "Could only place {} out of {} agents",
-                placed_agents, agent_count
+                "Could only place {placed_agents} out of {agent_count} agents"
             ));
         }
 

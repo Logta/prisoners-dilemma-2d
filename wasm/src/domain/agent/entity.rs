@@ -217,6 +217,12 @@ pub struct GameHistory {
     max_history: usize,
 }
 
+impl Default for GameHistory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GameHistory {
     pub fn new() -> Self {
         Self {

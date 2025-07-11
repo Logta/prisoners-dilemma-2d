@@ -13,6 +13,12 @@ pub struct SimulationStatistics {
     pub average_score: f64,
 }
 
+impl Default for SimulationStatistics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SimulationStatistics {
     pub fn new() -> Self {
         Self {

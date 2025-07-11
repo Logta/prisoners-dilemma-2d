@@ -1,5 +1,6 @@
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -13,6 +14,20 @@ pub enum MovementStrategy {
     Antisocial,  // 反社会的：異なる戦略から離れる
 }
 
+impl fmt::Display for MovementStrategy {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            MovementStrategy::Explorer => "Explorer",
+            MovementStrategy::Settler => "Settler",
+            MovementStrategy::Adaptive => "Adaptive",
+            MovementStrategy::Opportunist => "Opportunist",
+            MovementStrategy::Social => "Social",
+            MovementStrategy::Antisocial => "Antisocial",
+        };
+        write!(f, "{s}")
+    }
+}
+
 impl MovementStrategy {
     pub fn random() -> Self {
         let mut rng = rand::thread_rng();
@@ -23,17 +38,6 @@ impl MovementStrategy {
             3 => MovementStrategy::Opportunist,
             4 => MovementStrategy::Social,
             _ => MovementStrategy::Antisocial,
-        }
-    }
-
-    pub fn to_string(&self) -> String {
-        match self {
-            MovementStrategy::Explorer => "Explorer".to_string(),
-            MovementStrategy::Settler => "Settler".to_string(),
-            MovementStrategy::Adaptive => "Adaptive".to_string(),
-            MovementStrategy::Opportunist => "Opportunist".to_string(),
-            MovementStrategy::Social => "Social".to_string(),
-            MovementStrategy::Antisocial => "Antisocial".to_string(),
         }
     }
 
