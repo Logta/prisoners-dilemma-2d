@@ -32,6 +32,8 @@ export const HomePage: React.FC = () => {
     pause,
     reset,
     step,
+    initializeSimulation,
+    isInitialized,
     setStrategyComplexityPenalty: setSimulationPenalty,
     setStrategyComplexityPenaltyRate: setSimulationPenaltyRate,
     setTorusField: setSimulationTorusField,
@@ -103,8 +105,10 @@ export const HomePage: React.FC = () => {
             agentCount={agentCount}
             currentAgentCount={statistics?.total_agents || 0}
             disabled={loading}
+            isInitialized={isInitialized}
             isRunning={isRunning}
             onAgentCountChange={setAgentCount}
+            onInitialize={initializeSimulation}
             onPause={pause}
             onReset={reset}
             onSpeedChange={setSpeed}

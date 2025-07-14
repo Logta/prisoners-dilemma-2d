@@ -25,6 +25,9 @@ export class SimulationCanvas {
   private setupCanvas() {
     const maxSize = Math.min(800, 600); // Max canvas size
     this.cellSize = Math.floor(maxSize / Math.max(this.gridWidth, this.gridHeight));
+    
+    // Ensure minimum cell size of 4 pixels for visibility
+    this.cellSize = Math.max(this.cellSize, 4);
 
     this.canvas.width = this.gridWidth * this.cellSize;
     this.canvas.height = this.gridHeight * this.cellSize;
@@ -79,13 +82,23 @@ export class SimulationCanvas {
     const cooperationRate = agent.cooperation_rate;
     const color = this.blendWithCooperationRate(baseColor, cooperationRate);
 
-    this.ctx.fillStyle = color;
-    this.ctx.fillRect(x + 1, y + 1, this.cellSize - 2, this.cellSize - 2);
+    // Use adaptive padding based on cell size for better visibility
+    const padding = Math.max(1, Math.floor(this.cellSize * 0.1));
+    const agentSize = this.cellSize - (padding * 2);
 
-    // Add border to show agent clearly
-    this.ctx.strokeStyle = '#374151';
-    this.ctx.lineWidth = 1;
-    this.ctx.strokeRect(x + 1, y + 1, this.cellSize - 2, this.cellSize - 2);
+    // Ensure minimum agent size of 2 pixels
+    const finalSize = Math.max(agentSize, 2);
+    const finalPadding = Math.max((this.cellSize - finalSize) / 2, 0);
+
+    this.ctx.fillStyle = color;
+    this.ctx.fillRect(x + finalPadding, y + finalPadding, finalSize, finalSize);
+
+    // Add border only if there's enough space
+    if (this.cellSize >= 4) {
+      this.ctx.strokeStyle = '#374151';
+      this.ctx.lineWidth = 1;
+      this.ctx.strokeRect(x + finalPadding, y + finalPadding, finalSize, finalSize);
+    }
   }
 
   private blendWithCooperationRate(baseColor: string, cooperationRate: number): string {

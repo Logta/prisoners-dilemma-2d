@@ -149,6 +149,7 @@ export const useSimulation = (config: SimulationConfig) => {
   const [statistics, setStatistics] = useState<WasmStatistics | null>(null);
   const [agents, setAgents] = useState<WasmAgent[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const intervalRef = useRef<number | null>(null);
   const simulationRef = useRef<WasmSimulation | null>(null);
@@ -165,6 +166,7 @@ export const useSimulation = (config: SimulationConfig) => {
     setStatistics(null);
     setAgents([]);
     setSimulation(null);
+    setIsInitialized(false);
 
     if (simulationRef.current) {
       try {
@@ -263,14 +265,14 @@ export const useSimulation = (config: SimulationConfig) => {
     return () => clearTimeout(timeoutId);
   }, [shouldRecreateSimulation, wasmModule, config]);
 
-  // Initialize simulation when WASM module is loaded
-  useEffect(() => {
-    if (!wasmModule || wasmLoading) {
+  // Manual initialization function
+  const initializeSimulation = useCallback(() => {
+    if (!wasmModule || wasmLoading || isProcessingRef.current) {
       return;
     }
 
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Initialization requires complex error handling
-    const initializeSimulation = () => {
+    const performInitialization = () => {
       if (isProcessingRef.current) {
         return;
       }
@@ -296,6 +298,7 @@ export const useSimulation = (config: SimulationConfig) => {
         setStatistics(null);
         setAgents([]);
 
+        // Create new simulation with agents
         const newSimulation = new wasmModule.WasmSimulation(
           config.gridWidth,
           config.gridHeight,
@@ -320,71 +323,36 @@ export const useSimulation = (config: SimulationConfig) => {
         simulationRef.current = newSimulation;
         setSimulation(newSimulation);
 
-        // Try to get initial data immediately (fallback to empty if fails)
+        // Get initial data
         try {
           const stats = newSimulation.get_statistics();
-          // Convert to plain JavaScript object to avoid WASM memory issues
           const plainStats = convertStatsToPlainObject(stats);
           setStatistics(plainStats);
-          // WASMオブジェクトの参照を即座に破棄
-          // stats = null;
         } catch (err) {
-          console.warn('Failed to get initial statistics, using fallback:', err);
-          setStatistics({
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            adaptive_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            all_cooperate_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            all_defect_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            antisocial_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            average_cooperation_rate: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            average_mobility: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            average_score: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            explorer_count: 0,
-            generation: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            opportunist_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            pavlov_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            settler_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            social_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            tit_for_tat_count: 0,
-            // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-            total_agents: config.agentCount,
-          });
+          console.warn('Failed to get initial statistics:', err);
         }
 
         try {
           const initialAgents = newSimulation.get_agents();
-          // Convert to plain JavaScript objects to avoid WASM memory issues
           const plainAgents = convertAgentsToPlainObjects(initialAgents);
           setAgents(plainAgents);
-          // WASMオブジェクトの参照を即座に破棄
-          // initialAgents = null;
         } catch (err) {
           console.warn('Failed to get initial agents:', err);
           setAgents([]);
         }
 
         setError(null);
+        setIsInitialized(true);
       } catch (err) {
         console.error('Failed to initialize simulation:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize simulation');
+        setIsInitialized(false);
       } finally {
         isProcessingRef.current = false;
       }
     };
 
-    initializeSimulation();
+    performInitialization();
   }, [
     wasmModule,
     wasmLoading,
@@ -497,10 +465,17 @@ export const useSimulation = (config: SimulationConfig) => {
       return;
     }
 
+    // 初期化されていない場合は開始できない
+    if (!isInitialized) {
+      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
+      setError('シミュレーションが初期化されていません。初期配置ボタンを押してください。');
+      return;
+    }
+
     // エージェントが存在しない場合は開始できない
     if (!agents || agents.length === 0) {
       // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
-      setError('エージェントが配置されていません。リセットしてエージェントを配置してください。');
+      setError('エージェントが配置されていません。初期配置ボタンを押してください。');
       return;
     }
 
@@ -570,6 +545,12 @@ export const useSimulation = (config: SimulationConfig) => {
       return;
     }
 
+    // 初期化されていない場合は初期化を実行
+    if (!isInitialized) {
+      initializeSimulation();
+      return;
+    }
+
     pause();
 
     isProcessingRef.current = true;
@@ -620,11 +601,13 @@ export const useSimulation = (config: SimulationConfig) => {
     }
   }, [
     simulation,
+    isInitialized,
     config.agentCount,
     config.strategyComplexityPenalty,
     config.strategyComplexityPenaltyRate,
     config.torusField,
     pause,
+    initializeSimulation,
     recreateSimulation,
   ]);
 
@@ -707,8 +690,10 @@ export const useSimulation = (config: SimulationConfig) => {
   return {
     agents,
     error: wasmError || error,
+    initializeSimulation,
+    isInitialized,
     isRunning,
-    loading: wasmLoading || !simulation,
+    loading: wasmLoading,
     pause,
     reset,
     setStrategyComplexityPenalty,

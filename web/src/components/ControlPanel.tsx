@@ -11,10 +11,12 @@ interface ControlPanelProps {
   strategyComplexityPenalty: boolean;
   strategyComplexityPenaltyRate: number;
   torusField?: boolean;
+  isInitialized: boolean;
   onStart: () => void;
   onPause: () => void;
   onReset: () => void;
   onStep: () => void;
+  onInitialize: () => void;
   onSpeedChange: (speed: number) => void;
   onAgentCountChange: (count: number) => void;
   onStrategyComplexityPenaltyChange: (enabled: boolean) => void;
@@ -31,10 +33,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   strategyComplexityPenalty,
   strategyComplexityPenaltyRate,
   torusField = false,
+  isInitialized,
   onStart,
   onPause,
   onReset,
   onStep,
+  onInitialize,
   onSpeedChange,
   onAgentCountChange,
   onStrategyComplexityPenaltyChange,
@@ -49,8 +53,36 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       <h2 className="mb-4 font-semibold text-gray-900 text-xl">Simulation Controls</h2>
 
       <div className="space-y-4">
+        {/* 初期化されていない場合の警告 */}
+        {!isInitialized && (
+          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg
+                  aria-label="Info icon"
+                  className="h-5 w-5 text-blue-400"
+                  fill="currentColor"
+                  role="img"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    clipRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                    fillRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-blue-800">
+                  シミュレーションが初期化されていません。「初期配置」ボタンを押してエージェントを配置してください。
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* エージェントがいない場合の警告 */}
-        {hasNoAgents && (
+        {isInitialized && hasNoAgents && (
           <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
             <div className="flex items-center">
               <div className="flex-shrink-0">
@@ -70,12 +102,25 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </div>
               <div className="ml-3">
                 <p className="text-sm text-yellow-800">
-                  エージェントが配置されていません。「Reset」ボタンを押してエージェントを配置してください。
+                  エージェントが配置されていません。「初期配置」ボタンを押し直してください。
                 </p>
               </div>
             </div>
           </div>
         )}
+
+        {/* Initialization Controls */}
+        <div className="flex gap-2">
+          <Button
+            className="flex items-center gap-2"
+            disabled={disabled}
+            onClick={onInitialize}
+            variant={isInitialized ? "secondary" : "primary"}
+          >
+            <RotateCcw size={16} />
+            初期配置
+          </Button>
+        </div>
 
         {/* Play/Pause Controls */}
         <div className="flex gap-2">
@@ -87,10 +132,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           ) : (
             <Button
               className="flex items-center gap-2"
-              disabled={disabled || hasNoAgents}
+              disabled={disabled || !isInitialized || hasNoAgents}
               onClick={onStart}
               // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-              title={hasNoAgents ? 'エージェントが配置されていません' : ''}
+              title={!isInitialized ? 'まず初期配置を行ってください' : hasNoAgents ? 'エージェントが配置されていません' : ''}
             >
               <Play size={16} />
               Start
@@ -99,10 +144,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <Button
             className="flex items-center gap-2"
-            disabled={disabled || isRunning || hasNoAgents}
+            disabled={disabled || isRunning || !isInitialized || hasNoAgents}
             onClick={onStep}
             // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-            title={hasNoAgents ? 'エージェントが配置されていません' : ''}
+            title={!isInitialized ? 'まず初期配置を行ってください' : hasNoAgents ? 'エージェントが配置されていません' : ''}
             variant="secondary"
           >
             <StepForward size={16} />
@@ -111,8 +156,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
           <Button
             className="flex items-center gap-2"
-            disabled={disabled}
+            disabled={disabled || !isInitialized}
             onClick={onReset}
+            // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
+            title={!isInitialized ? 'まず初期配置を行ってください' : ''}
             variant="danger"
           >
             <RotateCcw size={16} />

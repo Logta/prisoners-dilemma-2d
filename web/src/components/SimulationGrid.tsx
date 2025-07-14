@@ -38,7 +38,7 @@ export const SimulationGrid: React.FC<SimulationGridProps> = ({
     }
 
     rendererRef.current.render(agents);
-  }, [agents]);
+  }, [agents, gridWidth, gridHeight]);
 
   // Handle grid size changes
   useEffect(() => {
