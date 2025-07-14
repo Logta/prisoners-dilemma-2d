@@ -39,6 +39,12 @@ impl Grid {
     }
 
     pub fn add_agent(&mut self, agent: Agent) -> Result<(), String> {
+        // Validate position bounds
+        if agent.position.x >= self.width || agent.position.y >= self.height {
+            return Err(format!("Agent position ({}, {}) is out of bounds for grid {}x{}", 
+                agent.position.x, agent.position.y, self.width, self.height));
+        }
+
         if self.position_map.contains_key(&agent.position) {
             return Err("Position already occupied".to_string());
         }
@@ -70,6 +76,11 @@ impl Grid {
     }
 
     pub fn get_agent_at_position(&self, position: &Position) -> Option<&Agent> {
+        // Validate position bounds
+        if position.x >= self.width || position.y >= self.height {
+            return None;
+        }
+
         self.position_map
             .get(position)
             .and_then(|id| self.agents.get(id))
@@ -97,6 +108,12 @@ impl Grid {
     }
 
     pub fn move_agent(&mut self, id: &Uuid, new_position: Position) -> Result<(), String> {
+        // Validate position bounds
+        if new_position.x >= self.width || new_position.y >= self.height {
+            return Err(format!("Position ({}, {}) is out of bounds for grid {}x{}", 
+                new_position.x, new_position.y, self.width, self.height));
+        }
+
         if !self.is_position_free(&new_position) {
             return Err("Target position is occupied".to_string());
         }

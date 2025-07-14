@@ -128,10 +128,16 @@ impl SimulationService {
 
         // Play games with proper borrowing
         for (id1, id2) in games_to_play {
-            // Get immutable references first, then clone
+            // Get immutable references first, then clone - with safe error handling
             let (agent1_data, agent2_data) = {
-                let agent1 = self.grid.get_agent(&id1).unwrap().clone();
-                let agent2 = self.grid.get_agent(&id2).unwrap().clone();
+                let agent1 = match self.grid.get_agent(&id1) {
+                    Some(agent) => agent.clone(),
+                    None => continue, // Skip this game if agent not found
+                };
+                let agent2 = match self.grid.get_agent(&id2) {
+                    Some(agent) => agent.clone(),
+                    None => continue, // Skip this game if agent not found
+                };
                 (agent1, agent2)
             };
             
