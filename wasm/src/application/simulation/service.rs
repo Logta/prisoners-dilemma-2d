@@ -102,24 +102,45 @@ impl SimulationService {
     fn process_games(&mut self) {
         let mut games_to_play = Vec::new();
 
-        for agent in self.grid.agents().values() {
-            let neighbors = self.grid.get_neighbors(&agent.position);
-            for neighbor in neighbors {
-                if agent.id < neighbor.id {
-                    games_to_play.push((agent.id, neighbor.id));
+        // Collect all agent data first to avoid borrowing conflicts
+        let agent_data: Vec<(uuid::Uuid, crate::domain::agent::position::Position)> = self.grid.agents()
+            .iter()
+            .map(|(id, agent)| (*id, agent.position))
+            .collect();
+
+        // Find games to play without borrowing the grid
+        for (_i, (id1, pos1)) in agent_data.iter().enumerate() {
+            let neighbor_positions = pos1.neighbors_with_mode(
+                self.grid.width(), 
+                self.grid.height(), 
+                self.config.torus_field_enabled
+            );
+            
+            for neighbor_pos in neighbor_positions {
+                if let Some(neighbor_agent) = self.grid.get_agent_at_position(&neighbor_pos) {
+                    let neighbor_id = neighbor_agent.id;
+                    if *id1 < neighbor_id {
+                        games_to_play.push((*id1, neighbor_id));
+                    }
                 }
             }
         }
 
+        // Play games with proper borrowing
         for (id1, id2) in games_to_play {
-            let agent1_clone = self.grid.get_agent(&id1).unwrap().clone();
-            let agent2_clone = self.grid.get_agent(&id2).unwrap().clone();
-
-            let mut agent1 = agent1_clone;
-            let mut agent2 = agent2_clone;
-
+            // Get immutable references first, then clone
+            let (agent1_data, agent2_data) = {
+                let agent1 = self.grid.get_agent(&id1).unwrap().clone();
+                let agent2 = self.grid.get_agent(&id2).unwrap().clone();
+                (agent1, agent2)
+            };
+            
+            let mut agent1 = agent1_data;
+            let mut agent2 = agent2_data;
+            
             GameService::play_game(&mut agent1, &mut agent2);
-
+            
+            // Update agents separately to avoid double mutable borrow
             if let Some(agent) = self.grid.get_agent_mut(&id1) {
                 *agent = agent1;
             }
