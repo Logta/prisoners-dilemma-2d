@@ -7,10 +7,7 @@ describe('Button', () => {
       // Arrange
       const button = <Button>Test</Button>;
 
-      // Act
-      const _variant = button.props.variant;
-
-      // Assert
+      // Act & Assert
       expect(button.props.variant).toBeUndefined(); // デフォルトはundefined
       expect(button.props.children).toBe('Test');
     });

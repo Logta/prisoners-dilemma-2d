@@ -27,7 +27,7 @@ describe('useWasm', () => {
 
     it('should handle non-Error objects', () => {
       // Arrange
-      const error = 'String error';
+      const error: unknown = 'String error';
 
       // Act
       const errorMessage = error instanceof Error ? error.message : 'Failed to load WASM module';
