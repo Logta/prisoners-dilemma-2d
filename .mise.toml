@@ -33,7 +33,8 @@ run = [
 description = "✅ 品質チェック"
 run = [
   "cd wasm && cargo clippy",
-  "cd web && bun run biome:check"
+  "cd web && bun run biome:check",
+  "cd web && bun run type-check"
 ]
 
 [tasks.fmt]
@@ -129,7 +130,27 @@ run = [
 description = "🔍 詳細リント"
 run = [
   "cd wasm && cargo clippy -- -D warnings",
-  "cd web && bun run biome:check"
+  "cd web && bun run biome:check",
+  "cd web && bun run type-check"
+]
+
+[tasks.type-check]
+description = "🏷️ 型チェック"
+run = "cd web && bun run type-check"
+
+[tasks.ci]
+description = "🚦 CI チェック (テスト + 品質チェック)"
+run = [
+  "mise run test",
+  "mise run check"
+]
+
+[tasks.full-check]
+description = "🔍 完全チェック (フォーマット + 品質チェック + テスト)"
+run = [
+  "mise run fmt",
+  "mise run check",
+  "mise run test"
 ]
 
 # =============================================================================
@@ -151,6 +172,18 @@ run = "mise run check"
 [tasks.f]
 description = "🎨 コード整形 (短縮)"
 run = "mise run fmt"
+
+[tasks.tc]
+description = "🏷️ 型チェック (短縮)"
+run = "mise run type-check"
+
+[tasks.ci-short]
+description = "🚦 CI チェック (短縮)"
+run = "mise run ci"
+
+[tasks.fc]
+description = "🔍 完全チェック (短縮)"
+run = "mise run full-check"
 
 [tasks.w]
 description = "👀 テスト監視 (短縮)"
