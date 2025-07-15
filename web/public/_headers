@@ -1,0 +1,11 @@
+/*.wasm
+  Content-Type: application/wasm
+
+/assets/*.wasm
+  Content-Type: application/wasm
+
+/assets/*.js
+  Content-Type: application/javascript
+
+/*.js
+  Content-Type: application/javascript
