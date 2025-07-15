@@ -95,10 +95,10 @@ export const StrategyType = {
 export type StrategyType = (typeof StrategyType)[keyof typeof StrategyType];
 
 export const STRATEGY_NAMES = {
-  [StrategyType.AllCooperate]: 'Always Cooperate',
-  [StrategyType.AllDefect]: 'Always Defect',
-  [StrategyType.TitForTat]: 'Tit for Tat',
-  [StrategyType.Pavlov]: 'Pavlov',
+  [StrategyType.AllCooperate]: '常に協力',
+  [StrategyType.AllDefect]: '常に裏切り',
+  [StrategyType.TitForTat]: 'しっぺ返し',
+  [StrategyType.Pavlov]: 'パブロフ',
 } as const;
 
 export const STRATEGY_COLORS = {
@@ -126,12 +126,12 @@ export const MovementStrategyType = {
 export type MovementStrategyType = (typeof MovementStrategyType)[keyof typeof MovementStrategyType];
 
 export const MOVEMENT_STRATEGY_NAMES = {
-  [MovementStrategyType.Explorer]: 'Explorer',
-  [MovementStrategyType.Settler]: 'Settler',
-  [MovementStrategyType.Adaptive]: 'Adaptive',
-  [MovementStrategyType.Opportunist]: 'Opportunist',
-  [MovementStrategyType.Social]: 'Social',
-  [MovementStrategyType.Antisocial]: 'Antisocial',
+  [MovementStrategyType.Explorer]: '探検者',
+  [MovementStrategyType.Settler]: '定住者',
+  [MovementStrategyType.Adaptive]: '適応者',
+  [MovementStrategyType.Opportunist]: '機会主義者',
+  [MovementStrategyType.Social]: '社交的',
+  [MovementStrategyType.Antisocial]: '非社交的',
 } as const;
 
 export const MOVEMENT_STRATEGY_COLORS = {

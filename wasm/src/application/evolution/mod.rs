@@ -1,5 +1,5 @@
-pub mod service;
 pub mod selection;
+pub mod service;
 
-pub use service::*;
 pub use selection::*;
+pub use service::*;

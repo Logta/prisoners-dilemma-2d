@@ -20,7 +20,9 @@ export const SimulationGrid: React.FC<SimulationGridProps> = ({
 
   // Initialize canvas renderer
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!canvasRef.current) {
+      return;
+    }
 
     try {
       rendererRef.current = new SimulationCanvas(canvasRef.current, gridWidth, gridHeight);
@@ -31,42 +33,46 @@ export const SimulationGrid: React.FC<SimulationGridProps> = ({
 
   // Render agents when they change
   useEffect(() => {
-    if (!rendererRef.current) return;
+    if (!rendererRef.current) {
+      return;
+    }
 
     rendererRef.current.render(agents);
   }, [agents]);
 
   // Handle grid size changes
   useEffect(() => {
-    if (!rendererRef.current) return;
+    if (!rendererRef.current) {
+      return;
+    }
 
     rendererRef.current.resize(gridWidth, gridHeight);
   }, [gridWidth, gridHeight]);
 
   return (
     <div className={`relative ${className}`}>
-      <canvas className="border border-gray-300 rounded-lg shadow-sm" ref={canvasRef} />
-      <div className="absolute top-2 right-2 bg-white bg-opacity-90 rounded p-2 text-xs">
+      <canvas className="rounded-lg border border-gray-300 shadow-sm" ref={canvasRef} />
+      <div className="absolute top-2 right-2 rounded bg-white bg-opacity-90 p-2 text-xs">
         <div className="grid grid-cols-2 gap-1 text-center">
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded" />
-            <span>Always Cooperate</span>
+            <div className="h-3 w-3 rounded bg-green-500" />
+            <span>常に協力</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-red-500 rounded" />
-            <span>Always Defect</span>
+            <div className="h-3 w-3 rounded bg-red-500" />
+            <span>常に裏切り</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded" />
-            <span>Tit for Tat</span>
+            <div className="h-3 w-3 rounded bg-blue-500" />
+            <span>しっぺ返し</span>
           </div>
           <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-amber-500 rounded" />
-            <span>Pavlov</span>
+            <div className="h-3 w-3 rounded bg-amber-500" />
+            <span>パブロフ</span>
           </div>
         </div>
         <div className="mt-2 text-gray-600">
-          <div>Brightness = Cooperation Rate</div>
+          <div>明るさ = 協力率</div>
         </div>
       </div>
     </div>

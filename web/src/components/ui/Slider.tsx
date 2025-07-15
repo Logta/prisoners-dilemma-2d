@@ -27,12 +27,12 @@ export const Slider: React.FC<SliderProps> = ({
   return (
     <div className={clsx('space-y-2', className)}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700" htmlFor={`slider-${label}`}>
+        <label className="block font-medium text-gray-700 text-sm" htmlFor={`slider-${label}`}>
           {label}: {value}
         </label>
       )}
       <input
-        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+        className="slider h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-200"
         id={`slider-${label}`}
         max={max}
         min={min}

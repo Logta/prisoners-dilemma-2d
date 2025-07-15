@@ -32,6 +32,8 @@ export const HomePage: React.FC = () => {
     pause,
     reset,
     step,
+    initializeSimulation,
+    isInitialized,
     setStrategyComplexityPenalty: setSimulationPenalty,
     setStrategyComplexityPenaltyRate: setSimulationPenaltyRate,
     setTorusField: setSimulationTorusField,
@@ -39,16 +41,16 @@ export const HomePage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <h2 className="text-lg font-semibold text-red-800 mb-2">Error</h2>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-6">
+          <h2 className="mb-2 font-semibold text-lg text-red-800">エラー</h2>
           <p className="text-red-700">{error}</p>
           <button
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="mt-4 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
             onClick={() => window.location.reload()}
             type="button"
           >
-            Reload Page
+            ページを再読み込み
           </button>
         </div>
       </div>
@@ -57,37 +59,39 @@ export const HomePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading simulation...</p>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-blue-600 border-b-2" />
+          <p className="text-gray-600">シミュレーションを読み込み中...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">2D Prisoner's Dilemma</h1>
-        <p className="text-lg text-gray-600">Evolutionary simulation of cooperation strategies</p>
+      <div className="border-gray-200 border-b bg-white px-4 py-6 shadow-sm">
+        <div className="container mx-auto text-center">
+          <h1 className="mb-2 font-bold text-3xl text-gray-900">2D 囚人のジレンマ</h1>
+          <p className="text-gray-600">協力戦略の進化シミュレーション</p>
+          {statistics && (
+            <div className="mt-2 text-gray-500 text-sm">
+              世代 {statistics.generation || 0} | {statistics.total_agents || 0} 体
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Simulation Grid - Takes up more space */}
-        <div className="lg:col-span-3">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900">
-              Simulation Grid
-              {statistics && (
-                <span className="text-sm font-normal text-gray-500 ml-2">
-                  Generation {statistics.generation || 0} | {statistics.total_agents || 0} agents
-                </span>
-              )}
-            </h2>
-            <div className="flex justify-center">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        {/* Simulation Grid - Sticky on larger screens */}
+        <div className="flex-1 lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden">
+          <div className="flex h-full flex-col">
+            <div className="border-gray-200 border-b bg-white px-4 py-3">
+              <h2 className="font-semibold text-gray-900 text-lg">シミュレーショングリッド</h2>
+            </div>
+            <div className="flex flex-1 items-center justify-center bg-white p-4">
               <SimulationGrid
                 agents={agents}
                 gridHeight={config.gridHeight}
@@ -97,44 +101,48 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Control Panel and Statistics */}
-        <div className="lg:col-span-1 space-y-6">
-          <ControlPanel
-            agentCount={agentCount}
-            currentAgentCount={statistics?.total_agents || 0}
-            disabled={loading}
-            isRunning={isRunning}
-            onAgentCountChange={setAgentCount}
-            onPause={pause}
-            onReset={reset}
-            onSpeedChange={setSpeed}
-            onStart={start}
-            onStep={step}
-            onStrategyComplexityPenaltyChange={(enabled) => {
-              setStrategyComplexityPenalty(enabled);
-              setSimulationPenalty(enabled);
-            }}
-            onStrategyComplexityPenaltyRateChange={(rate) => {
-              setStrategyComplexityPenaltyRate(rate);
-              setSimulationPenaltyRate(rate / 100);
-            }}
-            onTorusFieldChange={(enabled) => {
-              setTorusField(enabled);
-              setSimulationTorusField(enabled);
-            }}
-            speed={speed}
-            strategyComplexityPenalty={strategyComplexityPenalty}
-            strategyComplexityPenaltyRate={strategyComplexityPenaltyRate}
-            torusField={torusField}
-          />
+        {/* Control Panel and Statistics - Scrollable sidebar */}
+        <div className="border-gray-200 border-l bg-gray-50 lg:w-80 lg:min-w-80 lg:overflow-y-auto">
+          <div className="space-y-4 p-4">
+            <ControlPanel
+              agentCount={agentCount}
+              currentAgentCount={statistics?.total_agents || 0}
+              disabled={loading}
+              isInitialized={isInitialized}
+              isRunning={isRunning}
+              onAgentCountChange={setAgentCount}
+              onInitialize={initializeSimulation}
+              onPause={pause}
+              onReset={reset}
+              onSpeedChange={setSpeed}
+              onStart={start}
+              onStep={step}
+              onStrategyComplexityPenaltyChange={(enabled) => {
+                setStrategyComplexityPenalty(enabled);
+                setSimulationPenalty(enabled);
+              }}
+              onStrategyComplexityPenaltyRateChange={(rate) => {
+                setStrategyComplexityPenaltyRate(rate);
+                setSimulationPenaltyRate(rate / 100);
+              }}
+              onTorusFieldChange={(enabled) => {
+                setTorusField(enabled);
+                setSimulationTorusField(enabled);
+              }}
+              speed={speed}
+              strategyComplexityPenalty={strategyComplexityPenalty}
+              strategyComplexityPenaltyRate={strategyComplexityPenaltyRate}
+              torusField={torusField}
+            />
 
-          <StatisticsPanel loading={loading} statistics={statistics} />
+            <StatisticsPanel loading={loading} statistics={statistics} />
+
+            {/* Footer */}
+            <div className="border-gray-200 border-t pt-4 text-center text-gray-500 text-xs">
+              <p>React、TypeScript、WebAssembly (Rust) で開発</p>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-8 text-center text-sm text-gray-500">
-        <p>Built with React, TypeScript, and WebAssembly (Rust)</p>
       </div>
     </div>
   );

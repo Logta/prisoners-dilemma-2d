@@ -13,6 +13,12 @@ pub struct SimulationStatistics {
     pub average_score: f64,
 }
 
+impl Default for SimulationStatistics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SimulationStatistics {
     pub fn new() -> Self {
         Self {
@@ -28,7 +34,7 @@ impl SimulationStatistics {
 
     pub fn calculate(agents: &HashMap<uuid::Uuid, Agent>, generation: u32) -> Self {
         let total_agents = agents.len();
-        
+
         if total_agents == 0 {
             return Self::new();
         }
@@ -41,7 +47,9 @@ impl SimulationStatistics {
 
         for agent in agents.values() {
             *strategy_counts.entry(agent.strategy).or_insert(0) += 1;
-            *movement_strategy_counts.entry(agent.movement_strategy.to_string()).or_insert(0) += 1;
+            *movement_strategy_counts
+                .entry(agent.movement_strategy.to_string())
+                .or_insert(0) += 1;
             total_cooperation_rate += agent.cooperation_rate();
             total_mobility += agent.mobility;
             total_score += agent.score as f64;
@@ -71,7 +79,10 @@ impl SimulationStatistics {
         if self.total_agents == 0 {
             0.0
         } else {
-            let count = self.movement_strategy_counts.get(movement_strategy).unwrap_or(&0);
+            let count = self
+                .movement_strategy_counts
+                .get(movement_strategy)
+                .unwrap_or(&0);
             *count as f64 / self.total_agents as f64 * 100.0
         }
     }
