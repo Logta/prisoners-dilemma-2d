@@ -48,6 +48,8 @@ export default defineConfig({
     },
     // Increase chunk size warning limit for WASM files
     chunkSizeWarningLimit: 1000,
+    // Ensure WASM files are properly handled
+    assetsInlineLimit: 0,
   },
 
   // WASM support
