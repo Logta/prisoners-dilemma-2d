@@ -45,6 +45,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onStrategyComplexityPenaltyRateChange,
   onTorusFieldChange,
   disabled = false,
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This component handles complex UI state management
 }) => {
   // エージェントが存在しない場合の警告
   const hasNoAgents = currentAgentCount === 0 || currentAgentCount === undefined;
@@ -73,7 +74,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-blue-800">
+                <p className="text-blue-800 text-sm">
                   シミュレーションが初期化されていません。「初期配置」ボタンを押してエージェントを配置してください。
                 </p>
               </div>
@@ -134,13 +135,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               className="flex items-center gap-2"
               disabled={disabled || !isInitialized || hasNoAgents}
               onClick={onStart}
-              // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
               title={
                 isInitialized
                   ? hasNoAgents
-                    ? 'エージェントが配置されていません'
+                    ? // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
+                      'エージェントが配置されていません'
                     : ''
-                  : 'まず初期配置を行ってください'
+                  : // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
+                    'まず初期配置を行ってください'
               }
             >
               <Play size={16} />
@@ -152,13 +154,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             className="flex items-center gap-2"
             disabled={disabled || isRunning || !isInitialized || hasNoAgents}
             onClick={onStep}
-            // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
             title={
               isInitialized
                 ? hasNoAgents
-                  ? 'エージェントが配置されていません'
+                  ? // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
+                    'エージェントが配置されていません'
                   : ''
-                : 'まず初期配置を行ってください'
+                : // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
+                  'まず初期配置を行ってください'
             }
             variant="secondary"
           >

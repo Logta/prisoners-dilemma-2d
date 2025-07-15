@@ -71,7 +71,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-6 shadow-sm">
+      <div className="border-gray-200 border-b bg-white px-4 py-6 shadow-sm">
         <div className="container mx-auto text-center">
           <h1 className="mb-2 font-bold text-3xl text-gray-900">2D 囚人のジレンマ</h1>
           <p className="text-gray-600">協力戦略の進化シミュレーション</p>
@@ -84,14 +84,14 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col lg:flex-row min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Simulation Grid - Sticky on larger screens */}
         <div className="flex-1 lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden">
-          <div className="h-full flex flex-col">
-            <div className="bg-white border-b border-gray-200 px-4 py-3">
+          <div className="flex h-full flex-col">
+            <div className="border-gray-200 border-b bg-white px-4 py-3">
               <h2 className="font-semibold text-gray-900 text-lg">シミュレーショングリッド</h2>
             </div>
-            <div className="flex-1 flex items-center justify-center bg-white p-4">
+            <div className="flex flex-1 items-center justify-center bg-white p-4">
               <SimulationGrid
                 agents={agents}
                 gridHeight={config.gridHeight}
@@ -102,8 +102,8 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Control Panel and Statistics - Scrollable sidebar */}
-        <div className="lg:w-80 lg:min-w-80 bg-gray-50 border-l border-gray-200 lg:overflow-y-auto">
-          <div className="p-4 space-y-4">
+        <div className="border-gray-200 border-l bg-gray-50 lg:w-80 lg:min-w-80 lg:overflow-y-auto">
+          <div className="space-y-4 p-4">
             <ControlPanel
               agentCount={agentCount}
               currentAgentCount={statistics?.total_agents || 0}
@@ -138,7 +138,7 @@ export const HomePage: React.FC = () => {
             <StatisticsPanel loading={loading} statistics={statistics} />
 
             {/* Footer */}
-            <div className="pt-4 border-t border-gray-200 text-center text-gray-500 text-xs">
+            <div className="border-gray-200 border-t pt-4 text-center text-gray-500 text-xs">
               <p>React、TypeScript、WebAssembly (Rust) で開発</p>
             </div>
           </div>

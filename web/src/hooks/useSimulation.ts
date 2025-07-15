@@ -529,7 +529,7 @@ export const useSimulation = (config: SimulationConfig) => {
         }
       }
     }, config.speed);
-  }, [simulation, isRunning, step, config.speed, agents, statistics]);
+  }, [simulation, isRunning, step, config.speed, agents, statistics, isInitialized]);
 
   const pause = useCallback(() => {
     if (intervalRef.current) {
