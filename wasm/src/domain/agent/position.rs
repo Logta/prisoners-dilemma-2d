@@ -74,10 +74,10 @@ mod tests {
         // Arrange
         let x = 5;
         let y = 10;
-        
+
         // Act
         let position = Position::new(x, y);
-        
+
         // Assert
         assert_eq!(position.x, x);
         assert_eq!(position.y, y);
@@ -89,10 +89,10 @@ mod tests {
         let position = Position::new(5, 5);
         let grid_width = 10;
         let grid_height = 10;
-        
+
         // Act
         let neighbors = position.neighbors(grid_width, grid_height);
-        
+
         // Assert
         assert_eq!(neighbors.len(), 8);
         assert!(neighbors.contains(&Position::new(4, 4)));
@@ -110,7 +110,7 @@ mod tests {
         // Arrange
         let grid_width = 10;
         let grid_height = 10;
-        
+
         // Act & Assert: 角の位置
         let corner = Position::new(0, 0);
         let corner_neighbors = corner.neighbors(grid_width, grid_height);
@@ -118,7 +118,7 @@ mod tests {
         assert!(corner_neighbors.contains(&Position::new(0, 1)));
         assert!(corner_neighbors.contains(&Position::new(1, 0)));
         assert!(corner_neighbors.contains(&Position::new(1, 1)));
-        
+
         // Act & Assert: 端の位置
         let edge = Position::new(0, 5);
         let edge_neighbors = edge.neighbors(grid_width, grid_height);
@@ -136,10 +136,10 @@ mod tests {
         let position = Position::new(0, 0);
         let grid_width = 10;
         let grid_height = 10;
-        
+
         // Act
         let neighbors = position.neighbors_with_mode(grid_width, grid_height, true);
-        
+
         // Assert
         assert_eq!(neighbors.len(), 8);
         assert!(neighbors.contains(&Position::new(9, 9)));
@@ -158,10 +158,10 @@ mod tests {
         let position = Position::new(5, 5);
         let grid_width = 10;
         let grid_height = 10;
-        
+
         // Act
         let neighbors = position.neighbors(grid_width, grid_height);
-        
+
         // Assert
         assert!(!neighbors.contains(&position));
     }
@@ -172,10 +172,10 @@ mod tests {
         let position = Position::new(5, 5);
         let grid_width = 10;
         let grid_height = 10;
-        
+
         // Act
         let neighbor = position.random_neighbor(grid_width, grid_height);
-        
+
         // Assert: 返された隣接位置が有効な隣接位置に含まれる
         assert!(neighbor.is_some());
         if let Some(neighbor) = neighbor {
