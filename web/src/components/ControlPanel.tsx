@@ -49,10 +49,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   // エージェントが存在しない場合の警告
   const hasNoAgents = currentAgentCount === 0 || currentAgentCount === undefined;
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 font-semibold text-gray-900 text-xl">シミュレーション制御</h2>
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <h2 className="mb-3 font-semibold text-gray-900 text-lg">シミュレーション制御</h2>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* 初期化されていない場合の警告 */}
         {!isInitialized && (
           <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">

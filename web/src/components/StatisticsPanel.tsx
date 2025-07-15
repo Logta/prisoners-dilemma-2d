@@ -18,8 +18,8 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
 }) => {
   if (loading || !statistics) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 font-semibold text-gray-900 text-xl">統計</h2>
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 className="mb-3 font-semibold text-gray-900 text-lg">統計</h2>
         <div className="animate-pulse">
           <div className="mb-2 h-4 w-3/4 rounded bg-gray-200" />
           <div className="mb-2 h-4 w-1/2 rounded bg-gray-200" />
@@ -94,10 +94,10 @@ export const StatisticsPanel: React.FC<StatisticsPanelProps> = ({
   const formatNumber = (value: number) => value.toFixed(2);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 font-semibold text-gray-900 text-xl">統計</h2>
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <h2 className="mb-3 font-semibold text-gray-900 text-lg">統計</h2>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Generation Info */}
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-lg bg-blue-50 p-3">
