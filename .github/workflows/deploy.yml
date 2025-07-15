@@ -27,8 +27,17 @@ jobs:
       - name: Setup dependencies
         run: mise install
 
+      - name: Setup project
+        run: mise run setup
+
+      - name: Setup cargo bin path
+        run: |
+          source $HOME/.cargo/env
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
       - name: Build project
         run: |
+          source $HOME/.cargo/env
           cd web
           mise run build
 
