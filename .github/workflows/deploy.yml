@@ -21,19 +21,36 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup mise
-        uses: jdx/mise-action@v2
-        with:
-          version: 2024.1.0
-
       - name: Setup Node.js
-        run: mise install
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install wasm-pack
         run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
+      - name: Build WASM
+        run: |
+          cd wasm
+          wasm-pack build --target web --out-dir pkg
+
+      - name: Copy WASM files
+        run: |
+          mkdir -p web/src/assets/pkg
+          cp -r wasm/pkg/* web/src/assets/pkg/
+
+      - name: Install dependencies
+        run: |
+          cd web
+          npm install
+
       - name: Build project
-        run: mise run build
+        run: |
+          cd web
+          npm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
