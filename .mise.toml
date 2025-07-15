@@ -2,6 +2,9 @@
 # 2D Prisoner's Dilemma - mise configuration
 # =============================================================================
 
+[settings]
+experimental = true
+
 [tools]
 node = "24"
 rust = "latest"
@@ -16,11 +19,8 @@ RUST_LOG = "debug"
 
 [tasks.dev]
 description = "🚀 開発開始"
-run = [
-  "cd wasm && wasm-pack build --target web --out-dir pkg",
-  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
-  "cd web && bun run dev"
-]
+depends = ["copy"]
+run = "cd web && bun run dev"
 
 [tasks.test]
 description = "🧪 テスト実行"
@@ -62,20 +62,13 @@ depends = ["wasm"]
 
 [tasks.build]
 description = "🏗️ 本番ビルド"
-run = [
-  "cd wasm && wasm-pack build --target web --out-dir pkg",
-  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
-  "cd web && bun run build"
-]
+depends = ["copy"]
+run = "cd web && bun run build"
 
 [tasks.preview]
 description = "👀 本番プレビュー"
-run = [
-  "cd wasm && wasm-pack build --target web --out-dir pkg",
-  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
-  "cd web && bun run build",
-  "cd web && bun run preview"
-]
+depends = ["build"]
+run = "cd web && bun run preview"
 
 # =============================================================================
 # 📊 WATCH COMMANDS - 監視系
@@ -122,12 +115,10 @@ run = "cargo doc --no-deps --open"
 
 [tasks.size]
 description = "📊 サイズ確認"
+depends = ["build"]
 run = [
-  "cd wasm && wasm-pack build --target web --out-dir pkg",
-  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
-  "cd web && bun run build",
   "ls -lh wasm/pkg/*.wasm",
-  "ls -lh web/build/assets/*.js"
+  "ls -lh web/dist/assets/*.js"
 ]
 
 [tasks.lint]
@@ -163,40 +154,36 @@ run = [
 
 [tasks.d]
 description = "🚀 開発開始 (短縮)"
-run = "mise run dev"
+depends = ["dev"]
 
 [tasks.t]
 description = "🧪 テスト実行 (短縮)"
-run = "mise run test"
+depends = ["test"]
 
 [tasks.c]
 description = "✅ 品質チェック (短縮)"
-run = "mise run check"
+depends = ["check"]
 
 [tasks.f]
 description = "🎨 コード整形 (短縮)"
-run = "mise run fmt"
+depends = ["fmt"]
 
 [tasks.tc]
 description = "🏷️ 型チェック (短縮)"
-run = "mise run type-check"
+depends = ["type-check"]
 
 [tasks.ci-short]
 description = "🚦 CI チェック (短縮)"
-run = "mise run ci"
+depends = ["ci"]
 
 [tasks.fc]
 description = "🔍 完全チェック (短縮)"
-run = "mise run full-check"
+depends = ["full-check"]
 
 [tasks.w]
 description = "👀 テスト監視 (短縮)"
-run = "mise run watch"
+depends = ["watch"]
 
 [tasks.b]
 description = "🏗️ 本番ビルド (短縮)"
-run = [
-  "cd wasm && wasm-pack build --target web --out-dir pkg",
-  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
-  "cd web && bun run build"
-]
+depends = ["build"]
