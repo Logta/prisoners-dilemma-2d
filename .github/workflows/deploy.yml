@@ -39,7 +39,7 @@ jobs:
         run: |
           source $HOME/.cargo/env
           cd web
-          mise run build
+          NODE_ENV=production mise run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
