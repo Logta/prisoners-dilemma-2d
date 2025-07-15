@@ -111,7 +111,7 @@ impl SimulationService {
             .collect();
 
         // Find games to play without borrowing the grid
-        for (_i, (id1, pos1)) in agent_data.iter().enumerate() {
+        for (id1, pos1) in agent_data.iter() {
             let neighbor_positions = pos1.neighbors_with_mode(
                 self.grid.width(),
                 self.grid.height(),
