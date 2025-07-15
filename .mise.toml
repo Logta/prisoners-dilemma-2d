@@ -63,15 +63,17 @@ depends = ["wasm"]
 [tasks.build]
 description = "🏗️ 本番ビルド"
 run = [
-  "mise run wasm",
-  "mise run copy",
+  "cd wasm && wasm-pack build --target web --out-dir pkg",
+  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
   "cd web && bun run build"
 ]
 
 [tasks.preview]
 description = "👀 本番プレビュー"
 run = [
-  "mise run build",
+  "cd wasm && wasm-pack build --target web --out-dir pkg",
+  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
+  "cd web && bun run build",
   "cd web && bun run preview"
 ]
 
@@ -85,7 +87,7 @@ run = "cd wasm && cargo watch -x test"
 
 [tasks.watch-wasm]
 description = "🔄 WASM監視"
-run = "cd wasm && cargo watch -s 'mise run wasm && mise run copy'"
+run = "cd wasm && cargo watch -s 'wasm-pack build --target web --out-dir pkg && mkdir -p ../web/src/assets/pkg && cp -r pkg/* ../web/src/assets/pkg/'"
 
 # =============================================================================
 # 🛠️ SETUP COMMANDS - セットアップ
@@ -121,7 +123,9 @@ run = "cargo doc --no-deps --open"
 [tasks.size]
 description = "📊 サイズ確認"
 run = [
-  "mise run build",
+  "cd wasm && wasm-pack build --target web --out-dir pkg",
+  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
+  "cd web && bun run build",
   "ls -lh wasm/pkg/*.wasm",
   "ls -lh web/build/assets/*.js"
 ]
@@ -191,4 +195,8 @@ run = "mise run watch"
 
 [tasks.b]
 description = "🏗️ 本番ビルド (短縮)"
-run = "mise run build"
+run = [
+  "cd wasm && wasm-pack build --target web --out-dir pkg",
+  "mkdir -p web/src/assets/pkg && cp -r wasm/pkg/* web/src/assets/pkg/",
+  "cd web && bun run build"
+]
