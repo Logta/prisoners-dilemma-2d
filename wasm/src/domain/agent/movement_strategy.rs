@@ -68,3 +68,69 @@ pub fn movement_strategy_random() -> MovementStrategy {
 pub fn movement_strategy_variant_count() -> u32 {
     6
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_movement_strategy_random_returns_valid_strategy() {
+        // Arrange & Act
+        let strategy = MovementStrategy::random();
+        
+        // Assert
+        assert!(matches!(strategy, 
+            MovementStrategy::Explorer | 
+            MovementStrategy::Settler | 
+            MovementStrategy::Adaptive |
+            MovementStrategy::Opportunist |
+            MovementStrategy::Social |
+            MovementStrategy::Antisocial
+        ));
+    }
+
+    #[test]
+    fn test_movement_strategy_default_mobility_values() {
+        // Arrange & Act & Assert
+        assert_eq!(MovementStrategy::Explorer.default_mobility(), 0.8);
+        assert_eq!(MovementStrategy::Settler.default_mobility(), 0.2);
+        assert_eq!(MovementStrategy::Adaptive.default_mobility(), 0.5);
+        assert_eq!(MovementStrategy::Opportunist.default_mobility(), 0.4);
+        assert_eq!(MovementStrategy::Social.default_mobility(), 0.6);
+        assert_eq!(MovementStrategy::Antisocial.default_mobility(), 0.7);
+    }
+
+    #[test]
+    fn test_movement_strategy_display() {
+        // Arrange & Act & Assert
+        assert_eq!(MovementStrategy::Explorer.to_string(), "Explorer");
+        assert_eq!(MovementStrategy::Settler.to_string(), "Settler");
+        assert_eq!(MovementStrategy::Adaptive.to_string(), "Adaptive");
+        assert_eq!(MovementStrategy::Opportunist.to_string(), "Opportunist");
+        assert_eq!(MovementStrategy::Social.to_string(), "Social");
+        assert_eq!(MovementStrategy::Antisocial.to_string(), "Antisocial");
+    }
+
+    #[test]
+    fn test_movement_strategy_wasm_functions() {
+        // Arrange
+        let strategy = MovementStrategy::Explorer;
+        
+        // Act
+        let str_result = movement_strategy_to_string(strategy);
+        let random_result = movement_strategy_random();
+        let count_result = movement_strategy_variant_count();
+        
+        // Assert
+        assert_eq!(str_result, "Explorer");
+        assert!(matches!(random_result, 
+            MovementStrategy::Explorer | 
+            MovementStrategy::Settler | 
+            MovementStrategy::Adaptive |
+            MovementStrategy::Opportunist |
+            MovementStrategy::Social |
+            MovementStrategy::Antisocial
+        ));
+        assert_eq!(count_result, 6);
+    }
+}
