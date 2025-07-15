@@ -103,7 +103,9 @@ impl SimulationService {
         let mut games_to_play = Vec::new();
 
         // Collect all agent data first to avoid borrowing conflicts
-        let agent_data: Vec<(uuid::Uuid, crate::domain::agent::position::Position)> = self.grid.agents()
+        let agent_data: Vec<(uuid::Uuid, crate::domain::agent::position::Position)> = self
+            .grid
+            .agents()
             .iter()
             .map(|(id, agent)| (*id, agent.position))
             .collect();
@@ -111,11 +113,11 @@ impl SimulationService {
         // Find games to play without borrowing the grid
         for (_i, (id1, pos1)) in agent_data.iter().enumerate() {
             let neighbor_positions = pos1.neighbors_with_mode(
-                self.grid.width(), 
-                self.grid.height(), 
-                self.config.torus_field_enabled
+                self.grid.width(),
+                self.grid.height(),
+                self.config.torus_field_enabled,
             );
-            
+
             for neighbor_pos in neighbor_positions {
                 if let Some(neighbor_agent) = self.grid.get_agent_at_position(&neighbor_pos) {
                     let neighbor_id = neighbor_agent.id;
@@ -140,12 +142,12 @@ impl SimulationService {
                 };
                 (agent1, agent2)
             };
-            
+
             let mut agent1 = agent1_data;
             let mut agent2 = agent2_data;
-            
+
             GameService::play_game(&mut agent1, &mut agent2);
-            
+
             // Update agents separately to avoid double mutable borrow
             if let Some(agent) = self.grid.get_agent_mut(&id1) {
                 *agent = agent1;

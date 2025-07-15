@@ -56,23 +56,23 @@ export const SimulationGrid: React.FC<SimulationGridProps> = ({
         <div className="grid grid-cols-2 gap-1 text-center">
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-green-500" />
-            <span>Always Cooperate</span>
+            <span>常に協力</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-red-500" />
-            <span>Always Defect</span>
+            <span>常に裏切り</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-blue-500" />
-            <span>Tit for Tat</span>
+            <span>しっぺ返し</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-amber-500" />
-            <span>Pavlov</span>
+            <span>パブロフ</span>
           </div>
         </div>
         <div className="mt-2 text-gray-600">
-          <div>Brightness = Cooperation Rate</div>
+          <div>明るさ = 協力率</div>
         </div>
       </div>
     </div>

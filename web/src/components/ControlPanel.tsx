@@ -50,7 +50,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const hasNoAgents = currentAgentCount === 0 || currentAgentCount === undefined;
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-      <h2 className="mb-4 font-semibold text-gray-900 text-xl">Simulation Controls</h2>
+      <h2 className="mb-4 font-semibold text-gray-900 text-xl">シミュレーション制御</h2>
 
       <div className="space-y-4">
         {/* 初期化されていない場合の警告 */}
@@ -115,7 +115,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             className="flex items-center gap-2"
             disabled={disabled}
             onClick={onInitialize}
-            variant={isInitialized ? "secondary" : "primary"}
+            variant={isInitialized ? 'secondary' : 'primary'}
           >
             <RotateCcw size={16} />
             初期配置
@@ -127,7 +127,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           {isRunning ? (
             <Button className="flex items-center gap-2" onClick={onPause} variant="secondary">
               <Pause size={16} />
-              Pause
+              一時停止
             </Button>
           ) : (
             <Button
@@ -135,10 +135,16 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               disabled={disabled || !isInitialized || hasNoAgents}
               onClick={onStart}
               // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-              title={!isInitialized ? 'まず初期配置を行ってください' : hasNoAgents ? 'エージェントが配置されていません' : ''}
+              title={
+                isInitialized
+                  ? hasNoAgents
+                    ? 'エージェントが配置されていません'
+                    : ''
+                  : 'まず初期配置を行ってください'
+              }
             >
               <Play size={16} />
-              Start
+              開始
             </Button>
           )}
 
@@ -147,11 +153,17 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             disabled={disabled || isRunning || !isInitialized || hasNoAgents}
             onClick={onStep}
             // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-            title={!isInitialized ? 'まず初期配置を行ってください' : hasNoAgents ? 'エージェントが配置されていません' : ''}
+            title={
+              isInitialized
+                ? hasNoAgents
+                  ? 'エージェントが配置されていません'
+                  : ''
+                : 'まず初期配置を行ってください'
+            }
             variant="secondary"
           >
             <StepForward size={16} />
-            Step
+            ステップ
           </Button>
 
           <Button
@@ -159,11 +171,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             disabled={disabled || !isInitialized}
             onClick={onReset}
             // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-            title={!isInitialized ? 'まず初期配置を行ってください' : ''}
+            title={isInitialized ? '' : 'まず初期配置を行ってください'}
             variant="danger"
           >
             <RotateCcw size={16} />
-            Reset
+            リセット
           </Button>
         </div>
 
@@ -171,21 +183,21 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         <div>
           <Slider
             className="w-full"
-            label="Speed (ms)"
+            label="速度 (ms)"
             max={2000}
             min={50}
             onChange={onSpeedChange}
             step={50}
             value={speed}
           />
-          <div className="mt-1 text-gray-500 text-xs">Lower values = faster simulation</div>
+          <div className="mt-1 text-gray-500 text-xs">値が小さいほど高速</div>
         </div>
 
         {/* Agent Count Control */}
         <div>
           <Slider
             className="w-full"
-            label={`Population Size (${agentCount} agents)`}
+            label={`エージェント数 (${agentCount} 体)`}
             max={1000}
             min={10}
             onChange={onAgentCountChange}
@@ -193,7 +205,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             value={agentCount}
           />
           <div className="mt-1 text-gray-500 text-xs">
-            Number of agents in the simulation (reset required to apply changes)
+            シミュレーション内のエージェント数（変更にはリセットが必要）
           </div>
         </div>
 
@@ -201,9 +213,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         <div className="border-t pt-4">
           <label className="flex cursor-pointer items-center justify-between">
             <div>
-              <span className="font-medium text-gray-700 text-sm">Strategy Complexity Penalty</span>
+              <span className="font-medium text-gray-700 text-sm">戦略複雑度ペナルティ</span>
               <div className="mt-1 text-gray-500 text-xs">
-                Reduces fitness gain for TitForTat and Pavlov strategies
+                しっぺ返し戦略とパブロフ戦略の適応度上昇を抑制
               </div>
             </div>
             <input
@@ -220,7 +232,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <div className="mt-3">
               <Slider
                 className="w-full"
-                label={`Penalty Rate (${strategyComplexityPenaltyRate}%)`}
+                label={`ペナルティ率 (${strategyComplexityPenaltyRate}%)`}
                 max={100}
                 min={0}
                 onChange={onStrategyComplexityPenaltyRateChange}
@@ -228,7 +240,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 value={strategyComplexityPenaltyRate}
               />
               <div className="mt-1 text-gray-500 text-xs">
-                Higher values = stronger penalty for complex strategies
+                値が大きいほど複雑な戦略への強いペナルティ
               </div>
             </div>
           )}
@@ -238,9 +250,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         <div className="border-t pt-4">
           <label className="flex cursor-pointer items-center justify-between">
             <div>
-              <span className="font-medium text-gray-700 text-sm">Torus Field Mode</span>
+              <span className="font-medium text-gray-700 text-sm">トーラスフィールドモード</span>
               <div className="mt-1 text-gray-500 text-xs">
-                Allow agents to wrap around grid edges (grid becomes a torus)
+                エージェントがグリッドの端を越えて移動可能（トーラス状）
               </div>
             </div>
             <input

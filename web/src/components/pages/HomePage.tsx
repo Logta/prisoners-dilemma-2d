@@ -43,14 +43,14 @@ export const HomePage: React.FC = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-6">
-          <h2 className="mb-2 font-semibold text-lg text-red-800">Error</h2>
+          <h2 className="mb-2 font-semibold text-lg text-red-800">エラー</h2>
           <p className="text-red-700">{error}</p>
           <button
             className="mt-4 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
             onClick={() => window.location.reload()}
             type="button"
           >
-            Reload Page
+            ページを再読み込み
           </button>
         </div>
       </div>
@@ -62,7 +62,7 @@ export const HomePage: React.FC = () => {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-blue-600 border-b-2" />
-          <p className="text-gray-600">Loading simulation...</p>
+          <p className="text-gray-600">シミュレーションを読み込み中...</p>
         </div>
       </div>
     );
@@ -72,8 +72,8 @@ export const HomePage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8 text-center">
-        <h1 className="mb-2 font-bold text-4xl text-gray-900">2D Prisoner's Dilemma</h1>
-        <p className="text-gray-600 text-lg">Evolutionary simulation of cooperation strategies</p>
+        <h1 className="mb-2 font-bold text-4xl text-gray-900">2D 囚人のジレンマ</h1>
+        <p className="text-gray-600 text-lg">協力戦略の進化シミュレーション</p>
       </div>
 
       {/* Main Content */}
@@ -82,10 +82,10 @@ export const HomePage: React.FC = () => {
         <div className="lg:col-span-3">
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <h2 className="mb-4 font-semibold text-gray-900 text-xl">
-              Simulation Grid
+              シミュレーショングリッド
               {statistics && (
                 <span className="ml-2 font-normal text-gray-500 text-sm">
-                  Generation {statistics.generation || 0} | {statistics.total_agents || 0} agents
+                  世代 {statistics.generation || 0} | {statistics.total_agents || 0} 体
                 </span>
               )}
             </h2>
@@ -138,7 +138,7 @@ export const HomePage: React.FC = () => {
 
       {/* Footer */}
       <div className="mt-8 text-center text-gray-500 text-sm">
-        <p>Built with React, TypeScript, and WebAssembly (Rust)</p>
+        <p>React、TypeScript、WebAssembly (Rust) で開発</p>
       </div>
     </div>
   );
