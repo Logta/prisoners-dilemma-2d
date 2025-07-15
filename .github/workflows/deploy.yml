@@ -27,13 +27,17 @@ jobs:
       - name: Setup dependencies
         run: mise install
 
-      - name: Install wasm-pack
+      - name: Setup project
+        run: mise run setup
+
+      - name: Setup cargo bin path
         run: |
-          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          source $HOME/.cargo/env
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
       - name: Build project
         run: |
+          source $HOME/.cargo/env
           cd web
           mise run build
 
