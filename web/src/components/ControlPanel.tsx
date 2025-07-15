@@ -110,7 +110,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         )}
 
         {/* Initialization Controls */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             className="flex items-center gap-2"
             disabled={disabled}
@@ -123,7 +123,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
 
         {/* Play/Pause Controls */}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {isRunning ? (
             <Button className="flex items-center gap-2" onClick={onPause} variant="secondary">
               <Pause size={16} />
