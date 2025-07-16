@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
+import { copyFileSync } from 'fs';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -10,6 +11,14 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    {
+      name: 'github-pages-spa',
+      apply: 'build',
+      closeBundle() {
+        // Create 404.html for GitHub Pages SPA support
+        copyFileSync('dist/index.html', 'dist/404.html');
+      },
+    },
   ],
   
   // Include WASM files as assets
@@ -45,11 +54,16 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
       },
+      output: {
+        manualChunks: undefined,
+      },
     },
     // Increase chunk size warning limit for WASM files
     chunkSizeWarningLimit: 1000,
     // Ensure WASM files are properly handled
     assetsInlineLimit: 0,
+    // Ensure proper file extensions for GitHub Pages
+    assetsDir: 'assets',
   },
 
   // WASM support
