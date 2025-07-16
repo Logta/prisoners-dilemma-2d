@@ -5,9 +5,11 @@ import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
 import { copyFileSync } from 'fs';
 
+import pkg from './package.json';
+
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/2D-Prisoners-Dilemma/' : '/',
+  base: process.env.NODE_ENV === 'production' ? `/${pkg.repository.name}/` : '/',
   plugins: [
     react(),
     tailwindcss(),
