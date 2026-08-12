@@ -1,5 +1,5 @@
 use crate::domain::agent::{Agent, StrategyType};
-use rand::Rng;
+use rand::RngExt;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -7,7 +7,7 @@ pub struct RouletteSelection;
 
 impl RouletteSelection {
     pub fn select_parents(agents: &HashMap<Uuid, Agent>) -> Vec<Agent> {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut selected = Vec::new();
 
         let agents_vec: Vec<&Agent> = agents.values().collect();
@@ -23,14 +23,14 @@ impl RouletteSelection {
 
         if total_score <= 0 {
             for _ in 0..agents_vec.len() {
-                let index = rng.gen_range(0..agents_vec.len());
+                let index = rng.random_range(0..agents_vec.len());
                 selected.push(agents_vec[index].clone());
             }
             return selected;
         }
 
         for _ in 0..agents_vec.len() {
-            let mut random_value = rng.gen_range(1..=total_score);
+            let mut random_value = rng.random_range(1..=total_score);
             let mut selected_agent = None;
 
             for (i, score) in adjusted_scores.iter().enumerate() {
@@ -45,7 +45,7 @@ impl RouletteSelection {
             if let Some(agent) = selected_agent {
                 selected.push(agent);
             } else {
-                let fallback_index = rng.gen_range(0..agents_vec.len());
+                let fallback_index = rng.random_range(0..agents_vec.len());
                 selected.push(agents_vec[fallback_index].clone());
             }
         }
@@ -57,7 +57,7 @@ impl RouletteSelection {
         agents: &HashMap<Uuid, Agent>,
         penalty_rate: f32,
     ) -> Vec<Agent> {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut selected = Vec::new();
 
         let agents_vec: Vec<&Agent> = agents.values().collect();
@@ -86,14 +86,14 @@ impl RouletteSelection {
 
         if total_score <= 0.0 {
             for _ in 0..agents_vec.len() {
-                let index = rng.gen_range(0..agents_vec.len());
+                let index = rng.random_range(0..agents_vec.len());
                 selected.push(agents_vec[index].clone());
             }
             return selected;
         }
 
         for _ in 0..agents_vec.len() {
-            let mut random_value = rng.gen_range(0.0..total_score);
+            let mut random_value = rng.random_range(0.0..total_score);
             let mut selected_agent = None;
 
             for (i, score) in adjusted_scores.iter().enumerate() {
@@ -108,7 +108,7 @@ impl RouletteSelection {
             if let Some(agent) = selected_agent {
                 selected.push(agent);
             } else {
-                let fallback_index = rng.gen_range(0..agents_vec.len());
+                let fallback_index = rng.random_range(0..agents_vec.len());
                 selected.push(agents_vec[fallback_index].clone());
             }
         }

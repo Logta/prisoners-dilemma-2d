@@ -1,6 +1,7 @@
 // biome-ignore-all assist/source/useSortedKeys: 設定だから不要
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
+  "root": false,
+  "$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -10,7 +11,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "suspicious": {
         "noConsole": {
           "level": "error",
@@ -78,7 +79,8 @@
         "useShorthandAssign": "error",
         "useSingleVarDeclarator": "error",
         "useTemplate": "error",
-        "useThrowOnlyError": "error"
+        "useThrowOnlyError": "error",
+        "useNumericSeparators": "error"
       },
       "correctness": {
         "noUnusedFunctionParameters": "error",
@@ -124,11 +126,15 @@
       },
       "security": {
         "noDangerouslySetInnerHtml": "error",
-        "noGlobalEval": "error"
+        "noGlobalEval": "error",
+        "noSecrets": {
+          "level": "error",
+          "options": {
+            "entropyThreshold": 60
+          }
+        }
       },
       "nursery": {
-        "useNumericSeparators": "error",
-        "noSecrets": "error",
         "useSortedClasses": "error"
       },
       "a11y": {

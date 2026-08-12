@@ -1,18 +1,21 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router';
 import { Layout } from './components/layout/Layout';
 import { HomePage } from './components/pages/HomePage';
 
-export const router = createBrowserRouter([
+export const router = createBrowserRouter(
+  [
+    {
+      children: [
+        {
+          element: <HomePage />,
+          index: true,
+        },
+      ],
+      element: <Layout />,
+      path: '/',
+    },
+  ],
   {
-    children: [
-      {
-        element: <HomePage />,
-        index: true,
-      },
-    ],
-    element: <Layout />,
-    path: '/',
-  },
-], {
-  basename: import.meta.env.BASE_URL,
-});
+    basename: import.meta.env.BASE_URL,
+  }
+);

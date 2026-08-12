@@ -1,7 +1,7 @@
 use super::RouletteSelection;
 use crate::application::simulation::SimulationConfig;
 use crate::domain::agent::{Agent, Position};
-use rand::Rng;
+use rand::RngExt;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -41,7 +41,7 @@ impl EvolutionService {
         };
 
         let mut new_agents = Vec::new();
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
 
         let agent_count = current_agents.len();
         let grid_positions = self.generate_positions(agent_count);
@@ -53,8 +53,8 @@ impl EvolutionService {
                 continue;
             }
 
-            let parent1_idx = rng.gen_range(0..parents.len());
-            let parent2_idx = rng.gen_range(0..parents.len());
+            let parent1_idx = rng.random_range(0..parents.len());
+            let parent2_idx = rng.random_range(0..parents.len());
 
             let parent1 = &parents[parent1_idx];
             let parent2 = &parents[parent2_idx];
@@ -70,15 +70,15 @@ impl EvolutionService {
 
     fn generate_positions(&self, count: usize) -> Vec<Position> {
         let mut positions = Vec::new();
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let grid_size = 100;
         let max_positions = grid_size * grid_size;
 
         // If we need more positions than available, allow overlapping
         if count > max_positions {
             for _ in 0..count {
-                let x = rng.gen_range(0..grid_size);
-                let y = rng.gen_range(0..grid_size);
+                let x = rng.random_range(0..grid_size);
+                let y = rng.random_range(0..grid_size);
                 positions.push(Position::new(x, y));
             }
         } else {
@@ -86,8 +86,8 @@ impl EvolutionService {
             let mut attempts = 0;
             for _ in 0..count {
                 loop {
-                    let x = rng.gen_range(0..grid_size);
-                    let y = rng.gen_range(0..grid_size);
+                    let x = rng.random_range(0..grid_size);
+                    let y = rng.random_range(0..grid_size);
                     let position = Position::new(x, y);
 
                     if !positions.contains(&position) || attempts > max_positions * 2 {

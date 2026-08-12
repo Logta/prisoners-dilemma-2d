@@ -254,7 +254,6 @@ export const useSimulation = (config: SimulationConfig) => {
       } catch (err) {
         console.error('Failed to recreate simulation:', err);
         setError(
-          // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
           'シミュレーションの復旧に失敗しました。ページを再読み込みするか、Resetボタンをお試しください。'
         );
       }
@@ -379,14 +378,12 @@ export const useSimulation = (config: SimulationConfig) => {
 
     // ステップ実行前にもエージェントの存在をチェック
     if (!agents || agents.length === 0) {
-      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('エージェントが配置されていません。リセットしてエージェントを配置してください。');
       return;
     }
 
     // 統計情報からエージェント数を再確認
     if (statistics && statistics.total_agents === 0) {
-      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('エージェントが配置されていません。リセットしてエージェントを配置してください。');
       return;
     }
@@ -433,7 +430,6 @@ export const useSimulation = (config: SimulationConfig) => {
 
       // エージェントが存在しない場合はシミュレーションを停止
       if (!plainAgents || plainAgents.length === 0 || plainStats.total_agents === 0) {
-        // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
         setError('すべてのエージェントが消失しました。シミュレーションを停止します。');
         setIsRunning(false);
         return;
@@ -467,21 +463,18 @@ export const useSimulation = (config: SimulationConfig) => {
 
     // 初期化されていない場合は開始できない
     if (!isInitialized) {
-      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('シミュレーションが初期化されていません。初期配置ボタンを押してください。');
       return;
     }
 
     // エージェントが存在しない場合は開始できない
     if (!agents || agents.length === 0) {
-      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('エージェントが配置されていません。初期配置ボタンを押してください。');
       return;
     }
 
     // 統計情報からエージェント数を再確認
     if (statistics && statistics.total_agents === 0) {
-      // biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret
       setError('エージェントが配置されていません。リセットしてエージェントを配置してください。');
       return;
     }

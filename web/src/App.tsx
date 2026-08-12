@@ -2,7 +2,7 @@
 // Main Application Component
 // ========================================
 
-import { RouterProvider } from 'react-router-dom';
+import { RouterProvider } from 'react-router';
 import { JotaiProvider } from './components/providers/JotaiProvider';
 import { router } from './router';
 

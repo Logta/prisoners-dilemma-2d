@@ -138,11 +138,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               title={
                 isInitialized
                   ? hasNoAgents
-                    ? // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-                      'エージェントが配置されていません'
+                    ? 'エージェントが配置されていません'
                     : ''
-                  : // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-                    'まず初期配置を行ってください'
+                  : 'まず初期配置を行ってください'
               }
             >
               <Play size={16} />
@@ -157,11 +155,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             title={
               isInitialized
                 ? hasNoAgents
-                  ? // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-                    'エージェントが配置されていません'
+                  ? 'エージェントが配置されていません'
                   : ''
-                : // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
-                  'まず初期配置を行ってください'
+                : 'まず初期配置を行ってください'
             }
             variant="secondary"
           >
@@ -173,7 +169,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             className="flex items-center gap-2"
             disabled={disabled || !isInitialized}
             onClick={onReset}
-            // biome-ignore lint/nursery/noSecrets: This is a Japanese tooltip message, not a secret
             title={isInitialized ? '' : 'まず初期配置を行ってください'}
             variant="danger"
           >

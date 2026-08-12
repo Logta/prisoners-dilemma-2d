@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use wasm_bindgen::prelude::*;
@@ -30,8 +30,8 @@ impl fmt::Display for MovementStrategy {
 
 impl MovementStrategy {
     pub fn random() -> Self {
-        let mut rng = rand::thread_rng();
-        match rng.gen_range(0..6) {
+        let mut rng = rand::rng();
+        match rng.random_range(0..6) {
             0 => MovementStrategy::Explorer,
             1 => MovementStrategy::Settler,
             2 => MovementStrategy::Adaptive,
