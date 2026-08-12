@@ -91,3 +91,6 @@ vite.config.js.timestamp-*
 
 # mise
 .mise.local.toml
+
+# Claude Code（個人設定。チーム共有する権限は .claude/settings.json に記述する）
+.claude/settings.local.json
