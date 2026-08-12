@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -11,8 +11,8 @@ pub enum StrategyType {
 
 impl StrategyType {
     pub fn random() -> Self {
-        let mut rng = rand::thread_rng();
-        match rng.gen_range(0..4) {
+        let mut rng = rand::rng();
+        match rng.random_range(0..4) {
             0 => StrategyType::AllCooperate,
             1 => StrategyType::AllDefect,
             2 => StrategyType::TitForTat,

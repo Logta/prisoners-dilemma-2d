@@ -1,7 +1,7 @@
 [package]
 name = "prisoners_dilemma_2d"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -9,12 +9,12 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 wasm-bindgen = "0.2"
 js-sys = "0.3"
-rand = "0.8"
-rand_distr = "0.4"
+rand = "0.10"
+rand_distr = "0.6"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-getrandom = { version = "0.2", features = ["js"] }
-thiserror = "2.0.12"
+getrandom = { version = "0.4", features = ["wasm_js"] }
+thiserror = "2.0"
 async-trait = "0.1"
 uuid = { version = "1.0", features = ["v4", "js", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }

@@ -1,3 +1,4 @@
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Slider } from './Slider';
 
@@ -8,115 +9,70 @@ describe('Slider', () => {
     vi.clearAllMocks();
   });
 
-  describe('props validation', () => {
-    it('should accept required props correctly', () => {
-      // Arrange
-      const slider = <Slider max={100} min={0} onChange={mockOnChange} value={50} />;
+  describe('rendering', () => {
+    it('renders a range input with the given value/min/max', () => {
+      render(<Slider max={100} min={0} onChange={mockOnChange} value={50} />);
 
-      // Act
-      const props = slider.props;
-
-      // Assert
-      expect(props.value).toBe(50);
-      expect(props.min).toBe(0);
-      expect(props.max).toBe(100);
-      expect(props.onChange).toBe(mockOnChange);
+      const input = screen.getByRole('slider') as HTMLInputElement;
+      expect(input.type).toBe('range');
+      expect(input.value).toBe('50');
+      expect(input.min).toBe('0');
+      expect(input.max).toBe('100');
     });
 
-    it('should use default step value when not provided', () => {
-      // Arrange
-      const slider = <Slider max={100} min={0} onChange={mockOnChange} value={50} />;
+    it('defaults step to 1 when not provided', () => {
+      render(<Slider max={100} min={0} onChange={mockOnChange} value={50} />);
 
-      // Act
-      const step = slider.props.step;
-
-      // Assert
-      expect(step).toBeUndefined(); // デフォルトはコンポーネント内で1
+      expect(screen.getByRole('slider')).toHaveAttribute('step', '1');
     });
 
-    it('should accept custom step value', () => {
-      // Arrange
-      const slider = <Slider max={100} min={0} onChange={mockOnChange} step={5} value={50} />;
+    it('uses a custom step value when provided', () => {
+      render(<Slider max={100} min={0} onChange={mockOnChange} step={5} value={50} />);
 
-      // Act
-      const step = slider.props.step;
-
-      // Assert
-      expect(step).toBe(5);
+      expect(screen.getByRole('slider')).toHaveAttribute('step', '5');
     });
   });
 
-  describe('label functionality', () => {
-    it('should not have label by default', () => {
-      // Arrange
-      const slider = <Slider max={100} min={0} onChange={mockOnChange} value={50} />;
+  describe('label', () => {
+    it('does not render a label by default', () => {
+      render(<Slider max={100} min={0} onChange={mockOnChange} value={50} />);
 
-      // Act
-      const label = slider.props.label;
-
-      // Assert
-      expect(label).toBeUndefined();
+      expect(screen.queryByText(/:/)).not.toBeInTheDocument();
     });
 
-    it('should accept custom label', () => {
-      // Arrange
-      const slider = <Slider label="Speed" max={100} min={0} onChange={mockOnChange} value={50} />;
+    it('renders the label together with the current value', () => {
+      render(<Slider label="Speed" max={100} min={0} onChange={mockOnChange} value={50} />);
 
-      // Act
-      const label = slider.props.label;
-
-      // Assert
-      expect(label).toBe('Speed');
+      expect(screen.getByText('Speed: 50')).toBeInTheDocument();
     });
   });
 
-  describe('value boundaries', () => {
-    it('should handle minimum value', () => {
-      // Arrange
-      const slider = <Slider max={100} min={0} onChange={mockOnChange} value={0} />;
+  describe('interaction', () => {
+    it('calls onChange with the numeric value when the slider moves', () => {
+      render(<Slider max={100} min={0} onChange={mockOnChange} value={50} />);
 
-      // Act
-      const value = slider.props.value;
+      fireEvent.change(screen.getByRole('slider'), { target: { value: '75' } });
 
-      // Assert
-      expect(value).toBe(0);
+      expect(mockOnChange).toHaveBeenCalledTimes(1);
+      expect(mockOnChange).toHaveBeenCalledWith(75);
     });
 
-    it('should handle maximum value', () => {
-      // Arrange
-      const slider = <Slider max={100} min={0} onChange={mockOnChange} value={100} />;
+    it('handles decimal values', () => {
+      render(<Slider max={100} min={0} onChange={mockOnChange} step={0.1} value={50.5} />);
 
-      // Act
-      const value = slider.props.value;
+      fireEvent.change(screen.getByRole('slider'), { target: { value: '60.5' } });
 
-      // Assert
-      expect(value).toBe(100);
-    });
-
-    it('should handle decimal values', () => {
-      // Arrange
-      const slider = <Slider max={100} min={0} onChange={mockOnChange} step={0.1} value={50.5} />;
-
-      // Act
-      const value = slider.props.value;
-
-      // Assert
-      expect(value).toBe(50.5);
+      expect(mockOnChange).toHaveBeenCalledWith(60.5);
     });
   });
 
   describe('className prop', () => {
-    it('should accept custom className', () => {
-      // Arrange
-      const slider = (
+    it('applies a custom className to the wrapper', () => {
+      const { container } = render(
         <Slider className="custom-class" max={100} min={0} onChange={mockOnChange} value={50} />
       );
 
-      // Act
-      const className = slider.props.className;
-
-      // Assert
-      expect(className).toBe('custom-class');
+      expect(container.firstElementChild?.className).toContain('custom-class');
     });
   });
 });

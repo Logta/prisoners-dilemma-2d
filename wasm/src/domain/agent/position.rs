@@ -58,9 +58,9 @@ impl Position {
         if neighbors.is_empty() {
             None
         } else {
-            use rand::Rng;
-            let mut rng = rand::thread_rng();
-            Some(neighbors[rng.gen_range(0..neighbors.len())])
+            use rand::RngExt;
+            let mut rng = rand::rng();
+            Some(neighbors[rng.random_range(0..neighbors.len())])
         }
     }
 }

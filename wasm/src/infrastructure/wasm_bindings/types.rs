@@ -3,6 +3,81 @@ use crate::domain::agent::{Agent, MovementStrategy, StrategyType};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
+/// `domain::MovementStrategy` のJS向け公開表現。
+///
+/// domain層はwasm-bindgenに依存しないため、JSへ公開する数値表現（enum判別値）は
+/// このinfrastructure層で一元管理する。判別値はフロントエンドとの互換性のため
+/// 既存の並び順（Explorer=0 〜 Antisocial=5）を維持すること。
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WasmMovementStrategy {
+    Explorer = 0,
+    Settler = 1,
+    Adaptive = 2,
+    Opportunist = 3,
+    Social = 4,
+    Antisocial = 5,
+}
+
+impl From<MovementStrategy> for WasmMovementStrategy {
+    fn from(strategy: MovementStrategy) -> Self {
+        match strategy {
+            MovementStrategy::Explorer => WasmMovementStrategy::Explorer,
+            MovementStrategy::Settler => WasmMovementStrategy::Settler,
+            MovementStrategy::Adaptive => WasmMovementStrategy::Adaptive,
+            MovementStrategy::Opportunist => WasmMovementStrategy::Opportunist,
+            MovementStrategy::Social => WasmMovementStrategy::Social,
+            MovementStrategy::Antisocial => WasmMovementStrategy::Antisocial,
+        }
+    }
+}
+
+impl From<WasmMovementStrategy> for MovementStrategy {
+    fn from(strategy: WasmMovementStrategy) -> Self {
+        match strategy {
+            WasmMovementStrategy::Explorer => MovementStrategy::Explorer,
+            WasmMovementStrategy::Settler => MovementStrategy::Settler,
+            WasmMovementStrategy::Adaptive => MovementStrategy::Adaptive,
+            WasmMovementStrategy::Opportunist => MovementStrategy::Opportunist,
+            WasmMovementStrategy::Social => MovementStrategy::Social,
+            WasmMovementStrategy::Antisocial => MovementStrategy::Antisocial,
+        }
+    }
+}
+
+impl TryFrom<u8> for WasmMovementStrategy {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(WasmMovementStrategy::Explorer),
+            1 => Ok(WasmMovementStrategy::Settler),
+            2 => Ok(WasmMovementStrategy::Adaptive),
+            3 => Ok(WasmMovementStrategy::Opportunist),
+            4 => Ok(WasmMovementStrategy::Social),
+            5 => Ok(WasmMovementStrategy::Antisocial),
+            _ => Err(()),
+        }
+    }
+}
+
+// wasm_bindgen methods for MovementStrategy（domain層をwasm-bindgenから切り離すため、
+// このinfrastructure層に配置している）
+#[wasm_bindgen]
+pub fn movement_strategy_to_string(strategy: WasmMovementStrategy) -> String {
+    MovementStrategy::from(strategy).to_string()
+}
+
+#[wasm_bindgen]
+pub fn movement_strategy_random() -> WasmMovementStrategy {
+    WasmMovementStrategy::from(MovementStrategy::random())
+}
+
+#[wasm_bindgen]
+pub fn movement_strategy_variant_count() -> u32 {
+    MovementStrategy::ALL.len() as u32
+}
+
 #[wasm_bindgen]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WasmAgent {
@@ -28,14 +103,7 @@ impl From<&Agent> for WasmAgent {
                 StrategyType::TitForTat => 2,
                 StrategyType::Pavlov => 3,
             },
-            movement_strategy: match agent.movement_strategy {
-                MovementStrategy::Explorer => 0,
-                MovementStrategy::Settler => 1,
-                MovementStrategy::Adaptive => 2,
-                MovementStrategy::Opportunist => 3,
-                MovementStrategy::Social => 4,
-                MovementStrategy::Antisocial => 5,
-            },
+            movement_strategy: WasmMovementStrategy::from(agent.movement_strategy) as u8,
             mobility: agent.mobility,
             score: agent.score,
             cooperation_rate: agent.cooperation_rate(),
@@ -127,17 +195,29 @@ impl From<&SimulationStatistics> for WasmStatistics {
                 .strategy_counts
                 .get(&StrategyType::Pavlov)
                 .unwrap_or(&0),
-            explorer_count: *stats.movement_strategy_counts.get("Explorer").unwrap_or(&0),
-            settler_count: *stats.movement_strategy_counts.get("Settler").unwrap_or(&0),
-            adaptive_count: *stats.movement_strategy_counts.get("Adaptive").unwrap_or(&0),
+            explorer_count: *stats
+                .movement_strategy_counts
+                .get(&MovementStrategy::Explorer)
+                .unwrap_or(&0),
+            settler_count: *stats
+                .movement_strategy_counts
+                .get(&MovementStrategy::Settler)
+                .unwrap_or(&0),
+            adaptive_count: *stats
+                .movement_strategy_counts
+                .get(&MovementStrategy::Adaptive)
+                .unwrap_or(&0),
             opportunist_count: *stats
                 .movement_strategy_counts
-                .get("Opportunist")
+                .get(&MovementStrategy::Opportunist)
                 .unwrap_or(&0),
-            social_count: *stats.movement_strategy_counts.get("Social").unwrap_or(&0),
+            social_count: *stats
+                .movement_strategy_counts
+                .get(&MovementStrategy::Social)
+                .unwrap_or(&0),
             antisocial_count: *stats
                 .movement_strategy_counts
-                .get("Antisocial")
+                .get(&MovementStrategy::Antisocial)
                 .unwrap_or(&0),
             average_cooperation_rate: stats.average_cooperation_rate,
             average_mobility: stats.average_mobility,
@@ -226,13 +306,8 @@ impl WasmStatistics {
 
 #[wasm_bindgen]
 pub fn movement_strategy_name(strategy_id: u8) -> String {
-    match strategy_id {
-        0 => "Explorer".to_string(),
-        1 => "Settler".to_string(),
-        2 => "Adaptive".to_string(),
-        3 => "Opportunist".to_string(),
-        4 => "Social".to_string(),
-        5 => "Antisocial".to_string(),
-        _ => "Unknown".to_string(),
+    match WasmMovementStrategy::try_from(strategy_id) {
+        Ok(strategy) => MovementStrategy::from(strategy).to_string(),
+        Err(()) => "Unknown".to_string(),
     }
 }

@@ -1,4 +1,4 @@
-use crate::domain::agent::{Agent, StrategyType};
+use crate::domain::agent::{Agent, MovementStrategy, StrategyType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -7,7 +7,7 @@ pub struct SimulationStatistics {
     pub generation: u32,
     pub total_agents: usize,
     pub strategy_counts: HashMap<StrategyType, usize>,
-    pub movement_strategy_counts: HashMap<String, usize>,
+    pub movement_strategy_counts: HashMap<MovementStrategy, usize>,
     pub average_cooperation_rate: f64,
     pub average_mobility: f64,
     pub average_score: f64,
@@ -48,7 +48,7 @@ impl SimulationStatistics {
         for agent in agents.values() {
             *strategy_counts.entry(agent.strategy).or_insert(0) += 1;
             *movement_strategy_counts
-                .entry(agent.movement_strategy.to_string())
+                .entry(agent.movement_strategy)
                 .or_insert(0) += 1;
             total_cooperation_rate += agent.cooperation_rate();
             total_mobility += agent.mobility;
@@ -75,15 +75,65 @@ impl SimulationStatistics {
         }
     }
 
-    pub fn get_movement_strategy_percentage(&self, movement_strategy: &str) -> f64 {
+    pub fn get_movement_strategy_percentage(&self, movement_strategy: MovementStrategy) -> f64 {
         if self.total_agents == 0 {
             0.0
         } else {
             let count = self
                 .movement_strategy_counts
-                .get(movement_strategy)
+                .get(&movement_strategy)
                 .unwrap_or(&0);
             *count as f64 / self.total_agents as f64 * 100.0
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::agent::{Agent, Position, StrategyType};
+
+    #[test]
+    fn calculate_counts_every_movement_strategy_variant_without_loss() {
+        // 回帰テスト: movement_strategy_counts が HashMap<String, _> だった頃は、
+        // Display文字列とキー文字列がズレると該当戦略の集計が黙って0になりうった。
+        // 型安全なMovementStrategyキーに変えたことで、全バリアントが確実に集計されることを確認する。
+        let agents: HashMap<uuid::Uuid, Agent> = MovementStrategy::ALL
+            .iter()
+            .map(|&movement_strategy| {
+                let agent = Agent::new(
+                    Position::new(0, 0),
+                    StrategyType::AllCooperate,
+                    0.5,
+                    movement_strategy,
+                );
+                (agent.id, agent)
+            })
+            .collect();
+
+        let stats = SimulationStatistics::calculate(&agents, 0);
+
+        for movement_strategy in MovementStrategy::ALL {
+            assert_eq!(
+                stats.movement_strategy_counts.get(&movement_strategy),
+                Some(&1),
+                "{movement_strategy} の集計が失われている"
+            );
+            assert!(
+                stats.get_movement_strategy_percentage(movement_strategy) > 0.0,
+                "{movement_strategy} のパーセンテージが0になっている"
+            );
+        }
+    }
+
+    #[test]
+    fn calculate_returns_empty_stats_for_no_agents() {
+        let agents: HashMap<uuid::Uuid, Agent> = HashMap::new();
+
+        let stats = SimulationStatistics::calculate(&agents, 5);
+
+        assert_eq!(stats.total_agents, 0);
+        assert!(stats.movement_strategy_counts.is_empty());
+        assert!(stats.strategy_counts.is_empty());
     }
 }

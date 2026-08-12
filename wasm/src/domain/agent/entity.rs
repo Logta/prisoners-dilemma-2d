@@ -33,14 +33,14 @@ impl Agent {
     }
 
     pub fn random(position: Position) -> Self {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
+        use rand::RngExt;
+        let mut rng = rand::rng();
         let movement_strategy = MovementStrategy::random();
 
         Self::new(
             position,
             StrategyType::random(),
-            movement_strategy.default_mobility() + rng.gen_range(-0.2..=0.2),
+            movement_strategy.default_mobility() + rng.random_range(-0.2..=0.2),
             movement_strategy,
         )
     }
@@ -79,8 +79,8 @@ impl Agent {
         neighbor_agents: &[&Agent],
         neighbor_strategies: &[StrategyType],
     ) -> bool {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
+        use rand::RngExt;
+        let mut rng = rand::rng();
 
         let base_probability = self.mobility;
         let recent_performance = self.history.recent_performance();
@@ -154,7 +154,7 @@ impl Agent {
             }
         };
 
-        rng.gen::<f64>() < move_probability.clamp(0.0, 1.0)
+        rng.random::<f64>() < move_probability.clamp(0.0, 1.0)
     }
 
     pub fn move_to(&mut self, new_position: Position) {
@@ -162,10 +162,10 @@ impl Agent {
     }
 
     pub fn crossover(parent1: &Agent, parent2: &Agent, position: Position) -> Agent {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
+        use rand::RngExt;
+        let mut rng = rand::rng();
 
-        let strategy = if rng.gen_bool(0.5) {
+        let strategy = if rng.random_bool(0.5) {
             parent1.strategy
         } else {
             parent2.strategy
@@ -174,8 +174,8 @@ impl Agent {
         let mobility = (parent1.mobility + parent2.mobility) / 2.0;
 
         // 移動戦略の継承：75%で親から、25%で新規ランダム
-        let movement_strategy = if rng.gen_bool(0.75) {
-            if rng.gen_bool(0.5) {
+        let movement_strategy = if rng.random_bool(0.75) {
+            if rng.random_bool(0.5) {
                 parent1.movement_strategy
             } else {
                 parent2.movement_strategy
@@ -188,22 +188,22 @@ impl Agent {
     }
 
     pub fn mutate(&mut self) {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
+        use rand::RngExt;
+        let mut rng = rand::rng();
 
-        if rng.gen_bool(0.05) {
+        if rng.random_bool(0.05) {
             // 5%の確率で突然変異
             // 戦略の突然変異
-            if rng.gen_bool(0.5) {
+            if rng.random_bool(0.5) {
                 self.strategy = StrategyType::random();
             }
 
             // 移動性向の突然変異
-            let change = rng.gen_range(-0.2..=0.2);
+            let change = rng.random_range(-0.2..=0.2);
             self.mobility = (self.mobility + change).clamp(0.0, 1.0);
 
             // 移動戦略の突然変異
-            if rng.gen_bool(0.3) {
+            if rng.random_bool(0.3) {
                 // 30%の確率で移動戦略も変異
                 self.movement_strategy = MovementStrategy::random();
             }

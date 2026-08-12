@@ -1,6 +1,6 @@
 use super::Grid;
 use crate::domain::agent::{Agent, Position};
-use rand::Rng;
+use rand::RngExt;
 
 pub struct GridService;
 
@@ -10,14 +10,14 @@ impl GridService {
             return Err("Too many agents for grid size".to_string());
         }
 
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let mut placed_agents = 0;
         let max_attempts = agent_count * 10;
         let mut attempts = 0;
 
         while placed_agents < agent_count && attempts < max_attempts {
-            let x = rng.gen_range(0..grid.width());
-            let y = rng.gen_range(0..grid.height());
+            let x = rng.random_range(0..grid.width());
+            let y = rng.random_range(0..grid.height());
             let position = Position::new(x, y);
 
             if grid.is_position_free(&position) {
@@ -61,8 +61,9 @@ impl GridService {
             if agent.should_move_with_neighbors(&neighbor_agents, &neighbor_strategies) {
                 let empty_neighbors = grid.get_empty_neighbors(&agent.position);
                 if !empty_neighbors.is_empty() {
-                    let mut rng = rand::thread_rng();
-                    let target_position = empty_neighbors[rng.gen_range(0..empty_neighbors.len())];
+                    let mut rng = rand::rng();
+                    let target_position =
+                        empty_neighbors[rng.random_range(0..empty_neighbors.len())];
                     movements.push((agent.id, target_position));
                 }
             }

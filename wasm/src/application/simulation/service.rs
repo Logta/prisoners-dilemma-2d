@@ -160,14 +160,50 @@ impl SimulationService {
 
     fn next_generation(&mut self) {
         let evolution_service = crate::application::evolution::EvolutionService::new();
-        let new_agents = evolution_service.evolve_with_config(self.grid.agents(), &self.config);
+        let new_agents = evolution_service.evolve_with_config(
+            self.grid.agents(),
+            &self.config,
+            self.grid.width(),
+            self.grid.height(),
+        );
 
         self.grid.clear();
         for agent in new_agents {
+            // generate_positions がグリッド実サイズに基づき一意な座標を割り当てるため、
+            // 通常はここで失敗しない。エージェント数がグリッド容量を超える場合のみ、
+            // 座標が重複したエージェントが意図的に間引かれる。
             let _ = self.grid.add_agent(agent);
         }
 
         self.generation += 1;
         self.turn = 0;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generation_change_preserves_agent_count_on_non_default_grid_size() {
+        // 回帰テスト: 以前は EvolutionService が座標生成をグリッドサイズ100固定で行っており、
+        // 100x100以外のグリッドでは世代交代のたびにエージェントが静かに失われていた。
+        let mut simulation = SimulationService::new(10, 8, 20).expect("simulation should init");
+
+        for _ in 0..(simulation.turns_per_generation * 3) {
+            simulation.step();
+        }
+
+        assert_eq!(simulation.get_generation(), 3);
+        assert_eq!(
+            simulation.get_agents().len(),
+            20,
+            "100x100以外のグリッドサイズでも3世代を経てエージェント数が保たれるはず"
+        );
+
+        for agent in simulation.get_agents() {
+            assert!(agent.position.x < 10);
+            assert!(agent.position.y < 8);
+        }
     }
 }

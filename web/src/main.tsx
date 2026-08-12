@@ -31,7 +31,6 @@ class ErrorBoundary extends React.Component<
         <div className="error">
           <div className="error-message">
             <h2>アプリケーションエラーが発生しました</h2>
-            {/* biome-ignore lint/nursery/noSecrets: This is a Japanese error message, not a secret */}
             <p>{this.state.error?.message || '不明なエラー'}</p>
           </div>
           <button className="retry-button" onClick={() => window.location.reload()} type="button">

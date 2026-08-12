@@ -4,11 +4,12 @@
 
 [settings]
 experimental = true
+minimum_release_age = "3d"
 
 [tools]
-node = "24"
-rust = "latest"
-bun = "latest"
+node = "24.19.0"
+rust = "1.97.1"
+bun = "1.3.14"
 
 [env]
 RUST_LOG = "debug"
@@ -26,11 +27,12 @@ run = "cd web && bun run dev"
 description = "🧪 テスト実行"
 run = [
   "cd wasm && cargo test",
-  "cd web && bun test"
+  "cd web && bun run test:run"
 ]
 
 [tasks.check]
 description = "✅ 品質チェック"
+depends = ["copy"]
 run = [
   "cd wasm && cargo clippy",
   "cd web && bun run biome:check",
@@ -101,7 +103,7 @@ run = "cd web && bun install"
 [tasks.clean]
 description = "🧹 クリーンアップ"
 run = [
-  "rm -rf pkg/ web/src/assets/pkg/ web/build/ target/",
+  "rm -rf wasm/pkg/ wasm/target/ web/src/assets/pkg/ web/dist/",
   "echo 'クリーンアップ完了'"
 ]
 
@@ -123,6 +125,7 @@ run = [
 
 [tasks.lint]
 description = "🔍 詳細リント"
+depends = ["copy"]
 run = [
   "cd wasm && cargo clippy -- -D warnings",
   "cd web && bun run biome:check",
@@ -131,6 +134,7 @@ run = [
 
 [tasks.type-check]
 description = "🏷️ 型チェック"
+depends = ["copy"]
 run = "cd web && bun run type-check"
 
 [tasks.ci]

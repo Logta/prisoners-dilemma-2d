@@ -1,3 +1,9 @@
+// wasm/pkg配下はビルド生成物のためtype-onlyでインポートする（実行時コードには含めない）。
+// Rust側のMovementStrategyにバリアントが追加・削除された場合、下部の
+// MOVEMENT_STRATEGY_NAMES_EXHAUSTIVE_CHECK が型エラーとなり、この手書きの対応表を
+// 更新し忘れることを防ぐ。
+import type { WasmMovementStrategy } from '@/assets/pkg/prisoners_dilemma_2d';
+
 export interface WasmAgent {
   readonly id: string;
   readonly x: number;
@@ -142,3 +148,9 @@ export const MOVEMENT_STRATEGY_COLORS = {
   [MovementStrategyType.Social]: '#ec4899', // pink
   [MovementStrategyType.Antisocial]: '#6b7280', // gray
 } as const;
+
+// コンパイル時のドリフト検出: Rust側のWasmMovementStrategy（wasm-bindgen生成）に
+// バリアントが追加・削除されると、この代入がtsc上で型エラーになる。
+// 利用側は存在しないが、exportすることでnoUnusedLocalsの対象外にしている。
+export const MOVEMENT_STRATEGY_NAMES_EXHAUSTIVE_CHECK: Record<WasmMovementStrategy, string> =
+  MOVEMENT_STRATEGY_NAMES;
