@@ -32,6 +32,7 @@ run = [
 
 [tasks.check]
 description = "✅ 品質チェック"
+depends = ["copy"]
 run = [
   "cd wasm && cargo clippy",
   "cd web && bun run biome:check",
@@ -124,6 +125,7 @@ run = [
 
 [tasks.lint]
 description = "🔍 詳細リント"
+depends = ["copy"]
 run = [
   "cd wasm && cargo clippy -- -D warnings",
   "cd web && bun run biome:check",
@@ -132,6 +134,7 @@ run = [
 
 [tasks.type-check]
 description = "🏷️ 型チェック"
+depends = ["copy"]
 run = "cd web && bun run type-check"
 
 [tasks.ci]
