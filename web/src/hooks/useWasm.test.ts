@@ -1,78 +1,63 @@
-import { describe, expect, it } from 'vitest';
+import { renderHook, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useWasm } from './useWasm';
 
+const initWasm = vi.fn().mockResolvedValue(undefined);
+const setPanicHook = vi.fn();
+
+vi.mock('@/assets/pkg/prisoners_dilemma_2d.js', () => ({
+  default: (...args: unknown[]) => initWasm(...args),
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  set_panic_hook: (...args: unknown[]) => setPanicHook(...args),
+  // biome-ignore lint/style/useNamingConvention: WASM binding class name from Rust
+  WasmSimulation: class {},
+}));
+
 describe('useWasm', () => {
-  describe('hook structure', () => {
-    it('should be a function', () => {
-      // Arrange & Act
-      const hook = useWasm;
-
-      // Assert
-      expect(typeof hook).toBe('function');
-      expect(hook.name).toBe('useWasm');
-    });
+  afterEach(() => {
+    vi.clearAllMocks();
   });
 
-  describe('error handling logic', () => {
-    it('should handle Error object correctly', () => {
-      // Arrange
-      const error = new Error('Test error');
+  it('starts in a loading state with no module', async () => {
+    const { result } = renderHook(() => useWasm());
 
-      // Act
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load WASM module';
+    expect(result.current.loading).toBe(true);
+    expect(result.current.wasmModule).toBeNull();
+    expect(result.current.error).toBeNull();
 
-      // Assert
-      expect(errorMessage).toBe('Test error');
-    });
-
-    it('should handle non-Error objects', () => {
-      // Arrange
-      const error: unknown = 'String error';
-
-      // Act
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load WASM module';
-
-      // Assert
-      expect(errorMessage).toBe('Failed to load WASM module');
-    });
+    // 次のテストに非同期処理が漏れ出さないよう、ロード完了まで待つ
+    await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
-  describe('state management logic', () => {
-    it('should handle state transitions correctly', () => {
-      // Arrange
-      let loading = true;
-      let wasmModule = null;
-      let error = null;
+  it('loads the WASM module and installs the panic hook', async () => {
+    const { result } = renderHook(() => useWasm());
 
-      // Act - simulate successful load
-      loading = false;
-      wasmModule = {
-        // biome-ignore lint/style/useNamingConvention: WASM constructor is PascalCase
-        WasmSimulation: () => {},
-      };
-      error = null;
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-      // Assert
-      expect(loading).toBe(false);
-      expect(wasmModule).toBeDefined();
-      expect(error).toBeNull();
-    });
+    expect(initWasm).toHaveBeenCalledTimes(1);
+    expect(setPanicHook).toHaveBeenCalledTimes(1);
+    expect(result.current.wasmModule).not.toBeNull();
+    expect(result.current.error).toBeNull();
+  });
 
-    it('should handle error state transitions', () => {
-      // Arrange
-      let loading = true;
-      let wasmModule = null;
-      let error = null;
+  it('exposes an error message and clears loading when initialization fails', async () => {
+    initWasm.mockRejectedValueOnce(new Error('failed to instantiate'));
 
-      // Act - simulate error
-      loading = false;
-      wasmModule = null;
-      error = 'Load failed';
+    const { result } = renderHook(() => useWasm());
 
-      // Assert
-      expect(loading).toBe(false);
-      expect(wasmModule).toBeNull();
-      expect(error).toBe('Load failed');
-    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.error).toBe('failed to instantiate');
+    expect(result.current.wasmModule).toBeNull();
+  });
+
+  it('falls back to a generic message when a non-Error is thrown', async () => {
+    initWasm.mockRejectedValueOnce('not an Error instance');
+
+    const { result } = renderHook(() => useWasm());
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.error).toBe('Failed to load WASM module');
   });
 });

@@ -1,187 +1,335 @@
-import { describe, expect, it } from 'vitest';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useSimulation } from './useSimulation';
 
+type MockWasmAgent = {
+  id: string;
+  x: number;
+  y: number;
+  strategy: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  movement_strategy: number;
+  mobility: number;
+  score: number;
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  cooperation_rate: number;
+};
+
+class MockWasmSimulation {
+  width: number;
+  height: number;
+  agentCount: number;
+  generation = 0;
+  turn = 0;
+  freed = false;
+  torusField = false;
+  penaltyEnabled = false;
+  penaltyRate = 0;
+
+  constructor(width: number, height: number, agentCount: number) {
+    this.width = width;
+    this.height = height;
+    this.agentCount = agentCount;
+  }
+
+  step() {
+    this.turn += 1;
+    return this.statistics();
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  get_agents(): MockWasmAgent[] {
+    return Array.from({ length: this.agentCount }, (_, i) => ({
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      cooperation_rate: 0.5,
+      id: `agent-${i}`,
+      mobility: 0.5,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      movement_strategy: 0,
+      score: 0,
+      strategy: 0,
+      x: i % this.width,
+      y: Math.floor(i / this.width),
+    }));
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  get_statistics() {
+    return this.statistics();
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  get_grid_width() {
+    return this.width;
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  get_grid_height() {
+    return this.height;
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  get_generation() {
+    return this.generation;
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  get_turn() {
+    return this.turn;
+  }
+
+  reset(agentCount: number) {
+    this.agentCount = agentCount;
+    this.generation = 0;
+    this.turn = 0;
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  set_strategy_complexity_penalty(enabled: boolean) {
+    this.penaltyEnabled = enabled;
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  set_strategy_complexity_penalty_rate(rate: number) {
+    this.penaltyRate = rate;
+  }
+
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  set_torus_field(enabled: boolean) {
+    this.torusField = enabled;
+  }
+
+  free() {
+    this.freed = true;
+  }
+
+  private statistics() {
+    return {
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      adaptive_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      all_cooperate_count: this.agentCount,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      all_defect_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      antisocial_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      average_cooperation_rate: 0.5,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      average_mobility: 0.5,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      average_score: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      explorer_count: this.agentCount,
+      generation: this.generation,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      opportunist_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      pavlov_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      settler_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      social_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      tit_for_tat_count: 0,
+      // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+      total_agents: this.agentCount,
+    };
+  }
+}
+
+vi.mock('@/assets/pkg/prisoners_dilemma_2d.js', () => ({
+  default: vi.fn().mockResolvedValue(undefined),
+  // biome-ignore lint/style/useNamingConvention: WASM binding uses snake_case from Rust
+  set_panic_hook: vi.fn(),
+  // biome-ignore lint/style/useNamingConvention: WASM binding class name from Rust
+  WasmSimulation: MockWasmSimulation,
+}));
+
+const baseConfig = {
+  agentCount: 10,
+  gridHeight: 5,
+  gridWidth: 5,
+  speed: 100,
+};
+
+// wasmロード完了まで待ち、フックを利用可能な状態にするヘルパー
+const renderReadySimulation = async (config = baseConfig) => {
+  const view = renderHook((props) => useSimulation(props), { initialProps: config });
+  await waitFor(() => expect(view.result.current.loading).toBe(false));
+  return view;
+};
+
 describe('useSimulation', () => {
-  const defaultConfig = {
-    agentCount: 1000,
-    gridHeight: 100,
-    gridWidth: 100,
-    speed: 100,
-  };
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
 
-  describe('hook structure', () => {
-    it('should be a function with correct name', () => {
-      // Arrange & Act
-      const hook = useSimulation;
+  describe('初期化前', () => {
+    it('WASMロード完了までloadingがtrueのまま', () => {
+      const { result } = renderHook(() => useSimulation(baseConfig));
 
-      // Assert
-      expect(typeof hook).toBe('function');
-      expect(hook.name).toBe('useSimulation');
+      expect(result.current.loading).toBe(true);
+      expect(result.current.isInitialized).toBe(false);
+      expect(result.current.agents).toEqual([]);
+    });
+
+    it('初期配置前はstepを呼んでも何も起きない', async () => {
+      const { result } = await renderReadySimulation();
+
+      act(() => {
+        result.current.step();
+      });
+
+      expect(result.current.agents).toEqual([]);
+      expect(result.current.error).toBeNull();
     });
   });
 
-  describe('configuration validation', () => {
-    it('should validate grid dimensions', () => {
-      // Arrange
-      const config = {
-        agentCount: 500,
-        gridHeight: 50,
-        gridWidth: 50,
-        speed: 200,
-      };
+  describe('initializeSimulation', () => {
+    it('指定したagentCount分のエージェントを配置する', async () => {
+      const { result } = await renderReadySimulation();
 
-      // Act
-      const isValidWidth = config.gridWidth > 0 && config.gridWidth <= 1000;
-      const isValidHeight = config.gridHeight > 0 && config.gridHeight <= 1000;
+      act(() => {
+        result.current.initializeSimulation();
+      });
 
-      // Assert
-      expect(isValidWidth).toBe(true);
-      expect(isValidHeight).toBe(true);
-    });
-
-    it('should validate agent count', () => {
-      // Arrange
-      const config = { ...defaultConfig, agentCount: 2000 };
-
-      // Act
-      const isValidCount = config.agentCount > 0 && config.agentCount <= 10_000;
-
-      // Assert
-      expect(isValidCount).toBe(true);
-    });
-
-    it('should validate speed setting', () => {
-      // Arrange
-      const config = { ...defaultConfig, speed: 50 };
-
-      // Act
-      const isValidSpeed = config.speed >= 50 && config.speed <= 2000;
-
-      // Assert
-      expect(isValidSpeed).toBe(true);
+      expect(result.current.isInitialized).toBe(true);
+      expect(result.current.agents).toHaveLength(baseConfig.agentCount);
+      expect(result.current.statistics?.total_agents).toBe(baseConfig.agentCount);
+      expect(result.current.error).toBeNull();
     });
   });
 
-  describe('agent data structure validation', () => {
-    it('should validate agent properties', () => {
-      // Arrange
-      const mockAgent = {
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        cooperation_rate: 0.8,
-        id: '1',
-        mobility: 0.5,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        movement_strategy: 'Adaptive',
-        score: 150,
-        strategy: 'AllCooperate',
-        x: 10,
-        y: 20,
-      };
+  describe('step', () => {
+    it('turnを進め、統計とエージェントを更新する', async () => {
+      const { result } = await renderReadySimulation();
 
-      // Act
-      const hasValidId = typeof mockAgent.id === 'string' && mockAgent.id.length > 0;
-      const hasValidPosition = typeof mockAgent.x === 'number' && typeof mockAgent.y === 'number';
-      const hasValidRates = mockAgent.cooperation_rate >= 0 && mockAgent.cooperation_rate <= 1;
-      const hasValidMobility = mockAgent.mobility >= 0 && mockAgent.mobility <= 1;
+      act(() => {
+        result.current.initializeSimulation();
+      });
 
-      // Assert
-      expect(hasValidId).toBe(true);
-      expect(hasValidPosition).toBe(true);
-      expect(hasValidRates).toBe(true);
-      expect(hasValidMobility).toBe(true);
+      act(() => {
+        result.current.step();
+      });
+
+      expect(result.current.statistics?.total_agents).toBe(baseConfig.agentCount);
+      expect(result.current.error).toBeNull();
     });
 
-    it('should validate agent bounds', () => {
-      // Arrange
-      const agent = { x: 50, y: 75 };
-      const gridWidth = 100;
-      const gridHeight = 100;
+    it('エージェントが0体になった場合はエラーにして停止する', async () => {
+      const { result } = await renderReadySimulation({ ...baseConfig, agentCount: 0 });
 
-      // Act
-      const isInBounds =
-        agent.x >= 0 && agent.x < gridWidth && agent.y >= 0 && agent.y < gridHeight;
+      act(() => {
+        result.current.initializeSimulation();
+      });
 
-      // Assert
-      expect(isInBounds).toBe(true);
+      act(() => {
+        result.current.step();
+      });
+
+      expect(result.current.error).toContain('エージェントが配置されていません');
     });
   });
 
-  describe('statistics data structure validation', () => {
-    it('should validate statistics properties', () => {
-      // Arrange
-      const mockStats = {
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        all_cooperate_count: 200,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        all_defect_count: 300,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        average_cooperation_rate: 0.6,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        average_mobility: 0.4,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        average_score: 75.5,
-        generation: 5,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        pavlov_count: 250,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        tit_for_tat_count: 250,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        total_agents: 1000,
-      };
+  describe('start / pause', () => {
+    it('startで一定間隔ごとにstepが実行され、pauseで止まる', async () => {
+      const { result } = await renderReadySimulation();
 
-      // Act
-      const hasValidCounts =
-        mockStats.all_cooperate_count +
-          mockStats.all_defect_count +
-          mockStats.tit_for_tat_count +
-          mockStats.pavlov_count ===
-        mockStats.total_agents;
-      const hasValidRates =
-        mockStats.average_cooperation_rate >= 0 && mockStats.average_cooperation_rate <= 1;
-      const hasValidMobility = mockStats.average_mobility >= 0 && mockStats.average_mobility <= 1;
+      act(() => {
+        result.current.initializeSimulation();
+      });
 
-      // Assert
-      expect(hasValidCounts).toBe(true);
-      expect(hasValidRates).toBe(true);
-      expect(hasValidMobility).toBe(true);
+      vi.useFakeTimers();
+      act(() => {
+        result.current.start();
+      });
+      expect(result.current.isRunning).toBe(true);
+
+      const turnBefore = result.current.statistics?.generation ?? 0;
+      act(() => {
+        vi.advanceTimersByTime(baseConfig.speed * 3);
+      });
+
+      // 3回分のインターバルが経過しても総エージェント数は変わらず、停止していない
+      expect(result.current.isRunning).toBe(true);
+      expect(result.current.statistics?.total_agents).toBe(baseConfig.agentCount);
+      expect(result.current.statistics?.generation).toBe(turnBefore);
+
+      act(() => {
+        result.current.pause();
+      });
+      expect(result.current.isRunning).toBe(false);
+    });
+
+    it('初期配置前はstartしても実行状態にならない', async () => {
+      const { result } = await renderReadySimulation();
+
+      act(() => {
+        result.current.start();
+      });
+
+      expect(result.current.isRunning).toBe(false);
+      expect(result.current.isInitialized).toBe(false);
     });
   });
 
-  describe('conversion utility functions', () => {
-    it('should convert agents to plain objects correctly', () => {
-      // Arrange
-      const wasmAgent = {
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        cooperation_rate: 0.8,
-        id: '1',
-        mobility: 0.5,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        movement_strategy: 'Adaptive',
-        score: 150,
-        strategy: 'AllCooperate',
-        x: 10,
-        y: 20,
-      };
+  describe('reset', () => {
+    it('エージェント数を再設定し、設定を再適用する', async () => {
+      const { result } = await renderReadySimulation();
 
-      // Act
-      const plainAgent = {
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        cooperation_rate: wasmAgent.cooperation_rate,
-        id: wasmAgent.id,
-        mobility: wasmAgent.mobility,
-        // biome-ignore lint/style/useNamingConvention: WASM properties use snake_case
-        movement_strategy: wasmAgent.movement_strategy,
-        score: wasmAgent.score,
-        strategy: wasmAgent.strategy,
-        x: wasmAgent.x,
-        y: wasmAgent.y,
-      };
+      act(() => {
+        result.current.initializeSimulation();
+      });
 
-      // Assert
-      expect(plainAgent.id).toBe(wasmAgent.id);
-      expect(plainAgent.x).toBe(wasmAgent.x);
-      expect(plainAgent.y).toBe(wasmAgent.y);
-      expect(plainAgent.cooperation_rate).toBe(wasmAgent.cooperation_rate);
+      act(() => {
+        result.current.setTorusField(true);
+      });
+
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(result.current.agents).toHaveLength(baseConfig.agentCount);
+      expect(result.current.statistics?.generation).toBe(0);
+      expect(result.current.error).toBeNull();
+    });
+  });
+
+  describe('setter群', () => {
+    it('setStrategyComplexityPenaltyRateがWASM側のメソッドを呼ぶ', async () => {
+      const { result } = await renderReadySimulation();
+
+      act(() => {
+        result.current.initializeSimulation();
+      });
+
+      const simulation = result.current.simulation as unknown as MockWasmSimulation;
+
+      act(() => {
+        result.current.setStrategyComplexityPenalty(true);
+        result.current.setStrategyComplexityPenaltyRate(0.5);
+      });
+
+      expect(simulation.penaltyEnabled).toBe(true);
+      expect(simulation.penaltyRate).toBe(0.5);
+    });
+
+    it('setTorusFieldがWASM側のメソッドを呼ぶ', async () => {
+      const { result } = await renderReadySimulation();
+
+      act(() => {
+        result.current.initializeSimulation();
+      });
+
+      const simulation = result.current.simulation as unknown as MockWasmSimulation;
+
+      act(() => {
+        result.current.setTorusField(true);
+      });
+
+      expect(simulation.torusField).toBe(true);
     });
   });
 });

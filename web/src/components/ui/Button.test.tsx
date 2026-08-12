@@ -1,96 +1,98 @@
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
 
 describe('Button', () => {
   describe('variant styles', () => {
-    it('should apply primary variant class by default', () => {
-      // Arrange
-      const button = <Button>Test</Button>;
+    it('applies primary variant classes by default', () => {
+      render(<Button>Test</Button>);
 
-      // Act & Assert
-      expect(button.props.variant).toBeUndefined(); // デフォルトはundefined
-      expect(button.props.children).toBe('Test');
+      const button = screen.getByRole('button', { name: 'Test' });
+      expect(button.className).toContain('bg-blue-600');
     });
 
-    it('should apply secondary variant class when specified', () => {
-      // Arrange
-      const button = <Button variant="secondary">Test</Button>;
+    it('applies secondary variant classes when specified', () => {
+      render(<Button variant="secondary">Test</Button>);
 
-      // Act
-      const variant = button.props.variant;
-
-      // Assert
-      expect(variant).toBe('secondary');
+      const button = screen.getByRole('button', { name: 'Test' });
+      expect(button.className).toContain('bg-gray-100');
+      expect(button.className).not.toContain('bg-blue-600');
     });
 
-    it('should apply danger variant class when specified', () => {
-      // Arrange
-      const button = <Button variant="danger">Test</Button>;
+    it('applies danger variant classes when specified', () => {
+      render(<Button variant="danger">Test</Button>);
 
-      // Act
-      const variant = button.props.variant;
-
-      // Assert
-      expect(variant).toBe('danger');
+      const button = screen.getByRole('button', { name: 'Test' });
+      expect(button.className).toContain('bg-red-600');
     });
   });
 
   describe('size styles', () => {
-    it('should apply medium size by default', () => {
-      // Arrange
-      const button = <Button>Test</Button>;
+    it('applies medium size classes by default', () => {
+      render(<Button>Test</Button>);
 
-      // Act
-      const size = button.props.size;
-
-      // Assert
-      expect(size).toBeUndefined(); // デフォルトはundefined
+      const button = screen.getByRole('button', { name: 'Test' });
+      expect(button.className).toContain('h-10');
     });
 
-    it('should apply small size when specified', () => {
-      // Arrange
-      const button = <Button size="sm">Test</Button>;
+    it('applies small size classes when specified', () => {
+      render(<Button size="sm">Test</Button>);
 
-      // Act
-      const size = button.props.size;
-
-      // Assert
-      expect(size).toBe('sm');
+      const button = screen.getByRole('button', { name: 'Test' });
+      expect(button.className).toContain('h-8');
     });
 
-    it('should apply large size when specified', () => {
-      // Arrange
-      const button = <Button size="lg">Test</Button>;
+    it('applies large size classes when specified', () => {
+      render(<Button size="lg">Test</Button>);
 
-      // Act
-      const size = button.props.size;
-
-      // Assert
-      expect(size).toBe('lg');
+      const button = screen.getByRole('button', { name: 'Test' });
+      expect(button.className).toContain('h-12');
     });
   });
 
   describe('disabled state', () => {
-    it('should pass disabled prop correctly', () => {
-      // Arrange
-      const button = <Button disabled={true}>Test</Button>;
+    it('disables the underlying button element when disabled is true', () => {
+      render(<Button disabled={true}>Test</Button>);
 
-      // Act
-      const disabled = button.props.disabled;
-
-      // Assert
-      expect(disabled).toBe(true);
+      expect(screen.getByRole('button', { name: 'Test' })).toBeDisabled();
     });
 
-    it('should not be disabled by default', () => {
-      // Arrange
-      const button = <Button>Test</Button>;
+    it('is not disabled by default', () => {
+      render(<Button>Test</Button>);
 
-      // Act
-      const disabled = button.props.disabled;
+      expect(screen.getByRole('button', { name: 'Test' })).not.toBeDisabled();
+    });
 
-      // Assert
-      expect(disabled).toBeUndefined();
+    it('does not fire onClick when disabled', () => {
+      const onClick = vi.fn();
+      render(
+        <Button disabled={true} onClick={onClick}>
+          Test
+        </Button>
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Test' }));
+
+      expect(onClick).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('interaction', () => {
+    it('fires onClick when clicked', () => {
+      const onClick = vi.fn();
+      render(<Button onClick={onClick}>Test</Button>);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Test' }));
+
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('merges a custom className with the variant/size classes', () => {
+      render(<Button className="custom-class">Test</Button>);
+
+      const button = screen.getByRole('button', { name: 'Test' });
+      expect(button.className).toContain('custom-class');
+      expect(button.className).toContain('bg-blue-600');
     });
   });
 });

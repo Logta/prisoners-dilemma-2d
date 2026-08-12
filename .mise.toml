@@ -27,7 +27,7 @@ run = "cd web && bun run dev"
 description = "🧪 テスト実行"
 run = [
   "cd wasm && cargo test",
-  "cd web && bun test"
+  "cd web && bun run test:run"
 ]
 
 [tasks.check]
