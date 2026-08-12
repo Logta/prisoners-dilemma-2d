@@ -2,9 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main, develop, feat/*]
+    branches: [master]
   pull_request:
-    branches: [main, develop]
+    branches: [master]
+
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -24,7 +27,9 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
+        with:
+          version: v0.15.0
 
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
@@ -65,7 +70,9 @@ jobs:
           toolchain: stable
 
       - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
+        with:
+          version: v0.15.0
 
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
@@ -97,7 +104,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: web/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
@@ -109,6 +116,9 @@ jobs:
 
       - name: Biome lint and format check
         run: cd web && bun run biome:check
+
+      - name: Run tests
+        run: cd web && bun run test:run
 
   # 統合ビルドジョブ
   build:
@@ -129,7 +139,9 @@ jobs:
           bun-version: latest
 
       - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+        uses: jetli/wasm-pack-action@0d096b08b4e5a7de8c28de67e11e945404e9eefa # v0.4.0
+        with:
+          version: v0.15.0
 
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
@@ -148,7 +160,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: web/node_modules
-          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('web/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
