@@ -229,6 +229,9 @@ export const useSimulation = (config: SimulationConfig) => {
     try {
       runStepOnce(simulation);
     } catch (err) {
+      // 処理中フラグを先に下ろさないと、重大なエラー時の recreateSimulation が
+      // 「処理中」と判断して何もせずに戻ってしまう。
+      isProcessingRef.current = false;
       handleWasmError(err, 'Simulation step failed:', 'Simulation step failed');
       setIsRunning(false);
     } finally {
@@ -317,6 +320,7 @@ export const useSimulation = (config: SimulationConfig) => {
       setAgents(plainAgents);
       setError(null);
     } catch (err) {
+      isProcessingRef.current = false;
       handleWasmError(err, 'Reset failed:', 'Reset failed');
     } finally {
       isProcessingRef.current = false;
