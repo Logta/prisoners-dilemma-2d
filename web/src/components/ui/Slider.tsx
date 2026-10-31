@@ -27,7 +27,7 @@ export const Slider: React.FC<SliderProps> = ({
   return (
     <div className={clsx('space-y-2', className)}>
       {label && (
-        <label className="block font-medium text-gray-700 text-sm" htmlFor={`slider-${label}`}>
+        <label className="block text-sm font-medium text-gray-700" htmlFor={`slider-${label}`}>
           {label}: {value}
         </label>
       )}

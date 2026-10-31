@@ -43,7 +43,7 @@ export const HomePage: React.FC = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="max-w-md rounded-lg border border-red-200 bg-red-50 p-6">
-          <h2 className="mb-2 font-semibold text-lg text-red-800">エラー</h2>
+          <h2 className="mb-2 text-lg font-semibold text-red-800">エラー</h2>
           <p className="text-red-700">{error}</p>
           <button
             className="mt-4 rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700"
@@ -61,7 +61,7 @@ export const HomePage: React.FC = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-blue-600 border-b-2" />
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600" />
           <p className="text-gray-600">シミュレーションを読み込み中...</p>
         </div>
       </div>
@@ -71,12 +71,12 @@ export const HomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="border-gray-200 border-b bg-white px-4 py-6 shadow-sm">
+      <div className="border-b border-gray-200 bg-white px-4 py-6 shadow-sm">
         <div className="container mx-auto text-center">
-          <h1 className="mb-2 font-bold text-3xl text-gray-900">2D 囚人のジレンマ</h1>
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">2D 囚人のジレンマ</h1>
           <p className="text-gray-600">協力戦略の進化シミュレーション</p>
           {statistics && (
-            <div className="mt-2 text-gray-500 text-sm">
+            <div className="mt-2 text-sm text-gray-500">
               世代 {statistics.generation || 0} | {statistics.total_agents || 0} 体
             </div>
           )}
@@ -88,8 +88,8 @@ export const HomePage: React.FC = () => {
         {/* Simulation Grid - Sticky on larger screens */}
         <div className="flex-1 lg:sticky lg:top-0 lg:h-screen lg:overflow-hidden">
           <div className="flex h-full flex-col">
-            <div className="border-gray-200 border-b bg-white px-4 py-3">
-              <h2 className="font-semibold text-gray-900 text-lg">シミュレーショングリッド</h2>
+            <div className="border-b border-gray-200 bg-white px-4 py-3">
+              <h2 className="text-lg font-semibold text-gray-900">シミュレーショングリッド</h2>
             </div>
             <div className="flex flex-1 items-center justify-center bg-white p-4">
               <SimulationGrid
@@ -102,7 +102,7 @@ export const HomePage: React.FC = () => {
         </div>
 
         {/* Control Panel and Statistics - Scrollable sidebar */}
-        <div className="border-gray-200 border-l bg-gray-50 lg:w-80 lg:min-w-80 lg:overflow-y-auto">
+        <div className="border-l border-gray-200 bg-gray-50 lg:w-80 lg:min-w-80 lg:overflow-y-auto">
           <div className="space-y-4 p-4">
             <ControlPanel
               agentCount={agentCount}
@@ -138,7 +138,7 @@ export const HomePage: React.FC = () => {
             <StatisticsPanel loading={loading} statistics={statistics} />
 
             {/* Footer */}
-            <div className="border-gray-200 border-t pt-4 text-center text-gray-500 text-xs">
+            <div className="border-t border-gray-200 pt-4 text-center text-xs text-gray-500">
               <p>React、TypeScript、WebAssembly (Rust) で開発</p>
             </div>
           </div>
