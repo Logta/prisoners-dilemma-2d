@@ -11,6 +11,9 @@ updates:
       time: "09:00"
       timezone: "Asia/Tokyo"
     open-pull-requests-limit: 5
+    # bunfig.toml / mise の minimumReleaseAge（3 日）に合わせ、公開直後の版は提案しない
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -28,6 +31,9 @@ updates:
       time: "09:00"
       timezone: "Asia/Tokyo"
     open-pull-requests-limit: 5
+    # bunfig.toml / mise の minimumReleaseAge（3 日）に合わせ、公開直後の版は提案しない
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -45,6 +51,9 @@ updates:
       time: "09:00"
       timezone: "Asia/Tokyo"
     open-pull-requests-limit: 5
+    # bunfig.toml / mise の minimumReleaseAge（3 日）に合わせ、公開直後の版は提案しない
+    cooldown:
+      default-days: 3
     commit-message:
       prefix: "chore"
       include: "scope"

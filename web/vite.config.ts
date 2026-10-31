@@ -7,12 +7,39 @@ import { copyFileSync } from 'fs';
 
 import pkg from './package.json' with { type: 'json' };
 
+// 本番ビルドにだけ埋め込む Content Security Policy。
+// GitHub Pages ではレスポンスヘッダを設定できないため meta タグで指定する。
+// - script-src: バンドル済みスクリプトのみ。wasm-bindgen の WebAssembly.instantiateStreaming に 'wasm-unsafe-eval' が必要
+// - style-src: index.html のインライン <style> のため 'unsafe-inline' を許可
+// 開発サーバーは React Refresh のインラインスクリプトを使うため対象外にしている。
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "script-src 'self' 'wasm-unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+].join('; ');
+
 // https://vitejs.dev/config/
 export default defineConfig({
   base: process.env.NODE_ENV === 'production' ? `/${pkg.repository.name}/` : '/',
   plugins: [
     react(),
     tailwindcss(),
+    {
+      name: 'content-security-policy',
+      apply: 'build',
+      transformIndexHtml: () => [
+        {
+          tag: 'meta',
+          attrs: { 'http-equiv': 'Content-Security-Policy', content: CONTENT_SECURITY_POLICY },
+          injectTo: 'head-prepend',
+        },
+      ],
+    },
     {
       name: 'github-pages-spa',
       apply: 'build',
@@ -37,14 +64,12 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    cors: true,
+    // cors: true は任意のオリジンから開発サーバーの内容を読めてしまうため指定しない
+    // （Vite 既定の localhost 系オリジンのみ許可に任せる）。
+    // WASM は src/assets/pkg にコピーして読み込むので、fs.allow でルート外を公開する必要もない。
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
-    },
-    fs: {
-      // Allow serving files from one level up to the project root
-      allow: ['..'],
     },
   },
 
