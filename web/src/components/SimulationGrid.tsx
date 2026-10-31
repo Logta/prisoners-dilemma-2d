@@ -52,7 +52,7 @@ export const SimulationGrid: React.FC<SimulationGridProps> = ({
   return (
     <div className={`relative ${className}`}>
       <canvas className="rounded-lg border border-gray-300 shadow-sm" ref={canvasRef} />
-      <div className="absolute top-2 right-2 rounded bg-white bg-opacity-90 p-2 text-xs">
+      <div className="bg-opacity-90 absolute top-2 right-2 rounded bg-white p-2 text-xs">
         <div className="grid grid-cols-2 gap-1 text-center">
           <div className="flex items-center gap-1">
             <div className="h-3 w-3 rounded bg-green-500" />
