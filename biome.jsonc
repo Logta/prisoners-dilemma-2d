@@ -1,7 +1,7 @@
 // biome-ignore-all assist/source/useSortedKeys: 設定だから不要
 {
   "root": false,
-  "$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -135,7 +135,7 @@
         }
       },
       "nursery": {
-        "useSortedClasses": "error"
+        "useTailwindSortedClasses": "error"
       },
       "a11y": {
         "noAccessKey": "error",
