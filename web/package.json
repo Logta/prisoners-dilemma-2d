@@ -80,5 +80,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "overrides": {
+    "minimatch": "^11.0.1",
+    "qs": "^6.16.2"
   }
 }
