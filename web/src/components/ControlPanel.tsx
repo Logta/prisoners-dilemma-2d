@@ -51,7 +51,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const hasNoAgents = currentAgentCount === 0 || currentAgentCount === undefined;
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h2 className="mb-3 font-semibold text-gray-900 text-lg">シミュレーション制御</h2>
+      <h2 className="mb-3 text-lg font-semibold text-gray-900">シミュレーション制御</h2>
 
       <div className="space-y-3">
         {/* 初期化されていない場合の警告 */}
@@ -74,7 +74,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-blue-800 text-sm">
+                <p className="text-sm text-blue-800">
                   シミュレーションが初期化されていません。「初期配置」ボタンを押してエージェントを配置してください。
                 </p>
               </div>
@@ -188,7 +188,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             step={50}
             value={speed}
           />
-          <div className="mt-1 text-gray-500 text-xs">値が小さいほど高速</div>
+          <div className="mt-1 text-xs text-gray-500">値が小さいほど高速</div>
         </div>
 
         {/* Agent Count Control */}
@@ -202,7 +202,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             step={10}
             value={agentCount}
           />
-          <div className="mt-1 text-gray-500 text-xs">
+          <div className="mt-1 text-xs text-gray-500">
             シミュレーション内のエージェント数（変更にはリセットが必要）
           </div>
         </div>
@@ -211,8 +211,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         <div className="border-t pt-4">
           <label className="flex cursor-pointer items-center justify-between">
             <div>
-              <span className="font-medium text-gray-700 text-sm">戦略複雑度ペナルティ</span>
-              <div className="mt-1 text-gray-500 text-xs">
+              <span className="text-sm font-medium text-gray-700">戦略複雑度ペナルティ</span>
+              <div className="mt-1 text-xs text-gray-500">
                 しっぺ返し戦略とパブロフ戦略の適応度上昇を抑制
               </div>
             </div>
@@ -237,7 +237,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 step={5}
                 value={strategyComplexityPenaltyRate}
               />
-              <div className="mt-1 text-gray-500 text-xs">
+              <div className="mt-1 text-xs text-gray-500">
                 値が大きいほど複雑な戦略への強いペナルティ
               </div>
             </div>
@@ -248,8 +248,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         <div className="border-t pt-4">
           <label className="flex cursor-pointer items-center justify-between">
             <div>
-              <span className="font-medium text-gray-700 text-sm">トーラスフィールドモード</span>
-              <div className="mt-1 text-gray-500 text-xs">
+              <span className="text-sm font-medium text-gray-700">トーラスフィールドモード</span>
+              <div className="mt-1 text-xs text-gray-500">
                 エージェントがグリッドの端を越えて移動可能（トーラス状）
               </div>
             </div>
