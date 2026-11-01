@@ -206,4 +206,95 @@ mod tests {
             assert!(agent.position.y < 8);
         }
     }
+
+    use crate::domain::agent::{MovementStrategy, Position, StrategyType};
+
+    fn cooperator_at(x: usize, y: usize) -> Agent {
+        Agent::new(
+            Position::new(x, y),
+            StrategyType::AllCooperate,
+            0.0,
+            MovementStrategy::Settler,
+        )
+    }
+
+    #[test]
+    fn process_games_plays_each_adjacent_pair_exactly_once() {
+        let mut simulation = SimulationService::new(3, 1, 0).unwrap();
+        let (a, b) = (cooperator_at(0, 0), cooperator_at(1, 0));
+        let (a_id, b_id) = (a.id, b.id);
+        simulation.grid.add_agent(a).unwrap();
+        simulation.grid.add_agent(b).unwrap();
+
+        simulation.process_games();
+
+        assert_eq!(simulation.grid.get_agent(&a_id).unwrap().score, 3);
+        assert_eq!(simulation.grid.get_agent(&b_id).unwrap().score, 3);
+    }
+
+    #[test]
+    fn step_advances_turn_and_reports_statistics() {
+        let mut simulation = SimulationService::new(10, 8, 20).unwrap();
+        assert_eq!(simulation.get_grid_size(), (10, 8));
+        for _ in 0..3 {
+            simulation.step();
+        }
+        assert_eq!(simulation.get_turn(), 3);
+        assert_eq!(simulation.get_generation(), 0);
+        assert_eq!(simulation.get_statistics().total_agents, 20);
+        assert!(simulation.get_statistics().average_score > 0.0);
+    }
+
+    #[test]
+    fn reset_reinitializes_agents_and_counters() {
+        let mut simulation = SimulationService::new(10, 8, 20).unwrap();
+        simulation.step();
+        simulation.reset(5).unwrap();
+        assert_eq!(simulation.get_agents().len(), 5);
+        assert_eq!(simulation.get_turn(), 0);
+        assert_eq!(simulation.get_generation(), 0);
+        assert!(simulation.reset(81).is_err());
+    }
+
+    #[test]
+    fn setters_update_config_and_grid() {
+        let mut simulation = SimulationService::new(3, 3, 0).unwrap();
+        simulation.set_strategy_complexity_penalty(true);
+        simulation.set_strategy_complexity_penalty_rate(1.5);
+        simulation.set_torus_field(true);
+        assert!(simulation.config.strategy_complexity_penalty_enabled);
+        assert_eq!(simulation.config.strategy_complexity_penalty_rate, 1.0);
+        assert!(simulation.config.torus_field_enabled);
+
+        // トーラスモードでは角のマスの隣接が反対側の端まで回り込む
+        let far = cooperator_at(2, 2);
+        let far_id = far.id;
+        simulation.grid.add_agent(far).unwrap();
+        let neighbors: Vec<_> = simulation
+            .grid
+            .get_neighbors(&Position::new(0, 0))
+            .iter()
+            .map(|a| a.id)
+            .collect();
+        assert_eq!(neighbors, vec![far_id]);
+    }
+
+    #[test]
+    fn with_config_applies_torus_mode_to_grid() {
+        let config = SimulationConfig::new()
+            .with_strategy_complexity_penalty(true)
+            .with_penalty_rate(-0.5)
+            .with_torus_field(true);
+        let simulation = SimulationService::with_config(3, 3, 0, config).unwrap();
+        assert!(simulation.config.strategy_complexity_penalty_enabled);
+        assert_eq!(simulation.config.strategy_complexity_penalty_rate, 0.0);
+        assert!(simulation.config.torus_field_enabled);
+        assert_eq!(
+            simulation
+                .grid
+                .get_empty_neighbors(&Position::new(0, 0))
+                .len(),
+            8
+        );
+    }
 }

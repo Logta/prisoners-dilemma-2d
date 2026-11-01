@@ -185,4 +185,56 @@ describe('SimulationCanvas', () => {
       expect(mockCanvas.height).toBe(600);
     });
   });
+
+  describe('サイズ計算と描画の詳細', () => {
+    it('非正方形のグリッドでは長辺に合わせてセルサイズを決める', () => {
+      new SimulationCanvas(mockCanvas, 20, 10);
+
+      // 600 / max(20, 10) = 30
+      expect(mockCanvas.width).toBe(600);
+      expect(mockCanvas.height).toBe(300);
+      expect(mockCanvas.style.width).toBe('600px');
+      expect(mockCanvas.style.height).toBe('300px');
+    });
+
+    it('グリッド線をセル境界の座標に引く', () => {
+      const canvas = new SimulationCanvas(mockCanvas, 2, 3);
+      canvas.drawGrid();
+
+      // cellSize = 600 / 3 = 200 → canvas 400x600
+      expect(mockContext.strokeStyle).toBe('#e9ecef');
+      expect(mockContext.lineWidth).toBe(0.5);
+      expect(mockContext.moveTo).toHaveBeenCalledWith(200, 0);
+      expect(mockContext.lineTo).toHaveBeenCalledWith(200, 600);
+      expect(mockContext.moveTo).toHaveBeenCalledWith(0, 400);
+      expect(mockContext.lineTo).toHaveBeenCalledWith(400, 400);
+    });
+
+    it('最小セルサイズ（4px）でも枠線を描く', () => {
+      const canvas = new SimulationCanvas(mockCanvas, 200, 200);
+      canvas.render([makeAgent()]);
+
+      // cellSize=4, padding=max(1, floor(0.4))=1, size=2
+      expect(mockContext.fillRect).toHaveBeenLastCalledWith(1, 1, 2, 2);
+      expect(mockContext.strokeRect).toHaveBeenCalledWith(1, 1, 2, 2);
+    });
+
+    it('renderは背景・グリッド・エージェントの順に描く', () => {
+      const canvas = new SimulationCanvas(mockCanvas, 2, 2);
+      canvas.render([makeAgent()]);
+
+      expect(mockContext.stroke).toHaveBeenCalledTimes(3 + 3);
+      expect(mockContext.fillRect).toHaveBeenCalledTimes(2);
+    });
+
+    it('resizeで縦横の比率が変わればキャンバスの形も変わる', () => {
+      const canvas = new SimulationCanvas(mockCanvas, 10, 10);
+      canvas.resize(10, 20);
+
+      // 600 / 20 = 30 → 300x600
+      expect(mockCanvas.width).toBe(300);
+      expect(mockCanvas.height).toBe(600);
+      expect(mockCanvas.style.width).toBe('300px');
+    });
+  });
 });

@@ -94,3 +94,8 @@ vite.config.js.timestamp-*
 
 # Claude Code（個人設定。チーム共有する権限は .claude/settings.json に記述する）
 .claude/settings.local.json
+# Stryker (mutation testing)
+/web/reports/
+/web/.stryker-tmp/
+/wasm/mutants.out/
+/wasm/mutants.out.old/

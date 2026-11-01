@@ -136,4 +136,87 @@ mod tests {
         assert!(stats.movement_strategy_counts.is_empty());
         assert!(stats.strategy_counts.is_empty());
     }
+
+    fn agent_with(
+        strategy: StrategyType,
+        movement: MovementStrategy,
+        mobility: f64,
+        score: i32,
+        action: crate::domain::agent::Action,
+    ) -> Agent {
+        let mut agent = Agent::new(Position::new(0, 0), strategy, mobility, movement);
+        agent.add_game_result(uuid::Uuid::new_v4(), action, action, score);
+        agent
+    }
+
+    #[test]
+    fn calculate_aggregates_counts_and_averages() {
+        use crate::domain::agent::Action;
+        let agents: HashMap<uuid::Uuid, Agent> = [
+            agent_with(
+                StrategyType::AllCooperate,
+                MovementStrategy::Explorer,
+                0.2,
+                3,
+                Action::Cooperate,
+            ),
+            agent_with(
+                StrategyType::AllCooperate,
+                MovementStrategy::Explorer,
+                0.6,
+                5,
+                Action::Defect,
+            ),
+        ]
+        .into_iter()
+        .map(|a| (a.id, a))
+        .collect();
+
+        let stats = SimulationStatistics::calculate(&agents, 7);
+
+        assert_eq!(stats.generation, 7);
+        assert_eq!(stats.total_agents, 2);
+        assert_eq!(
+            stats.strategy_counts.get(&StrategyType::AllCooperate),
+            Some(&2)
+        );
+        assert_eq!(
+            stats
+                .movement_strategy_counts
+                .get(&MovementStrategy::Explorer),
+            Some(&2)
+        );
+        assert!((stats.average_cooperation_rate - 0.5).abs() < 1e-9);
+        assert!((stats.average_mobility - 0.4).abs() < 1e-9);
+        assert!((stats.average_score - 4.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn percentages_are_share_of_total_in_percent() {
+        use crate::domain::agent::Action;
+        let agents: HashMap<uuid::Uuid, Agent> = [
+            (StrategyType::AllDefect, MovementStrategy::Social),
+            (StrategyType::AllCooperate, MovementStrategy::Explorer),
+            (StrategyType::AllCooperate, MovementStrategy::Explorer),
+            (StrategyType::AllCooperate, MovementStrategy::Explorer),
+        ]
+        .into_iter()
+        .map(|(s, m)| agent_with(s, m, 0.5, 1, Action::Cooperate))
+        .map(|a| (a.id, a))
+        .collect();
+
+        let stats = SimulationStatistics::calculate(&agents, 0);
+        assert!((stats.get_strategy_percentage(StrategyType::AllDefect) - 25.0).abs() < 1e-9);
+        assert!((stats.get_strategy_percentage(StrategyType::Pavlov)).abs() < 1e-9);
+        assert!(
+            (stats.get_movement_strategy_percentage(MovementStrategy::Social) - 25.0).abs() < 1e-9
+        );
+
+        let empty = SimulationStatistics::new();
+        assert_eq!(empty.get_strategy_percentage(StrategyType::AllDefect), 0.0);
+        assert_eq!(
+            empty.get_movement_strategy_percentage(MovementStrategy::Social),
+            0.0
+        );
+    }
 }

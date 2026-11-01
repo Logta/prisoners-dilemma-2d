@@ -164,4 +164,11 @@ mod tests {
                 | StrategyType::Pavlov
         ));
     }
+
+    #[test]
+    fn test_strategy_type_random_produces_every_variant() {
+        let seen: std::collections::HashSet<StrategyType> =
+            (0..1000).map(|_| StrategyType::random()).collect();
+        assert_eq!(seen.len(), 4, "1000 回で全 4 戦略が出るはず: {seen:?}");
+    }
 }

@@ -222,4 +222,48 @@ mod tests {
 
         assert!(next_gen.is_empty());
     }
+
+    /// 全員 AllCooperate の親から生まれた子は（5% × 50% の突然変異を除き）AllCooperate を継ぐ。
+    /// 親を使わずランダム生成すると AllCooperate は 1/4 程度になる。
+    fn count_inherited_children(config: &SimulationConfig, parents: usize, rounds: usize) -> usize {
+        let service = EvolutionService::new();
+        let mut inherited = 0;
+        for _ in 0..rounds {
+            let next_gen = service.evolve_with_config(&agents_map(parents), config, 5, 5);
+            assert_eq!(next_gen.len(), parents);
+            inherited += next_gen
+                .iter()
+                .filter(|a| a.strategy == StrategyType::AllCooperate)
+                .count();
+        }
+        inherited
+    }
+
+    #[test]
+    fn evolve_children_inherit_parent_strategy() {
+        let total = 20 * 5;
+        let inherited = count_inherited_children(&SimulationConfig::default(), 20, 5);
+        assert!(inherited > total * 8 / 10, "{inherited}/{total}");
+
+        let with_penalty = SimulationConfig::default().with_strategy_complexity_penalty(true);
+        let inherited = count_inherited_children(&with_penalty, 20, 5);
+        assert!(inherited > total * 8 / 10, "{inherited}/{total}");
+    }
+
+    #[test]
+    fn evolve_with_exactly_two_parents_still_uses_crossover() {
+        let total = 2 * 50;
+        let inherited = count_inherited_children(&SimulationConfig::default(), 2, 50);
+        assert!(inherited > total * 8 / 10, "{inherited}/{total}");
+    }
+
+    #[test]
+    fn evolve_uses_default_config() {
+        let service = EvolutionService::new();
+        let next_gen = service.evolve(&agents_map(10), 5, 5);
+        assert_eq!(next_gen.len(), 10);
+        for agent in &next_gen {
+            assert!(agent.position.x < 5 && agent.position.y < 5);
+        }
+    }
 }

@@ -85,6 +85,22 @@ description = "🔄 WASM監視"
 run = "cd wasm && cargo watch -s 'wasm-pack build --target web --out-dir pkg && mkdir -p ../web/src/assets/pkg && cp -r pkg/* ../web/src/assets/pkg/'"
 
 # =============================================================================
+# 🧬 MUTATION TESTING - 重いので CI では回さず、手動で実行する
+# =============================================================================
+
+[tasks."mutants:rust"]
+description = "🧬 Rust の mutation testing（cargo-mutants。対象は wasm/.cargo/mutants.toml）"
+run = "cd wasm && mise x cargo:cargo-mutants@27.1.0 -- cargo mutants"
+
+[tasks."mutants:web"]
+description = "🧬 Web の mutation testing（Stryker。対象は web/stryker.config.json）"
+run = "cd web && bun run test:mutation"
+
+[tasks.mutants]
+description = "🧬 mutation testing（Rust + Web）"
+depends = ["mutants:rust", "mutants:web"]
+
+# =============================================================================
 # 🛠️ SETUP COMMANDS - セットアップ
 # =============================================================================
 

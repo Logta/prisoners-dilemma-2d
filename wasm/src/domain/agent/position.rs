@@ -183,4 +183,14 @@ mod tests {
             assert!(valid_neighbors.contains(&neighbor));
         }
     }
+
+    #[test]
+    fn test_neighbors_at_far_corner_stay_in_bounds() {
+        // 右下の角（幅・高さの境界）では範囲外の座標を含めない
+        let neighbors = Position::new(4, 3).neighbors(5, 4);
+        assert_eq!(neighbors.len(), 3);
+        assert!(neighbors.contains(&Position::new(3, 3)));
+        assert!(neighbors.contains(&Position::new(4, 2)));
+        assert!(neighbors.contains(&Position::new(3, 2)));
+    }
 }

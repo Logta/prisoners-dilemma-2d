@@ -1,0 +1,5 @@
+# cargo-mutants の設定（`mise run mutants:rust` で実行）
+# 対象はシミュレーション・遺伝的アルゴリズムの中核ロジック（domain / application）に絞る。
+# wasm-bindgen のバインディング層（infrastructure）は JS 境界の薄いラッパーなので除外する。
+examine_globs = ["src/domain/**/*.rs", "src/application/**/*.rs"]
+timeout_multiplier = 3.0
