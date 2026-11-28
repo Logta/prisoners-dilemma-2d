@@ -106,6 +106,7 @@ mise run check     # 型チェック・リント
 mise run fmt       # コード整形
 mise run test      # テスト実行
 mise run build     # プロダクションビルド
+mise run audit     # RustSec advisory 確認（手動。wasm/Cargo.lock。ネットワーク必須。CI / full-check には含めない）
 ```
 
 ## 現在の状態
