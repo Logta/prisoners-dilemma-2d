@@ -101,6 +101,17 @@ description = "🧬 mutation testing（Rust + Web）"
 depends = ["mutants:rust", "mutants:web"]
 
 # =============================================================================
+# 🔒 DEPENDENCY AUDIT - 手動。advisory DB はネットワーク必須。CI / full-check には含めない
+# cargo-audit は cargo-mutants と同じく mise の cargo backend でピンする。
+# backend の既定は cargo install --locked。非ゼロ終了は指摘（または DB 取得失敗）。
+# プロジェクトの RUST_LOG=debug が reqwest のログで報告を埋めるので、実行時だけ off にする。
+# =============================================================================
+
+[tasks.audit]
+description = "🔒 wasm/Cargo.lock の RustSec advisory 確認（cargo-audit 0.23.0。手動。ネットワーク必須）"
+run = "cd wasm && mise x cargo:cargo-audit@0.23.0 -- env RUST_LOG=off cargo audit"
+
+# =============================================================================
 # 🛠️ SETUP COMMANDS - セットアップ
 # =============================================================================
 

@@ -86,6 +86,9 @@ mise run test
 
 # プロダクションビルド
 mise run build
+
+# RustSec advisory 確認（手動。対象は wasm/Cargo.lock。ネットワーク必須。CI には含めない）
+mise run audit
 ```
 
 ## 仕様詳細
